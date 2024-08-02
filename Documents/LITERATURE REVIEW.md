@@ -1,4 +1,10 @@
+## MEERKATS
 
+### ENVIRONMENT
+
+### BEHAVIOURS
+
+### DATASET
 ## WILD LIFE MONITORING
 ### IMPORTANCE OF
 Why is monitoring important
@@ -14,7 +20,6 @@ Issues with camera traps
 * false triggers create huge amounts of data
 * manually sifting through lots of data
 * possible inaccuracies
-
 ## COMPUTER VISION IN WILDLIFE MONITORING
 
 ### WHAT IS CV
@@ -23,10 +28,21 @@ Issues with camera traps
 * these techniques are known as object classification and detection
 * object classification estimates what the probability is that an image is of each class
 * object detection draws bounding boxes around objects in an image and estimates what the probability of the object being 
-* 
 * CNN's learn the features of from a set of training data 
 * object classification
 
-### OBJECT DETECTION
+### OBJECT DETECTION AND CLASSIFICATION
+* datasets
+* examples of where its been used before
+* computational power for training
+* transfer learning
+* examples of previous models
+* difficulty with inference for biologists
 
-## EDGE-COMPUTING
+## ON-BOARD OBJECT DETECTION
+
+### MODEL USABILITY
+
+### EXAMPLES OF ON-BOARD
+
+### DRAWBACKS

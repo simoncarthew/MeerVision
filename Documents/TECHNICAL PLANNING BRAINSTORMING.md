@@ -5,17 +5,20 @@ Use existing CNN architectures for object detection. Explore light weight models
 #### LARGE MODELS
 - YOLOv5 (Trained on ImageNet)
 - Megadetector (YOLOv5)
-- ResNet
 - ConvNeXt
-- Vision Transformer
+- RetinaNet
+- Faster R-CNN
+- Vision Transformer (ViT)
 - SSD
 - Refine Det
+- Detectron2
 
 #### ONBOARD MODELS
 * MobileNet-SSD
 * TinyYOLO
 * EfficientDet
 * PP-YOLO-Tiny
+* SSD Lite
 
 ## CAMERA TRAP
 
@@ -38,3 +41,13 @@ Use existing CNN architectures for object detection. Explore light weight models
 * Overkill amount of processing power if no onboard image processing
 * Doesn't make sense to use a raspberry pi without doing onboard processing 
 #### ESP32-CAM
+
+<u>Advantages</u>
+* cheap
+* low power
+* option for multiple angles because cheap
+
+<u>Disadvantages</u>
+* small storage capacity
+* limited camera options
+* minimal IR capabilities

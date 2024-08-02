@@ -86,5 +86,5 @@ class MeerDown:
 if __name__ == "__main__":
     # Creating an instance of MyClass
     md_data = MeerDown("Data/MeerDown/Annotations/behaviours.json","Data/MeerDown/Annotations/behaviour_colours.json","Data/MeerDown/Annotations")
-    print(md_data.annotations)
-    md_data.visualise_annotations("22-11-07_C3_03","Data/MeerDown/Annotated_videos")
+    # print(md_data.annotations)
+    md_data.visualise_annotations("22-10-20_C2_06","Data/MeerDown/Annotated_videos")
