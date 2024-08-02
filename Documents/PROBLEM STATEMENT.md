@@ -1,3 +1,3 @@
 The researchers at the Kalahari Meerkat Project are interested in the cooperative behaviour of the meerkats and would like to answer questions about their actions and interactions as a group. Manual observation is commonly employed by researchers to better understand animals in their natural environment. This is however an invasive solution that may disrupt the animals natural tendencies, requires many man hours and is subject to human error. This calls for an automated system that can track the movement patterns of the meerkats and classify their behaviour over time to help better understand group dynamics.
 
-Previous solutions to this problem are explored in the [[LITERATURE REVIEW]].
+Previous solutions to this problem are explored in the [[LITERATURE SUMMARIES]].

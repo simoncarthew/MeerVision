@@ -1,23 +1,21 @@
 ## CLASSIFICATION
 GOAL: find all the meerkats in the image (possibly classify behaviour)
 ### DETECTING/LOCATING MEERKAT
-1. TRAIN CLASSIFIER + LOCATOR
-	* fine tune generically trained model architecture with meerkat class
-	* train a classifier that can take in trap image, detect meerkat and classify as a meerkat
-	* this will be very difficult because of lack of meerkat trap images, need a huge amount of data
+Use existing CNN architectures for object detection. Explore light weight models that may be able to run on-board and how they compare to larger models.
+#### LARGE MODELS
+- YOLOv5 (Trained on ImageNet)
+- Megadetector (YOLOv5)
+- ResNet
+- ConvNeXt
+- Vision Transformer
+- SSD
+- Refine Det
 
-2. USE GENERIC "OBJECT" DETECTING MODEL
-	* basically don't try 
-	* MEGADETECTOR -  trained by microsoft to classify animal/person/vehicle in camera trap data (well fitting for our use case)
-	* IMAGENET - can use generically trained model architecture (YOLO/RESNET/CONVNET) to draw bounding boxes on potential "objects"
-	* may not do great in kalahari scene
-	* also no way of validating robustness
-
-4. MOTION DETECTOR / TRACKING ALGORITHM
-	* use a motion detection algorithm to find all pixels that contain moving objects
-	* problem is that when meerkat stops it will no longer detect pixels
-	* could use tracking algorithm that is robust to still meerkats
-	* increases number of images that will have to be classified
+#### ONBOARD MODELS
+* MobileNet-SSD
+* TinyYOLO
+* EfficientDet
+* PP-YOLO-Tiny
 
 ## CAMERA TRAP
 
