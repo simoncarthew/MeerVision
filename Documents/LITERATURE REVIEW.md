@@ -14,15 +14,15 @@ Migration patterns, population densities, group interactions, feeding patterns
 ### METHODS
 What are the methods of wildlife monitoring
 Human observation, microphones, satellite images, camera traps, crowd source images
+locating and classification
 ### CAMERA TRAPS
 Talk about the popularity of camera traps
 Issues with camera traps
 * false triggers create huge amounts of data
 * manually sifting through lots of data
 * possible inaccuracies
-## COMPUTER VISION IN WILDLIFE MONITORING
+## COMPUTER VISION
 
-### WHAT IS CV
 * broad description (algorithm that can interpret information from an image as a human could)
 * CV can be used to extrapolate information from the camera trap photos which biologists desire if there are animals in a photo and in some cases where the animals are in the photos
 * these techniques are known as object classification and detection
@@ -33,16 +33,21 @@ Issues with camera traps
 
 ### OBJECT DETECTION AND CLASSIFICATION
 * datasets
+* types of detection models
+* brief history
 * examples of where its been used before
 * computational power for training
+
+### USE IN CAMERA TRAPS
 * transfer learning
 * examples of previous models
 * difficulty with inference for biologists
 
 ## ON-BOARD OBJECT DETECTION
 
-### MODEL USABILITY
+### TECHNIQUES AND MOST COMMON AND LIMITATIONS
 
 ### EXAMPLES OF ON-BOARD
 
-### DRAWBACKS
+
+## OBJECT TRACKING

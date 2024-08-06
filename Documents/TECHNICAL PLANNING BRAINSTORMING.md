@@ -7,47 +7,36 @@ Use existing CNN architectures for object detection. Explore light weight models
 - Megadetector (YOLOv5)
 - ConvNeXt
 - RetinaNet
-- Faster R-CNN
 - Vision Transformer (ViT)
 - SSD
 - Refine Det
 - Detectron2
-
+- DETA
 #### ONBOARD MODELS
 * MobileNet-SSD
 * TinyYOLO
 * EfficientDet
 * PP-YOLO-Tiny
 * SSD Lite
+* RTMDet
+- RT-DETR
+
 
 ## CAMERA TRAP
 
 ### HOUSING
 
-### CAMERA + PROCESSOR + STORAGE
+### PROCESSING + CAMERA
 
-#### RASPBERRY PI 
+#### PROCESSOR CHOICES
 
-<u>Advantages</u>
-* More processing power for onboard processing
-* Higher quality camera options
-* Easier development environment
-* More storage Capacity
-* More options for night vision
+| DEVICE       | ADVANTAGES                                                                                                                                                                          | DISADVANTAGES                                                                                                                                                                                                       |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RASPBERRY PI | - More processing power for onboard processing<br>- Higher quality camera options<br>- Easier development environment<br>- More storage Capacity<br>- More options for night vision | - Significantly more expensive<br>- Higher Power consumption<br>- Overkill amount of processing power if no onboard image processing<br>- Doesn't make sense to use a raspberry pi without doing onboard processing |
+| ESP32-CAM    | - cheap<br>- low power<br>- option for multiple angles because cheap                                                                                                                | - small storage capacity<br>- limited camera options<br>- minimal IR capabilities                                                                                                                                   |
+#### CAMERA CHOICE
 
-<u>Disadvantages</u>
-* Significantly more expensive
-* Higher Power consumption
-* Overkill amount of processing power if no onboard image processing
-* Doesn't make sense to use a raspberry pi without doing onboard processing 
-#### ESP32-CAM
-
-<u>Advantages</u>
-* cheap
-* low power
-* option for multiple angles because cheap
-
-<u>Disadvantages</u>
-* small storage capacity
-* limited camera options
-* minimal IR capabilities
+| DEVICE       | CAMERA     | ADVANTAGES                                        | DISADVANTAGES          |
+| ------------ | ---------- | ------------------------------------------------- | ---------------------- |
+| RASPBERRY PI | 5mp IR-Cut | - good image quality<br>- has automatic IR filter | - relatively expensive |
+|              |            |                                                   |                        |
