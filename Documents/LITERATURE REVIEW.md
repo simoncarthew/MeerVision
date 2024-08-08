@@ -25,29 +25,22 @@ Issues with camera traps
 
 * broad description (algorithm that can interpret information from an image as a human could)
 * CV can be used to extrapolate information from the camera trap photos which biologists desire if there are animals in a photo and in some cases where the animals are in the photos
-* these techniques are known as object classification and detection
-* object classification estimates what the probability is that an image is of each class
-* object detection draws bounding boxes around objects in an image and estimates what the probability of the object being 
-* CNN's learn the features of from a set of training data 
-* object classification
 
 ### OBJECT DETECTION AND CLASSIFICATION
+* object classification estimates what the probability is that an image is of each class
+* object detection draws bounding boxes around objects in an image and estimates what the probability of the object being 
 * datasets
 * types of detection models
 * brief history
 * examples of where its been used before
 * computational power for training
-
-### USE IN CAMERA TRAPS
 * transfer learning
-* examples of previous models
-* difficulty with inference for biologists
+
+### BEHAVIOUR RECOGNITION
+* 
 
 ## ON-BOARD OBJECT DETECTION
 
 ### TECHNIQUES AND MOST COMMON AND LIMITATIONS
 
 ### EXAMPLES OF ON-BOARD
-
-
-## OBJECT TRACKING
