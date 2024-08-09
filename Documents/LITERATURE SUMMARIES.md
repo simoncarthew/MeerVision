@@ -237,8 +237,21 @@ lahoz-monfort_comprehensive_2021
 
 ### BEHAVIOUR MONITORING
 #### Animal Behavior Analysis Methods Using Deep Learning: A Survey
-* 
-
+* pose estimation
+	* identifying and locating the position and orientation of objects
+	* DeepLabCut and SLEAP
+	* use pose estimation outputs to classify behaviour
+	* used for behavioual profiling of robots
+	* predicting locomotion behaviours
+	* classify postures using nearest neighbour, random forest to stereotyped behaviours
+	* used LSTM and 1D CNN to process trajectpries of poses for classification
+* sensor based
+* bioacoustics
+* object detection
+	* classify animal behaviours with object detectors that process single image (Faster RCNN / YOLO / MobileNetv2-SSD)
+		* works well for positional behaviour
+	* some people found that temporal motion important for some animal behavior classification (TempNet / SlowFast = spatio-temporal convolution )
+	* tracking individuals using DeepSort
 #### Computer Vision for Primate Behaviour Analysis in the Wild
 [LINK]()
 * suggests that monitoring animal behaviour using video footage involves  object detection, multi-individual tracking, action recognition and individual identification
@@ -368,6 +381,25 @@ lahoz-monfort_comprehensive_2021
 * mobilenet is adapted from VGGNet and can process images 10 times faster
 * uses ssd for object detection
 * average precision (mAP) of a category is 93.4%, which can reach 7
+
+#### Automated Behavior Recognition and Tracking of Group-Housed Pigs with an Improved DeepSORT Method
+* used deepsort, YOLOX-S amd YOLOv5s for detection and tracking of pig behaviour
+* used for heavily occluded, overlapping and illumination changes
+* incorporate behaviour classification into tracking algorithm
+* "YOLO v5s and YOLOX-S detectors achieved a high precision rate of 99.4% and 98.43%, a recall rate of 99% and 99.23"
+* "multi-object tracking accuracy (MOTA), ID switches (IDs), and IDF1 of 98.6%,15, and 95.7%"
+* "The MOT algorithms based on attention mechanisms are TransTrack [28] and TrackFormer" but they have higher inference times than SORT and deepsort
+* tell the difference between standing and eating from aerial perspective
+
+#### Animal Motion Tracking in Forest: Using Machine Vision Technology
+* shown that video is an accurate way of monitoring animal movements and behaviour
+* non-stressful, non-insvasive and cost-effective
+* used YOLOv4 for animal detection
+* used DeepSORT for animal tracking
+	* tracks animals while assigning an ID to them
+	* introduces deep learning into the 
+	* more effective at tracking animals for longer periods and robust to id switches
+	* 
 
 ## ON-BOARD COMPUTING
 ### TECHNIQUES AND MOST COMMON AND LIMITATIONS
