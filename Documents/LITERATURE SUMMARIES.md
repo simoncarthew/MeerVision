@@ -395,11 +395,22 @@ lahoz-monfort_comprehensive_2021
 * shown that video is an accurate way of monitoring animal movements and behaviour
 * non-stressful, non-insvasive and cost-effective
 * used YOLOv4 for animal detection
+* SORT
+	* rudimentary approach like Kalman filters and Hungarian algorithms
+	* detection -> estimation (position of target in next frame) -> data association (cost matrix computed using iou between detection and estimation, solved using hungarian algorithm) -> creation and deletion of tracks (unique identities are created and destroyed based on IOUmin)
+	* lots of id switches and failes in cases of occlusions
 * used DeepSORT for animal tracking
 	* tracks animals while assigning an ID to them
-	* introduces deep learning into the 
+	* introduces deep learning into the standard SORT algorithm
+	* uses both motion and appearance descriptors
+	* the appearance descriptor reduces identity switches
 	* more effective at tracking animals for longer periods and robust to id switches
-	* 
+	* discriminating feature embedding is trained offline on re-identification dataset using cosine metric learning
+* results
+	* deepsort has good speed
+	* accuracy improved with fairMOT and centretrack
+	* reduces ID switches
+	* shown that yolo and deepsort is robust to poses and different views on animals with different backgrounds
 
 ## ON-BOARD COMPUTING
 ### TECHNIQUES AND MOST COMMON AND LIMITATIONS

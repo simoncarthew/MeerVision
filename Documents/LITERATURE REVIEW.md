@@ -37,7 +37,9 @@ Issues with camera traps
 * transfer learning
 
 ### BEHAVIOUR RECOGNITION
-* 
+
+
+### DEPTH PERCEPTION
 
 ## ON-BOARD OBJECT DETECTION
 
