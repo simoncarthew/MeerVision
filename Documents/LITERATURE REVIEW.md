@@ -21,12 +21,8 @@ Issues with camera traps
 * false triggers create huge amounts of data
 * manually sifting through lots of data
 * possible inaccuracies
-## COMPUTER VISION
 
-* broad description (algorithm that can interpret information from an image as a human could)
-* CV can be used to extrapolate information from the camera trap photos which biologists desire if there are animals in a photo and in some cases where the animals are in the photos
-
-### OBJECT DETECTION AND CLASSIFICATION
+## OBJECT DETECTION AND CLASSIFICATION
 * object classification estimates what the probability is that an image is of each class
 * object detection draws bounding boxes around objects in an image and estimates what the probability of the object being 
 * datasets
@@ -36,13 +32,19 @@ Issues with camera traps
 * computational power for training
 * transfer learning
 
-### BEHAVIOUR RECOGNITION
+## OBJECT TRACKING
 
 
-### DEPTH PERCEPTION
+## BEHAVIOUR RECOGNITION
+
+
+## DEPTH PERCEPTION
+
 
 ## ON-BOARD OBJECT DETECTION
 
+
 ### TECHNIQUES AND MOST COMMON AND LIMITATIONS
+
 
 ### EXAMPLES OF ON-BOARD

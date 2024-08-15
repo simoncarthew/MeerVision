@@ -20,6 +20,7 @@ Use existing CNN architectures for object detection. Explore light weight models
 * SSD Lite
 * RTMDet
 - RT-DETR
+- EdgeYOLO
 
 
 ## CAMERA TRAP

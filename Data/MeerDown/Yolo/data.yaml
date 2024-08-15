@@ -1,0 +1,6 @@
+names:
+  0: meerkat
+path: Data/MeerDown/Yolo
+test: ''
+train: images/train
+val: images/val

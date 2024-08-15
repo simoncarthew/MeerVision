@@ -7,6 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # model type
 model_type = "MiDaS_small"
+# model_type = "MiDaS"
 
 # Load MiDaS model
 midas = torch.hub.load("intel-isl/MiDaS", model_type)  # or use "MiDaS" for the large model
