@@ -127,6 +127,7 @@ class MeerDown:
             os.makedirs(yolo_path + '/labels/val', exist_ok=True)
 
             # iterate over every video
+            vid_count = 1
             for vid_path in self.video_files:
                 # get video name
                 vid_name = os.path.basename(vid_path)[:-4]
@@ -146,7 +147,7 @@ class MeerDown:
                     # read frame
                     ret, frame = cap.read()
 
-                    # check successful read
+                    # check successful read or if end
                     if not ret:
                         break
                     
@@ -166,9 +167,6 @@ class MeerDown:
                         y_centre = height - height / 2
                         lines.append(f'0 {x_centre:.6f} {y_centre:.6f} {width:.6f} {height:.6f}')
 
-                    # increase frame
-                    frame_count += 1
-
                     # train or val
                     train_val = ""
                     if 'area_1' in vid_path:
@@ -177,15 +175,21 @@ class MeerDown:
                         train_val = "val"
 
                     # set file paths
-                    image_path = "Data/MeerDown/Yolo/images/" + train_val + '/' + vid_name + frame_count + ".jpg"
-                    label_path = "Data/MeerDown/Yolo/label/" + train_val + '/' + vid_name + frame_count + ".txt"
+                    image_path = "Data/MeerDown/Yolo/images/" + train_val + '/' + vid_name + "_" + str(frame_count) + ".jpg"
+                    label_path = "Data/MeerDown/Yolo/labels/" + train_val + '/' + vid_name + "_" + str(frame_count) + ".txt"
 
                     # save image
-                    cv2.imwrite(image_path)
+                    cv2.imwrite(image_path, frame)
                 
                     # save annotations
                     with open(label_path, 'w') as file:
                         file.writelines(lines)
+
+                    # increase frame
+                    frame_count += 1
+                
+                print("Finnished " + str(vid_count) + "/" + str(len(self.video_files)) + " videos.")
+                vid_count += 1
     
 if __name__ == "__main__":
     md_data = MeerDown("Data/MeerDown/Annotations/behaviours.json","Data/MeerDown/Annotations/behaviour_colours.json","Data/MeerDown/Annotations", "Data/MeerDown/Annotated_videos")
