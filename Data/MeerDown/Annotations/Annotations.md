@@ -1,1 +1,0 @@
-Frame number, object type, object ID, behaviour index, occluded, x1, x2, y1, y2
