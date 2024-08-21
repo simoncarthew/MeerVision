@@ -1,11 +1,10 @@
 *.mp4
 *.jpg
-*.pt
 *.txt
-*.csv
 *.png
 *.cache
 *.yaml
 venv
+Data
 events.*
 Housing/Dimensions

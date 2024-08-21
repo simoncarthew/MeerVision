@@ -25,8 +25,11 @@ class Yolo8:
             latest_directory = train_directories_sorted[-1] if train_directories_sorted else None
 
             self.model = YOLO(yolo_path + "/" + latest_directory + "/weights/best.pt")
+        elif model_load == "custom":
+            model_path = input("Please paste model path: ")
+            self.model = YOLO(model_path)
     
-    def train(self, batch = 16, imgsz = 640, lr = 0.01, optimizer = 'AdamW', epochs = 50, dataset_path="Data/MeerDown/yolo/dataset.yaml", save_path = 'ObjectDetection/Yolo8', augment = False):
+    def train(self, batch = 16, imgsz = 640, lr = 0.02, optimizer = 'AdamW', epochs = 50, dataset_path="Data/MeerDown/yolo/dataset.yaml", save_path = 'ObjectDetection/Yolo8', augment = False):
         # Check device
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -142,14 +145,22 @@ if __name__ == "__main__":
 
     # select latest if no training
     if train == False:
-        train_select = "latest"
+        if input("Would you like to use custome model (y/n)? ") == "y":
+            train_select = "custom"
+        else:
+            train_select = "latest"
 
     # load the model
     yolo8 = Yolo8(model_load=train_select)
 
     # train model
     if train == True:
-        yolo8.train(dataset_path='Data/MeerDown/yolo_merged/dataset.yaml',epochs=50, augment = False)
+        yolo8.train(dataset_path='Data/MeerDown/yolo/yolo_val_mix_half/dataset.yaml',epochs=5, augment = False)
 
     # test the trained model
-    yolo8.process_video("Data/MeerDown/origin/Unannotated_videos/22-11-07_C3_10.mp4",thresh=0.1)
+    video_path = input("Please paste video path: ")
+    thresh = 0.1
+    if video_path =="":
+        yolo8.process_video("Data/MeerDown/origin/Unannotated_videos/22-11-07_C3_10.mp4",thresh=thresh)
+    else:
+        yolo8.process_video(video_path,thresh=thresh)

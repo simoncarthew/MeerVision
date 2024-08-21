@@ -11,7 +11,7 @@ from multiprocessing import Pool
 import cv2
 
 class MeerDown(Dataset):
-    def __init__(self, image_folder = "Data/MeerDown/frames", annotation_file = "Data/MeerDown/annotations.csv", image_size=(640, 640)):
+    def __init__(self, image_folder = "Data/MeerDown/raw/frames", annotation_file = "Data/MeerDown/raw/annotations.csv", image_size=(640, 640)):
         self.image_folder = image_folder
         self.annotation_file = annotation_file
         self.image_size = image_size
@@ -56,7 +56,7 @@ class MeerDown(Dataset):
         annotations = [torch.tensor(a, dtype=torch.float32) for a in annotations]
         return images, annotations
 
-    def create_yolo_dataset(self, yolo_dir='Data/MeerDown/yolo', train_set = "C2", total_val_in_train = 3525, total_val_images = 3525):
+    def create_yolo_dataset(self, yolo_dir='Data/MeerDown/yolo', train_set = "C2", total_val_in_train = 14140/2, total_val_images = 14140/2):
         # check if data exists and if they want to redo data
         redo = False
         if os.path.exists(yolo_dir):
@@ -190,5 +190,5 @@ class MeerDown(Dataset):
 
 if __name__ == "__main__":
     md = MeerDown()
-    md.create_yolo_dataset(yolo_dir = 'Data/MeerDown/yolo_merged')
+    md.create_yolo_dataset(yolo_dir = 'Data/MeerDown/yolo/yolo_val_mix_half')
     # md.display_yolo()
