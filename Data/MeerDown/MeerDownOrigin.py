@@ -7,7 +7,7 @@ import shutil
 import multiprocessing as mp
 
 class MeerDownOrigin:
-    def __init__(self, behaviour_file = "Data/MeerDown/Annotations/behaviours.json", colour_file = "Data/MeerDown/Annotations/behaviour_colours.json", annotations_folder = "Data/MeerDown/Annotations", annotated_video_folder = "Data/MeerDown/Annotated_videos"):
+    def __init__(self, behaviour_file = "Data/MeerDown/origin/Annotations/behaviours.json", colour_file = "Data/MeerDown/origin/Annotations/behaviour_colours.json", annotations_folder = "Data/MeerDown/origin/Annotations", annotated_video_folder = "Data/MeerDown/origin/Annotated_videos"):
 
         # load in behaviours
         with open(behaviour_file, 'r') as file:
@@ -30,33 +30,33 @@ class MeerDownOrigin:
             else: df['area'] = 2
             annotations_df_list.append(df)
         self.annotations = pd.concat(annotations_df_list, ignore_index=True)
-        
+
+    def create_annotated_frames(self, new_res = 0.65 , frame_rate = 30, annotations_save_path = 'Data/MeerDown/annotations.csv', frames_save_path = "Data/MeerDown/frames"):
         # reduce sampling period to 0.5 seonds
-        self.annotations = self.annotations[self.annotations['frame_number'] % 30 == 0]
+        reduced_annotations = self.annotations[self.annotations['frame_number'] % frame_rate == 0]
 
-        self.annotations.to_csv('Data/MeerDown/annotations.csv', sep=',', index=False, header=True, encoding='utf-8')
+        # save annotations
+        reduced_annotations.to_csv(annotations_save_path, sep=',', index=False, header=True, encoding='utf-8')
 
-    def create_annotated_frames(self):
         # check if data exists and if they want to redo data
         redo = False
-        frames_path = "Data/MeerDown/frames"
-        if os.path.exists(frames_path):
+        if os.path.exists(frames_save_path):
             if input("Annotated frame images already exists, would you like to delete (y/n)? ") == "y":
-                shutil.rmtree(frames_path)
+                shutil.rmtree(frames_save_path)
                 redo = True
         else:
             redo = True
 
         if redo:
             # create directory
-            os.mkdir(frames_path)
+            os.mkdir(frames_save_path)
 
             # Prepare for parallel processing
             num_workers = mp.cpu_count()  # Number of CPU cores
             pool = mp.Pool(processes=num_workers)
 
             # Create a list of arguments for the pool
-            args = [(vid_path, frames_path) for vid_path in self.video_files]
+            args = [(vid_path, frames_save_path, frame_rate, new_res, (640,640)) for vid_path in self.video_files]
 
             # Process videos in parallel
             pool.starmap(process_video, args)
@@ -123,7 +123,7 @@ class MeerDownOrigin:
         cap.release()
         cv2.destroyAllWindows()
 
-def process_video(vid_path, frames_path):
+def process_video(vid_path, frames_path, frame_rate, new_res, image_size):
     # Get video name
     vid_name = os.path.basename(vid_path)[:-4]
     
@@ -145,12 +145,17 @@ def process_video(vid_path, frames_path):
         if not ret:
             break
         
-        if frame_count % 30 == 0:
+        if frame_count % frame_rate == 0:
+            # scale down the image resolution to 0.7 of its original size
+            new_width = int(frame.shape[1] * new_res)
+            new_height = int(frame.shape[0] * new_res)
+            resized_frame = cv2.resize(frame, image_size)
+
             # Set file path
             image_path = os.path.join(frames_path, f"{vid_name}_frame_{frame_count}.jpg")
 
             # Save image
-            cv2.imwrite(image_path, frame)
+            cv2.imwrite(image_path, resized_frame)
 
         # Increase frame count
         frame_count += 1
@@ -159,8 +164,5 @@ def process_video(vid_path, frames_path):
     print(f"Finished processing video: {vid_name}")
 
 if __name__ == "__main__":
-    md_data = MeerDownOrigin("Data/MeerDown/Annotations/behaviours.json","Data/MeerDown/Annotations/behaviour_colours.json","Data/MeerDown/Annotations", "Data/MeerDown/Annotated_videos")
-    # md_data.create_yolo_dataset()
-    md_data.create_annotated_frames()
-    # print(md_data.annotations)
-    # md_data.visualise_annotations("22-10-20_C2_06","Data/MeerDown/Annotated_videos/area_1")
+    md_data = MeerDownOrigin()
+    md_data.create_annotated_frames(annotations_save_path="Data/MeerDown/reduced/annotations.csv", frames_save_path="Data/MeerDown/reduced/frames")

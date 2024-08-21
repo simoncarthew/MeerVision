@@ -3,4 +3,9 @@
 *.pt
 *.txt
 *.csv
+*.png
+*.cache
+*.yaml
 venv
+events.*
+Housing/Dimensions
