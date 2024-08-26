@@ -8,9 +8,11 @@ class Yolo8:
     def __init__(self, yolo_path = 'ObjectDetection/Yolo8', model_load = "pre"):
         # Load selected model
         if model_load == "new":
-            self.model = YOLO(yolo_path + '/yolov8n.yaml')
+            model_size = input("Enter model size (n/m/s/l): ")
+            self.model = YOLO(yolo_path + "/yolov8" + model_size + ".yaml")
         elif model_load == "tune":
-            self.model = YOLO(yolo_path + '/yolov8n.pt')
+            model_size = input("Enter model size (n/m/s/l): ")
+            self.model = YOLO(yolo_path + "/yolov8" + model_size + ".pt")
         elif model_load == "latest":
             # all directories
             all_directories = [d for d in os.listdir(yolo_path) if os.path.isdir(os.path.join(yolo_path, d))]
@@ -153,14 +155,20 @@ if __name__ == "__main__":
     # load the model
     yolo8 = Yolo8(model_load=train_select)
 
+    # would you like to show test video
+    video = False
+    if input("Would you like to see test video(y/n)? ") == "y":
+        video = True
+
     # train model
     if train == True:
-        yolo8.train(dataset_path='Data/MeerDown/yolo/yolo_val_mix_half/dataset.yaml',epochs=5, augment = False)
+        yolo8.train(dataset_path='Data/MeerDown/yolo/yolo_val_mix_half/dataset.yaml',epochs=7, batch = 4, lr=0.02, augment = False)
 
     # test the trained model
-    video_path = input("Please paste video path: ")
-    thresh = 0.1
-    if video_path =="":
-        yolo8.process_video("Data/MeerDown/origin/Unannotated_videos/22-11-07_C3_10.mp4",thresh=thresh)
-    else:
-        yolo8.process_video(video_path,thresh=thresh)
+    if video:
+        video_path = input("Please paste video path: ")
+        thresh = 0.1
+        if video_path =="":
+            yolo8.process_video("Data/MeerDown/origin/Unannotated_videos/22-11-07_C3_10.mp4",thresh=thresh)
+        else:
+            yolo8.process_video(video_path,thresh=thresh)

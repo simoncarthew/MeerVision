@@ -4,6 +4,7 @@
 *.png
 *.cache
 *.yaml
+*.pt
 venv
 Data
 events.*

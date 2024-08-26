@@ -1,0 +1,8 @@
+model,batchsize,lr,freeze,new,augment,epochs,percval
+yolo8,std,std,12,FALSE,FALSE,std,0.0
+yolo8,std,std,12,FALSE,TRUE,std,0.0
+yolo8,std,std,12,FALSE,TRUE,std,0.1
+yolo8,std,std,12,FALSE,TRUE,std,0.25
+yolo8,std,std,12,FALSE,TRUE,std,0.5
+megadetector,std,std,12,FALSE,TRUE,std,0.5
+mobile,std,std,12,FALSE,TRUE,std,0.5
