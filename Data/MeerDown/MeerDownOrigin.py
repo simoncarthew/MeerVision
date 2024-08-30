@@ -5,6 +5,7 @@ import os
 import cv2
 import shutil
 import multiprocessing as mp
+import numpy as np
 
 class MeerDownOrigin:
     def __init__(self, behaviour_file = "Data/MeerDown/origin/Annotations/behaviours.json", colour_file = "Data/MeerDown/origin/Annotations/behaviour_colours.json", annotations_folder = "Data/MeerDown/origin/Annotations", annotated_video_folder = "Data/MeerDown/origin/Annotated_videos"):
@@ -31,9 +32,17 @@ class MeerDownOrigin:
             annotations_df_list.append(df)
         self.annotations = pd.concat(annotations_df_list, ignore_index=True)
 
-    def create_annotated_frames(self, new_res = 0.65 , frame_rate = 30, annotations_save_path = 'Data/MeerDown/annotations.csv', frames_save_path = "Data/MeerDown/frames"):
-        # reduce sampling period to 0.5 seonds
+    def create_annotated_frames(self, frame_rate = 30, image_size = (640,640), original_image_size = (1920,1080), annotations_save_path = 'Data/MeerDown/annotations.csv', frames_save_path = "Data/MeerDown/frames"):
+        # reduce sampling period
         reduced_annotations = self.annotations[self.annotations['frame_number'] % frame_rate == 0]
+        
+        # adjust annotation coordinates to new image size
+        x_scaling = image_size[0]/original_image_size[0]
+        y_scaling = image_size[1]/original_image_size[1]
+        reduced_annotations['x1'] = np.ceil(reduced_annotations['x1'] * x_scaling).astype(int)
+        reduced_annotations['x2'] = np.ceil(reduced_annotations['x2'] * x_scaling).astype(int)
+        reduced_annotations['y1'] = np.ceil(reduced_annotations['y1'] * y_scaling).astype(int)
+        reduced_annotations['y2'] = np.ceil(reduced_annotations['y2'] * y_scaling).astype(int)
 
         # save annotations
         reduced_annotations.to_csv(annotations_save_path, sep=',', index=False, header=True, encoding='utf-8')
@@ -56,7 +65,7 @@ class MeerDownOrigin:
             pool = mp.Pool(processes=num_workers)
 
             # Create a list of arguments for the pool
-            args = [(vid_path, frames_save_path, frame_rate, new_res, (640,640)) for vid_path in self.video_files]
+            args = [(vid_path, frames_save_path, frame_rate, image_size) for vid_path in self.video_files]
 
             # Process videos in parallel
             pool.starmap(process_video, args)
@@ -123,7 +132,7 @@ class MeerDownOrigin:
         cap.release()
         cv2.destroyAllWindows()
 
-def process_video(vid_path, frames_path, frame_rate, new_res, image_size):
+def process_video(vid_path, frames_path, frame_rate, image_size):
     # Get video name
     vid_name = os.path.basename(vid_path)[:-4]
     
@@ -147,8 +156,6 @@ def process_video(vid_path, frames_path, frame_rate, new_res, image_size):
         
         if frame_count % frame_rate == 0:
             # scale down the image resolution to 0.7 of its original size
-            new_width = int(frame.shape[1] * new_res)
-            new_height = int(frame.shape[0] * new_res)
             resized_frame = cv2.resize(frame, image_size)
 
             # Set file path

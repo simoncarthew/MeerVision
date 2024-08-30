@@ -190,5 +190,6 @@ class MeerDown(Dataset):
 
 if __name__ == "__main__":
     md = MeerDown()
-    md.create_yolo_dataset(yolo_dir = 'Data/MeerDown/yolo/yolo_val_mix_half')
+    # md.create_yolo_dataset(yolo_dir = 'Data/MeerDown/yolo/yolo_val_mix_half')
     # md.display_yolo()
+    data = md.create_dataloader()
