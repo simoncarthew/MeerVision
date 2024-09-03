@@ -6,6 +6,6 @@
 *.yaml
 *.pt
 venv
-Data
+*.pyc
 events.*
 Housing/Dimensions
