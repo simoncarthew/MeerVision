@@ -1,195 +1,224 @@
-import os
-import numpy as np
+import glob
 import pandas as pd
-from PIL import Image
-from torch.utils.data import Dataset, DataLoader
-import torch
-import shutil
-import yaml
-import matplotlib.pyplot as plt
-from multiprocessing import Pool
+import os
+import json
+import multiprocessing as mp
 import cv2
 
-class MeerDown(Dataset):
-    def __init__(self, image_folder = "Data/MeerDown/raw/frames", annotation_file = "Data/MeerDown/raw/annotations.csv", image_size=(640, 640)):
-        self.image_folder = image_folder
-        self.annotation_file = annotation_file
-        self.image_size = image_size
+class MeerDown():
+    def __init__(self, annotations_folder, videos_folder, output_folder, sampling_rate=30):
+        self.annotations_folder = annotations_folder
+        self.videos_folder = videos_folder
+        self.output_folder = output_folder
+        self.sampling_rate = sampling_rate
         
-        # load annotations
-        self.annotations = pd.read_csv(annotation_file)
+        # Create the annotations DataFrame
+        self.annotations = self.create_annotations_df()
+        print("Created annotations df.")
         
-        # list of image files
-        self.image_files = sorted([f for f in os.listdir(image_folder) if f.endswith('.jpg') or f.endswith('.png')])
-
-    def __len__(self):
-        return len(self.image_files)
-
-    def __getitem__(self, idx):
-        img_name = os.path.join(self.image_folder, self.image_files[idx])
-        basename, _ = os.path.splitext(self.image_files[idx])
-        vid_name, frame_count_str = basename.split('_frame_')
-        image = Image.open(img_name).resize(self.image_size)
-        image = np.array(image) / 255.0 
-
-        img_annotations = self.annotations[
-            (self.annotations['video'] == vid_name) & (self.annotations['frame_number'] == frame_count_str)
-        ]
-
-        # Extract additional annotations
-        object_ids = img_annotations['object_ID'].values
-        behaviour_indices = img_annotations['behaviour_index'].values
-        occluded = img_annotations['occluded'].values
-        boxes = img_annotations[['x1', 'y1', 'x2', 'y2']].values
-
-        # Combine all annotations into a single array
-        annotations = np.column_stack([boxes, object_ids, behaviour_indices, occluded])
+        # Get video file paths
+        self.video_files = self.get_video_files()
+        print("Loaded video files.")
         
-        return image, annotations
-    
-    def create_dataloader(self, batch_size=16, shuffle=True, num_workers=4):
-        return DataLoader(self, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, collate_fn=self.collate_fn)
-
-    def collate_fn(self, batch):
-        images, annotations = zip(*batch)
-        images = torch.stack(images, dim=0)
-        annotations = [torch.tensor(a, dtype=torch.float32) for a in annotations]
-        return images, annotations
-
-    def create_yolo_dataset(self, yolo_dir='Data/MeerDown/yolo', train_set = "C2", total_val_in_train = 14140/2, total_val_images = 14140/2):
-        # check if data exists and if they want to redo data
-        redo = False
-        if os.path.exists(yolo_dir):
-            if input("Yolo dataset already exists, would you like to delete (y/n)? ") == "y":
-                shutil.rmtree(yolo_dir)
-                redo = True
+        # Create an empty COCO dataset structure
+        coco_path = os.path.join(output_folder,"annotations.json")
+        if os.path.exists(coco_path):
+            with open(coco_path, 'r') as f:
+                self.coco = json.load(f)
         else:
-            redo = True
-
-        if redo:
-            # no val images
-            num_val_images = 0
-            num_val_in_train = 0
-
-            # make yolo directory
-            os.makedirs(yolo_dir, exist_ok=True)
-
-            # make subdirectories
-            yolo_images_dir = os.path.join(yolo_dir, 'images')
-            yolo_labels_dir = os.path.join(yolo_dir, 'labels')
-            os.makedirs(os.path.join(yolo_images_dir, "train"), exist_ok=True)
-            os.makedirs(os.path.join(yolo_images_dir, "val"), exist_ok=True)
-            os.makedirs(os.path.join(yolo_labels_dir, "train"), exist_ok=True)
-            os.makedirs(os.path.join(yolo_labels_dir, "val"), exist_ok=True)
-
-            # Create the .yaml file
-            yaml_content = {
-                'path': os.path.abspath(yolo_dir),
-                'train': 'images/train',
-                'val': 'images/val',
-                'test': '',
-                'names': {0: 'meerkat'}
-            }
-            with open(os.path.join(yolo_dir, 'dataset.yaml'), 'w') as yaml_file:
-                yaml.dump(yaml_content, yaml_file, default_flow_style=False)
-            
-            # iterate over every image
-            for idx in range(len(self)):
-                # get vid_name and frame_count
-                img_name = self.image_files[idx]
-                basename, _ = os.path.splitext(img_name)
-                vid_name, frame_count_str = basename.split('_frame_')
-
-                # filter for relevant annotations
-                img_annotations = self.annotations[
-                    (self.annotations['video'] == vid_name) & (self.annotations['frame_number'] == int(frame_count_str))
+            self.coco = {
+                "images": [],
+                "annotations": [],
+                "categories": [
+                    {
+                        "id": 1,
+                        "name": "meerkat"
+                    }
                 ]
+            }
 
-                 # open image and get width 
-                img = Image.open(os.path.join(self.image_folder, img_name))
-                img_width, img_height = img.size
-                
-                # create yolo annotations
-                yolo_annotations = []
-                for _, row in img_annotations.iterrows():
-                    # extract bounding box coordinates and normalize them
-                    x_center = (row['x1'] + row['x2']) / 2 / img_width
-                    y_center = (row['y1'] + row['y2']) / 2 / img_height
-                    width = (row['x2'] - row['x1']) / img_width
-                    height = (row['y2'] - row['y1']) / img_height
-                    
-                    # yolo_annotation = f"{row['behaviour_index']} {x_center} {y_center} {width} {height}"
-                    yolo_annotation = f"{0} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}"
-                    yolo_annotations.append(yolo_annotation)
+        # set image dimensions 
+        self.set_dimensions()
 
-                # check if train or val
-                if train_set in vid_name : train_val = "train" 
-                elif num_val_in_train < total_val_in_train: 
-                    train_val = "train"
-                    num_val_in_train += 1
-                else: train_val = "val"
+    def create_annotations_df(self):
+        annotations_df_list = []
+        annotation_files = glob.glob(os.path.join(self.annotations_folder, '*.csv'))
 
-                if (num_val_images < total_val_images and train_val == "val") or train_val == "train":
+        for file in annotation_files:
+            df = pd.read_csv(file)
+            df['video'] = os.path.basename(file).split('.')[0]
+            df['area'] = 1 if "C2" in file else 2
+            annotations_df_list.append(df)
 
-                    # write the annotations to a .txt file
-                    txt_filename = os.path.join(yolo_labels_dir, train_val, f"{basename}.txt")
-                    with open(txt_filename, 'w') as f:
-                        f.write("\n".join(yolo_annotations))
-                    
-                    # Save the image to the YOLO directory
-                    img = img.resize(self.image_size)
-                    img.save(os.path.join(yolo_images_dir, train_val, img_name))
+        return pd.concat(annotations_df_list, ignore_index=True)
 
-                    if idx % 500 == 0:
-                        print("Completed " + str(idx) + "/" + str(len(self)) + " images.")
+    def get_video_files(self):
+        return (glob.glob(os.path.join(self.videos_folder + '/area_1', '*.mp4')) +
+                glob.glob(os.path.join(self.videos_folder + '/area_2', '*.mp4')))
 
-                    if train_val == "val":
-                        num_val_images += 1
+    def set_dimensions(self):
+        video_name = os.path.basename(self.video_files[0]).split('.')[0]
+        cap = cv2.VideoCapture(self.video_files[0])
 
-    def display_yolo(self,yolo_dir='Data/MeerDown/yolo_reduced_val', image_size=(640, 640), fps=10):
-        # Load YOLO annotations and images
-        images_dir = os.path.join(yolo_dir, 'images', 'train')
-        labels_dir = os.path.join(yolo_dir, 'labels', 'train')
+        # Retrieve video height and width
+        self.width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        image_files = sorted([f for f in os.listdir(images_dir) if f.endswith('.jpg') or f.endswith('.png')])
-        
-        for img_name in image_files:
-            # Load the image
-            img_path = os.path.join(images_dir, img_name)
-            img = cv2.imread(img_path)
+    def extract_frames(self, video_file):
+        video_name = os.path.basename(video_file).split('.')[0]
+        cap = cv2.VideoCapture(video_file)
+        frame_id = 0
 
-            # Load the corresponding label file
-            basename, _ = os.path.splitext(img_name)
-            label_path = os.path.join(labels_dir, f"{basename}.txt")
-            if not os.path.exists(label_path):
-                continue
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-            with open(label_path, 'r') as f:
-                annotations = f.readlines()
+            if frame_id % self.sampling_rate == 0:
+                # Generate image file name
+                image_name = f"{video_name}_frame_{frame_id}.jpg"
+                image_path = os.path.join(self.output_folder, "frames", image_name)
 
-            # Plot each bounding box on the image
-            for annotation in annotations:
-                class_id, x_center, y_center, width, height = map(float, annotation.split())
-                x_center, y_center, width, height = int(x_center * image_size[0]), int(y_center * image_size[1]), int(width * image_size[0]), int(height * image_size[1])
-                x1, y1 = int(x_center - width / 2), int(y_center - height / 2)
-                x2, y2 = int(x_center + width / 2), int(y_center + height / 2)
+                # Save the frame as an image
+                cv2.imwrite(image_path, frame)
 
-                # Draw the bounding box
-                cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(img, f'Class {int(class_id)}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            frame_id += 1
 
-            # Display the image
-            cv2.imshow('Labeled Image', img)
+        cap.release()
+
+    def create_coco_annotations(self):
+        print("Creating coco annotations.")
+
+        # Initialize image and annotation IDs
+        image_id = 0
+        annotation_id = 0
+
+        for video_file in self.video_files:
+            # Get video name 
+            video_name = os.path.basename(video_file).split('.')[0]
+
+            # Filter annotations for the specific video
+            annotations_filt = self.annotations[self.annotations['frame_number'] % self.sampling_rate == 0]
+            annotations_filt = annotations_filt[annotations_filt['video'] == video_name]
             
-            # Wait for the duration of one frame (in milliseconds)
-            time_per_frame = int(1000 / fps)
-            cv2.waitKey(time_per_frame)
+            # Track the last frame number to identify new frames
+            frame_no = None
 
-        # Release the display window
+            for _, row in annotations_filt.iterrows():
+                # Add image if new frame
+                if int(row['frame_number']) != frame_no:
+                    frame_no = row['frame_number']
+                    
+                    # Add image to coco
+                    image_info = {
+                        "id": image_id,
+                        "file_name": f"{video_name}_frame_{frame_no}.jpg",
+                        "height": self.height,
+                        "width": self.width,
+                        "zone": 1 if "C2" in video_name else 2
+                    }
+                    self.coco["images"].append(image_info)
+                    
+                    # Increment image ID
+                    image_id += 1
+
+                # Add annotation
+                annotation_info = {
+                    "id": annotation_id,
+                    "image_id": image_id - 1,  # Use the most recent image ID
+                    "category_id": 1,
+                    "bbox": [row['x1'], row['y1'], row['x2'] - row['x1'], row['y2'] - row['y1']],
+                    "area": (row['x2'] - row['x1']) * (row['y2'] - row['y1']),
+                    "iscrowd": 0
+                }
+                self.coco["annotations"].append(annotation_info)
+                
+                # Increment annotation ID
+                annotation_id += 1
+
+            print("Completed " + video_name + " annotations.")
+
+    def save_coco_file(self):
+        with open(os.path.join(self.output_folder, "annotations.json"), 'w') as f:
+            json.dump(self.coco, f, indent=4)
+
+    def process_videos(self):
+        # Create output folder if it doesn't exist
+        os.makedirs(self.output_folder, exist_ok=True)
+        
+        # Use multiprocessing to extract frames from videos in parallel
+        with mp.Pool(mp.cpu_count()) as pool:
+            pool.map(self.extract_frames, self.video_files)
+
+        # Create annotations for COCO format
+        self.create_coco_annotations()
+
+        # Save the final COCO file
+        self.save_coco_file()
+
+    def view_annotations(self):
+        # Load all frames from the frames folder
+        frame_files = sorted(glob.glob(os.path.join(self.output_folder, "frames", '*.jpg')))
+
+        if not frame_files:
+            print("No frames found in the specified folder.")
+            return
+
+        # Create a dictionary to map image IDs to annotations
+        image_annotations = {}
+        for img in self.coco["images"]:
+            image_annotations[img["id"]] = []
+
+        for ann in self.coco["annotations"]:
+            image_id = ann["image_id"]
+            if image_id in image_annotations:
+                image_annotations[image_id].append(ann)
+
+        # Initialize index for frame navigation
+        index = 0
+
+        while True:
+            # Load and display the current frame
+            frame_file = frame_files[index]
+            frame = cv2.imread(frame_file)
+
+            if frame is None:
+                print(f"Error loading frame: {frame_file}")
+                break
+
+            # Get the image ID for the current frame
+            frame_name = os.path.basename(frame_file)
+            image_id = next((img["id"] for img in self.coco["images"] if img["file_name"] == frame_name), None)
+
+            if image_id is None:
+                print(f"No image ID found for frame: {frame_name}")
+                break
+
+            # Draw bounding boxes on the frame
+            if image_id in image_annotations:
+                for ann in image_annotations[image_id]:
+                    x, y, w, h = ann['bbox']
+                    cv2.rectangle(frame, (int(x), int(y)), (int(x + w), int(y + h)), (0, 255, 0), 2)
+
+            # Show the frame
+            cv2.imshow('Frame', frame)
+
+            # Wait for user input
+            key = cv2.waitKey(0)
+
+            # Move to the next or previous frame or exit
+            if key == ord('m'):
+                index = (index + 1) % len(frame_files)
+            elif key == ord('n'):
+                index = (index - 1) % len(frame_files)
+            elif key == 27:
+                break
+
         cv2.destroyAllWindows()
 
+
 if __name__ == "__main__":
-    md = MeerDown()
-    # md.create_yolo_dataset(yolo_dir = 'Data/MeerDown/yolo/yolo_val_mix_half')
-    # md.display_yolo()
-    data = md.create_dataloader()
+    md = MeerDown("Data/MeerDown/origin/Annotations","Data/MeerDown/origin/Annotated_videos","Data/MeerDown/raw")
+    md.create_coco_annotations()
+    md.save_coco_file()
+    # md.view_annotations()

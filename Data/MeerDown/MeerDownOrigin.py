@@ -86,6 +86,7 @@ class MeerDownOrigin:
 
         # check if file can be opened
         if not cap.isOpened():
+            print(video_path)
             print("Error: Could not open video.")
             exit()
 
@@ -172,4 +173,5 @@ def process_video(vid_path, frames_path, frame_rate, image_size):
 
 if __name__ == "__main__":
     md_data = MeerDownOrigin()
-    md_data.create_annotated_frames(annotations_save_path="Data/MeerDown/reduced/annotations.csv", frames_save_path="Data/MeerDown/reduced/frames")
+    # md_data.create_annotated_frames(annotations_save_path="Data/MeerDown/reduced/annotations.csv", frames_save_path="Data/MeerDown/reduced/frames")
+    md_data.visualise_annotations("22-10-20_C2_06","Data/MeerDown/origin/Annotated_videos/area_1/")
