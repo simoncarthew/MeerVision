@@ -4,7 +4,7 @@ import cv2
 import glob
 
 # Folder paths
-IMAGE_FOLDER = "Data/Observed/images"
+IMAGE_FOLDER = "Data/Observed/frames"
 ANNOTATION_FILE = "Data/Observed/annotations.json"
 
 # see previous annotations 
@@ -65,7 +65,7 @@ def draw_rectangle(event, x, y, flags, param):
         cv2.rectangle(image, (start_x, start_y), (x, y), (0, 255, 0), 2)
         cv2.imshow("image", image)
 
-def save_annotation(image_name, boxes):
+def save_annotation(image_name, boxes, camera_trap=False):
     global image_id, annotation_id
 
     # Save image 'info'
@@ -73,7 +73,8 @@ def save_annotation(image_name, boxes):
         "id": image_id,
         "file_name": image_name,
         "height": image.shape[0],
-        "width": image.shape[1]
+        "width": image.shape[1],
+        "camera_trap": camera_trap
     }
     coco["images"].append(image_info)
 
@@ -103,10 +104,6 @@ def save_annotation(image_name, boxes):
 
     # Update image_id
     image_id += 1
-
-# Folder paths
-IMAGE_FOLDER = "Data/Observed/images"
-ANNOTATION_FILE = "Data/Observed/annotations.json"
 
 # Load existing annotations
 if os.path.exists(ANNOTATION_FILE):
@@ -183,7 +180,10 @@ for image_file in image_files:
 
         # Press 's' to save annotations and move to the next image
         if key == ord("s"):
-            save_annotation(image_name, boxes)
+            # Ask user if the image looks like a camera trap
+            print("Does this image look like a camera trap? Press 'm' to mark as camera trap, any other key to skip.")
+            camera_trap = cv2.waitKey(0) & 0xFF == ord('m')
+            save_annotation(image_name, boxes, camera_trap)
             num_new_images += 1
             new_image_annotations.append(image_file)
             break

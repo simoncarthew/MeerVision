@@ -20,11 +20,13 @@ class MeerDown():
         self.video_files = self.get_video_files()
         print("Loaded video files.")
         
-        # Create an empty COCO dataset structure
-        coco_path = os.path.join(output_folder,"annotations.json")
+        # create or load annotations folder
+        coco_path = os.path.join(self.output_folder,"annotations.json")
+        self.annot_exists = False
         if os.path.exists(coco_path):
             with open(coco_path, 'r') as f:
                 self.coco = json.load(f)
+            self.annot_exists = True
         else:
             self.coco = {
                 "images": [],
@@ -39,6 +41,12 @@ class MeerDown():
 
         # set image dimensions 
         self.set_dimensions()
+
+        # check if frames folder exists
+        frame_path = os.path.join(output_folder,"frames")
+        self.frame_exists = False
+        if os.path.exists(frame_path):
+            self.frame_exists = True
 
     def create_annotations_df(self):
         annotations_df_list = []
@@ -87,74 +95,88 @@ class MeerDown():
         cap.release()
 
     def create_coco_annotations(self):
-        print("Creating coco annotations.")
+        do = True
+        if self.annot_exists:
+            do = False
+            if input("Coco annotations already exist. Would you like to regenerate them? (y/n)") == "y":
+                do = True
 
-        # Initialize image and annotation IDs
-        image_id = 0
-        annotation_id = 0
+        if do:
+            print("Creating coco annotations.")
 
-        for video_file in self.video_files:
-            # Get video name 
-            video_name = os.path.basename(video_file).split('.')[0]
+            # Initialize image and annotation IDs
+            image_id = 0
+            annotation_id = 0
 
-            # Filter annotations for the specific video
-            annotations_filt = self.annotations[self.annotations['frame_number'] % self.sampling_rate == 0]
-            annotations_filt = annotations_filt[annotations_filt['video'] == video_name]
-            
-            # Track the last frame number to identify new frames
-            frame_no = None
+            for video_file in self.video_files:
+                # Get video name 
+                video_name = os.path.basename(video_file).split('.')[0]
 
-            for _, row in annotations_filt.iterrows():
-                # Add image if new frame
-                if int(row['frame_number']) != frame_no:
-                    frame_no = row['frame_number']
-                    
-                    # Add image to coco
-                    image_info = {
-                        "id": image_id,
-                        "file_name": f"{video_name}_frame_{frame_no}.jpg",
-                        "height": self.height,
-                        "width": self.width,
-                        "zone": 1 if "C2" in video_name else 2
-                    }
-                    self.coco["images"].append(image_info)
-                    
-                    # Increment image ID
-                    image_id += 1
-
-                # Add annotation
-                annotation_info = {
-                    "id": annotation_id,
-                    "image_id": image_id - 1,  # Use the most recent image ID
-                    "category_id": 1,
-                    "bbox": [row['x1'], row['y1'], row['x2'] - row['x1'], row['y2'] - row['y1']],
-                    "area": (row['x2'] - row['x1']) * (row['y2'] - row['y1']),
-                    "iscrowd": 0
-                }
-                self.coco["annotations"].append(annotation_info)
+                # Filter annotations for the specific video
+                annotations_filt = self.annotations[self.annotations['frame_number'] % self.sampling_rate == 0]
+                annotations_filt = annotations_filt[annotations_filt['video'] == video_name]
                 
-                # Increment annotation ID
-                annotation_id += 1
+                # Track the last frame number to identify new frames
+                frame_no = None
 
-            print("Completed " + video_name + " annotations.")
+                for _, row in annotations_filt.iterrows():
+                    # Add image if new frame
+                    if int(row['frame_number']) != frame_no:
+                        frame_no = row['frame_number']
+                        
+                        # Add image to coco
+                        image_info = {
+                            "id": image_id,
+                            "file_name": f"{video_name}_frame_{frame_no}.jpg",
+                            "height": self.height,
+                            "width": self.width,
+                            "zone": 1 if "C2" in video_name else 2
+                        }
+                        self.coco["images"].append(image_info)
+                        
+                        # Increment image ID
+                        image_id += 1
+
+                    # Add annotation
+                    annotation_info = {
+                        "id": annotation_id,
+                        "image_id": image_id - 1,  # Use the most recent image ID
+                        "category_id": 1,
+                        "bbox": [row['x1'], row['y1'], row['x2'] - row['x1'], row['y2'] - row['y1']],
+                        "area": (row['x2'] - row['x1']) * (row['y2'] - row['y1']),
+                        "iscrowd": 0
+                    }
+                    self.coco["annotations"].append(annotation_info)
+                    
+                    # Increment annotation ID
+                    annotation_id += 1
+
+                print("Completed " + video_name + " annotations.")
 
     def save_coco_file(self):
         with open(os.path.join(self.output_folder, "annotations.json"), 'w') as f:
             json.dump(self.coco, f, indent=4)
 
     def process_videos(self):
-        # Create output folder if it doesn't exist
-        os.makedirs(self.output_folder, exist_ok=True)
-        
-        # Use multiprocessing to extract frames from videos in parallel
-        with mp.Pool(mp.cpu_count()) as pool:
-            pool.map(self.extract_frames, self.video_files)
+        do = True
+        if self.frame_exists:
+            do = False
+            if input("Frames already exist. Would you like to regenerate them? (y/n)") == "y":
+                do = True
 
-        # Create annotations for COCO format
-        self.create_coco_annotations()
+        if do:
+            # Create output folder if it doesn't exist
+            os.makedirs(self.output_folder, exist_ok=True)
+            
+            # Use multiprocessing to extract frames from videos in parallel
+            with mp.Pool(mp.cpu_count()) as pool:
+                pool.map(self.extract_frames, self.video_files)
 
-        # Save the final COCO file
-        self.save_coco_file()
+            # Create annotations for COCO format
+            self.create_coco_annotations()
+
+            # Save the final COCO file
+            self.save_coco_file()
 
     def view_annotations(self):
         # Load all frames from the frames folder

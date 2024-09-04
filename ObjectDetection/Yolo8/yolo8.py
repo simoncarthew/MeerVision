@@ -31,59 +31,36 @@ class Yolo8:
             model_path = input("Please paste model path: ")
             self.model = YOLO(model_path)
     
-    def train(self, batch = 16, imgsz = 640, lr = 0.02, optimizer = 'AdamW', epochs = 50, dataset_path="Data/MeerDown/yolo/dataset.yaml", save_path = 'ObjectDetection/Yolo8', augment = False):
+    def train(self, batch = 32, imgsz = 640, lr = 0.01, optimizer = 'AdamW', epochs = 50, dataset_path="Data/MeerDown/yolo/dataset.yaml", save_path = 'ObjectDetection/Yolo8', augment = False):
         # Check device
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         # set augmenting variables
-        if augment == True:
-            results = self.model.train(
-                # set general parameters
-                data=dataset_path,
-                batch=batch,
-                epochs=epochs,
-                imgsz=imgsz,
-                project=save_path,
-                save=True,          
-                save_period=-1, 
-                verbose=True,
-                lr0=lr,
-                optimizer=optimizer,
-                amp=False,
-                device=device,
-
-                # data augmentation
-                mosaic=0.5,         # Mosaic augmentation probability
-                mixup=0.3,          # Mixup augmentation probability
-                hsv_h=0.02,         # HSV hue augmentation (default is 0.015)
-                hsv_s=0.7,          # HSV saturation augmentation (default is 0.7)
-                hsv_v=0.5,          # HSV value augmentation (default is 0.4)
-                flipud=0.0,         # Vertical flip probability (0.0 = disabled)
-                fliplr=0.5,         # Horizontal flip probability (default is 0.5)
-                shear=0.2,          # Shear augmentation magnitude (default is 0.0)
-                perspective=0.002,  # Perspective augmentation magnitude (default is 0.0)
-                scale=0.5,          # Scale augmentation magnitude (default is 0.5)
-                translate=0.2,      # Image translation (+/- fraction)
-                degrees=7.5,        # Image rotation (+/- degrees)
-                erasing=0.5,        # Probability of random erasing during classification training
-                auto_augment='autoaugment'  # Auto augmentation policy
-            )
-        else:
-            results = self.model.train(
-                # set general parameters
-                data=dataset_path,
-                batch=batch,
-                epochs=epochs,
-                imgsz=imgsz,
-                project=save_path,
-                save=True,          
-                save_period=-1, 
-                verbose=True,
-                lr0=lr,
-                optimizer=optimizer,
-                amp=False,
-                device=device
-            )
+        results = self.model.train(
+            device=device,
+            lr0=lr,
+            project=save_path,
+            verbose=True,
+            optimizer=optimizer,
+            data=dataset_path,  # Path to the dataset YAML file
+            epochs=epochs,  # Number of training epochs
+            batch=batch,  # Batch size
+            imgsz=imgsz,  # Image size
+            augment=augment,  # Enable data augmentation
+            hsv_h=0.015,  # Hue adjustment
+            hsv_s=0.7,    # Saturation adjustment
+            hsv_v=0.4,    # Value (brightness) adjustment
+            degrees=10.0,  # Rotation in degrees (adjusted to a non-zero value)
+            translate=0.1,  # Translation fraction
+            scale=0.5,  # Scaling factor
+            shear=2.0,  # Shear angle in degrees (adjusted to a non-zero value)
+            perspective=0.001,  # Perspective transformation (adjusted to a non-zero value)
+            flipud=0.1,  # Probability of flipping vertically (adjusted to a non-zero value)
+            fliplr=0.5,  # Probability of flipping horizontally
+            mosaic=1.0,  # Mosaic augmentation
+            mixup=0.2,  # MixUp augmentation (adjusted to a non-zero value)
+            copy_paste=0.2,  # Copy-Paste augmentation (adjusted to a non-zero value)
+        )
 
         return results
 
@@ -167,7 +144,7 @@ if __name__ == "__main__":
     # test the trained model
     if video:
         video_path = input("Please paste video path: ")
-        thresh = 0.1
+        thresh = 0.0
         if video_path =="":
             yolo8.process_video("Data/MeerDown/origin/Unannotated_videos/22-11-07_C3_10.mp4",thresh=thresh)
         else:

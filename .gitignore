@@ -8,4 +8,5 @@
 venv
 *.pyc
 events.*
+*.zip
 Housing/Dimensions
