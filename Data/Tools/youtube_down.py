@@ -4,7 +4,7 @@ import yt_dlp
 SAVE_PATH = "/home/simon/OneDrive/University/Fourth_Year/Second Semester/EEE4022S/MeerVision/Data/YoutubeCameraTrap"
 
 # link of the video to be downloaded
-link = "https://www.youtube.com/watch?v=8pb9cSuiJHg&list=LL&index=5"
+link = "https://www.youtube.com/watch?v=a1_KVqM_nGc"
 
 # Set up the options for yt-dlp
 ydl_opts = {

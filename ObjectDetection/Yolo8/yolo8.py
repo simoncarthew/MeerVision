@@ -63,8 +63,18 @@ class Yolo8:
         )
 
         return results
+    
+    def evaluate_model(self, dataset_path="Data/MeerDown/yolo/dataset.yaml", split="test"):
+        # Evaluate the model on the specified dataset split (e.g., "test")
+        metrics = self.model.val(data=dataset_path, split=split)
+        
+        # Extract mAP@0.5 score
+        map_50 = metrics['metrics/mAP_0.5']
+        print(f"mAP@0.5: {map_50:.4f}")
+        
+        return metrics
 
-    def process_video(self, video_path, thresh = 0.3):
+    def process_video(self, video_path, thresh=0.3, save_path=None):
         # Load the video file
         cap = cv2.VideoCapture(video_path)
 
@@ -72,6 +82,16 @@ class Yolo8:
         if not cap.isOpened():
             print("Error: Could not open video.")
             exit()
+
+        # Get the width, height, and frames per second of the video
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = int(cap.get(cv2.CAP_PROP_FPS))
+
+        # Initialize the video writer if save_path is not None
+        if save_path is not None:
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for MP4 format
+            out = cv2.VideoWriter(save_path, fourcc, fps, (width, height))
 
         # Process the video frame by frame
         while cap.isOpened():
@@ -89,13 +109,16 @@ class Yolo8:
                     conf = box.conf[0]  # Confidence score
                     if conf > thresh:
                         x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
-                        
                         cls = int(box.cls[0])  # Class label
                         label = self.model.names[cls]
 
                         # Draw the bounding box
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                         cv2.putText(frame, f'{label} {conf:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+            # Write the frame to the output video if saving is enabled
+            if save_path is not None:
+                out.write(frame)
 
             # Display the frame with bounding boxes
             cv2.imshow('YOLOv8 Detection', frame)
@@ -104,8 +127,10 @@ class Yolo8:
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-        # Release the video capture object and close display windows
+        # Release the video capture and writer objects, and close display windows
         cap.release()
+        if save_path is not None:
+            out.release()
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
@@ -144,8 +169,8 @@ if __name__ == "__main__":
     # test the trained model
     if video:
         video_path = input("Please paste video path: ")
-        thresh = 0.0
+        thresh = 0.3
         if video_path =="":
             yolo8.process_video("Data/MeerDown/origin/Unannotated_videos/22-11-07_C3_10.mp4",thresh=thresh)
         else:
-            yolo8.process_video(video_path,thresh=thresh)
+            yolo8.process_video(video_path,thresh=thresh, save_path="ObjectDetection/Yolo8/output/output.mp4")
