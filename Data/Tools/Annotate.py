@@ -179,10 +179,8 @@ for image_file in image_files:
         key = cv2.waitKey(1) & 0xFF
 
         # Press 's' to save annotations and move to the next image
-        if key == ord("s"):
-            # Ask user if the image looks like a camera trap
-            print("Does this image look like a camera trap? Press 'm' to mark as camera trap, any other key to skip.")
-            camera_trap = cv2.waitKey(0) & 0xFF == ord('a')
+        if key == ord("s") or key == ord("a"):
+            camera_trap = (key == ord('a'))
             save_annotation(image_name, boxes, camera_trap)
             num_new_images += 1
             new_image_annotations.append(image_file)
