@@ -172,6 +172,7 @@ for image_file in image_files:
     cv2.namedWindow("image", cv2.WND_PROP_FULLSCREEN)
     cv2.setWindowProperty("image", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
     
+    print(image_name)
     cv2.imshow("image", image)
     cv2.setMouseCallback("image", draw_rectangle)
 
