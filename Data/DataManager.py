@@ -444,6 +444,7 @@ class DataManager():
         # Create the .yaml file
         yaml_content = {
             'path': os.path.abspath(yolo_path),
+            'nc':1,
             'train': 'images/train',
             'val': 'images/val',
             'test': 'images/test',
@@ -458,6 +459,7 @@ class DataManager():
 if __name__ == "__main__":
     dm = DataManager()
     dm.create_yolo_dataset(-1,1000,1000,0,"Data/Formated/yolo")
+    dm.create_yolo_dataset()
     # dm.view_yolo_annotations("Data/Formated/yolo/images/test","Data/Formated/yolo/labels/test",10)
 
     # test filter_obsserved

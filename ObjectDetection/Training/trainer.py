@@ -2,19 +2,28 @@
 import sys
 yolo5_path = 'ObjectDetection/Yolo5'
 yolo8_path = 'ObjectDetection/Yolo8'
+data_path = 'Data'
 sys.path.append(yolo5_path)
 sys.path.append(yolo8_path)
+sys.path.append(data_path)
 
 # IMPORTS
 import pandas as pd
 import os
+import shutil
 from yolo5 import Yolo5
 from yolo8 import Yolo8
+from DataManager import DataManager
 
-# GLOBALS
+# GLOBALS PATHS
 TRAINING_CSV = 'ObjectDetection/Training/train.csv'
-RESULTS_PATH = 'ObjectDetection/Training/results'
-YOLO_DATA = 'Data/Formated/yolo'
+RESULTS_PATH = 'ObjectDetection/Training/Results'
+YOLO_PATH = 'Data/Formated/yolo'
+MEERDOWN_FRAMES = 'Data/MeerDown/frames'
+MEERDOWN_ANNOT = 'Data/MeerDown/raw/annotations.json'
+OBS_FRAMES = 'Data/Observed/frames'
+OBS_ANNOT = 'Data/Observed/annotations.json'
+DATA_PATH = 'ObjectDetection/Training/Data'
 
 # RESULTS_FOLDER
 existing_results = [d for d in os.listdir(RESULTS_PATH) if os.path.isdir(os.path.join(RESULTS_PATH, d))]
@@ -25,45 +34,67 @@ new_folder = f'results{next_number}'
 RESULTS_PATH = os.path.join(RESULTS_PATH, new_folder)
 os.makedirs(RESULTS_PATH)
 
+# SAVE CURRENT TRAIN FILE
+shutil.copy(TRAINING_CSV, os.path.join(RESULTS_PATH,'train.csv'))
+
 # READ IN TRAINING CSV
 train_df = pd.read_csv(TRAINING_CSV)
 
 # SET STD TRAINING PARAMETERS
-std_batch = 32
-std_epochs = 30
-std_lr = 0.01
-std_augment = True
-std_percval = 0.2
-std_batchsize = 32
-std_lr = 32
-std_freeze = 0
-std_new = False
-std_augment = True
-std_epochs = 30
-std_percval = 0.2
-std_obs_no = -1
-std_md_z1_train_val = 1000
-std_md_z2_trainval = 1000
-std_md_test_no = 0
+BATCH = 32
+EPOCHS = 30
+LR = 0.01
+AUGMENT = True
+PERCVAL = 0.2
+FREEZE = 0
+NEW = False
+EPOCHS = 30
+OBS_NO = -1
+MD_Z1_TRAINVAL = 1000
+MD_Z2_TRAINVAL = 1000
+MD_TEST_NO = 0
+IMG_SZ=640
+OPTIMIZER = 'SGD'
+STD_PARAM = {
+    "img_sz": IMG_SZ,"optimizer" : OPTIMIZER, "batch": BATCH, "epochs": EPOCHS, "lr": LR, "augment": AUGMENT, "percval": PERCVAL, "freeze": FREEZE, "new": NEW, "obs_no": OBS_NO, "md_z1_trainval": MD_Z1_TRAINVAL, "md_z2_trainval": MD_Z2_TRAINVAL, "md_test_no": MD_TEST_NO
+}
 
+# ALTERING_STD
+def check_std(row):
+    var_dict = STD_PARAM.copy()
+    new_data = False
+    for key, value in var_dict.items():
+        if row[key] != 'std':
+            var_dict[key] = row[key]
+            if key in ["img_sz","percval","obs_no","md_z1_trainval","md_z2_train_val","md_test_no"]: new_data = True
+    return var_dict, new_data
 
 # LOOP OVER ALL TRAINING INSTANCES
 for index, row in train_df.iterrows():
+    # SET PARAMETERS
+    parameters, new_data = check_std(row)
+
+    # create new dataset if necessary
+    yolo_path = YOLO_PATH
+    if new_data:
+        yolo_path = os.path.join(DATA_PATH,yolo)
+        dm = DataManager(parameters["percval"], MEERDOWN_ANNOT, MEERDOWN_FRAMES, OBS_ANNOT, OBS_FRAMES, debug = False)
+        dm.create_yolo_dataset(parameters["obs_no"],parameters["md_z1_trainval"],parameters["md_z2_trainval"],parameters["md_test_no"],yolo_path)
 
     # YOLOV5
     if "yolo5" in row["model"]:
-        # get the model size
-        size = row["model"][6:]
 
-        # create yolo instance
+        # load and train
+        size = row["model"][5:]
         yolo = Yolo5(model_size = size)
+        yolo.train(data_path=yolo_path, augment=parameters["augment"], epochs=parameters["epochs"], batch_size=parameters["batch"], img_sz=parameters["img_sz"], freeze=parameters["freeze"], optimizer=parameters["optimizer"],)
 
-        # set parameters
-
-        # set save_path
-        yolo.train(data_path=YOLO_DATA, epochs=1)
+        # change the name of the results
+        os.rename(os.path.join(RESULTS_PATH,'train'), os.path.join(RESULTS_PATH,'model_' + str(row["id"])))
 
     # YOLOV8
+    if "yolo8" in row["model"]:
+        # create new dataset if necessary
 
-    # MEGADETECTOR
-    
+        # load and train
+        size = row["model"][5:]

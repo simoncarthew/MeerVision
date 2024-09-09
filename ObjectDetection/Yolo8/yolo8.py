@@ -30,14 +30,15 @@ class Yolo8:
         elif model_load == "custom":
             model_path = input("Please paste model path: ")
             self.model = YOLO(model_path)
+        
+        # Check device
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     def train(self, batch = 32, imgsz = 640, lr = 0.01, optimizer = 'SGD', epochs = 50, dataset_path="Data/MeerDown/yolo/dataset.yaml", save_path = 'ObjectDetection/Yolo8', augment = False):
-        # Check device
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         # set augmenting variables
         results = self.model.train(
-            device=device,
+            device=self.device,
             lr0=lr,
             project=save_path,
             verbose=True,

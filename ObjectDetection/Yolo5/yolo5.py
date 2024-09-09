@@ -22,17 +22,18 @@ class Yolo5:
             else:
                 v.requires_grad = True
 
-    def train(self, data_path, epochs=30, batch_size=16, img_size=640, freeze = 10, optimizer = 'SGD', save_path = "ObjectDetection/Yolo5"):
+    def train(self, data_path, epochs=30, batch_size=16, img_sz=640, freeze = 10, optimizer = 'SGD', augment = True, save_path = "ObjectDetection/Yolo5"):
         self.freeze_layers(freeze)
 
         train.run(
             data=data_path,
             epochs=epochs,
             batch_size=batch_size,
-            imgsz=img_size,
+            imgsz=img_sz,
             device=self.device,
             project = save_path,
             optimizer = optimizer,
+            augment=augment
             name = "train"
         )
     
