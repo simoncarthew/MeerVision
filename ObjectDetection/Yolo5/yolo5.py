@@ -14,14 +14,26 @@ class Yolo5:
         # self.device = 'cpu'
         self.model = torch.hub.load('ultralytics/yolov5', model_size, pretrained=True).to(self.device)
     
-    def train(self, data_path, epochs=30, batch_size=16, img_size=640, save_path = "ObjectDetection/Yolo5"):
+    def freeze_layers(self, freeze):
+        # Print the layers that will be frozen
+        for k, v in self.model.named_parameters():
+            if any(f"model.{x}." in k for x in range(freeze)):
+                v.requires_grad = False
+            else:
+                v.requires_grad = True
+
+    def train(self, data_path, epochs=30, batch_size=16, img_size=640, freeze = 10, optimizer = 'SGD', save_path = "ObjectDetection/Yolo5"):
+        self.freeze_layers(freeze)
+
         train.run(
             data=data_path,
             epochs=epochs,
             batch_size=batch_size,
             imgsz=img_size,
             device=self.device,
-            project = save_path
+            project = save_path,
+            optimizer = optimizer,
+            name = "train"
         )
     
     def detect_video(self, video_path, output_path=None, conf_thres=0.25):
@@ -64,13 +76,15 @@ class Yolo5:
             out.release()
         cv2.destroyAllWindows()
 
-# Example usage
-yolo = Yolo5(model_size='s')
+if __name__ == "__main__":
 
-# Train the model on a custom dataset
-yolo.train(data_path='Data/Formated/yolo/dataset.yaml', epochs=1)
+    # Example usage
+    yolo = Yolo5(model_size='s')
 
-# Detect and annotate objects in a video
-# yolo.detect_video(video_path='input_video.mp4', output_path='output_video.mp4')
+    # Train the model on a custom dataset
+    yolo.train(data_path='Data/Formated/yolo/dataset.yaml', epochs=1)
+
+    # Detect and annotate objects in a video
+    # yolo.detect_video(video_path='input_video.mp4', output_path='output_video.mp4')
 
 
