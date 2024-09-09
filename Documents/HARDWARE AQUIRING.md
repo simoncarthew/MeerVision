@@ -21,8 +21,10 @@
 
 ## DO DADS
 * 50 x 2000 Marley pipe
-* Gauage
+* No 0 gland
 * Super glue
+* butane 
+* RTC battery
 
 ## PRINTING LIST
 * Bottom

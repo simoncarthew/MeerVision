@@ -5,13 +5,11 @@ from ultralytics import YOLO
 
 class Yolo8:
 
-    def __init__(self, yolo_path = 'ObjectDetection/Yolo8', model_load = "pre"):
+    def __init__(self, model_path = "", yolo_path = 'ObjectDetection/Yolo8', model_size = None, model_load = ""):
         # Load selected model
         if model_load == "new":
-            model_size = input("Enter model size (n/m/s/l): ")
             self.model = YOLO(yolo_path + "/yolov8" + model_size + ".yaml")
         elif model_load == "tune":
-            model_size = input("Enter model size (n/m/s/l): ")
             self.model = YOLO(yolo_path + "/yolov8" + model_size + ".pt")
         elif model_load == "latest":
             # all directories
@@ -30,11 +28,27 @@ class Yolo8:
         elif model_load == "custom":
             model_path = input("Please paste model path: ")
             self.model = YOLO(model_path)
-        
+        elif model_size is not None:
+            self.model = YOLO(yolo_path + "/yolov8" + model_size + ".yaml")
+        elif model_path != "":
+            self.model = YOLO(model_path)
+        else:
+            print("Model select not adequate.")
+            exit()
+
         # Check device
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
-    def train(self, batch = 32, imgsz = 640, lr = 0.01, optimizer = 'SGD', epochs = 50, dataset_path="Data/MeerDown/yolo/dataset.yaml", save_path = 'ObjectDetection/Yolo8', augment = False):
+    def freeze_layers(self, freeze):
+        freeze = [f"model.{x}." for x in range(freeze)]
+        for k, v in self.model.named_parameters():
+            v.requires_grad = True 
+            if any(x in k for x in freeze):
+                print(f"freezing {k}")
+                v.requires_grad = False
+
+    def train(self, batch = 32, freeze = 0, img_sz = 640, lr = 0.01, optimizer = 'SGD', epochs = 50, dataset_path="Data/MeerDown/yolo/dataset.yaml", save_path = 'ObjectDetection/Yolo8', augment = False):
+        self.freeze_layers(freeze)
 
         # set augmenting variables
         results = self.model.train(
@@ -46,7 +60,7 @@ class Yolo8:
             data=dataset_path,  # Path to the dataset YAML file
             epochs=epochs,  # Number of training epochs
             batch=batch,  # Batch size
-            imgsz=imgsz,  # Image size
+            imgsz=img_sz,  # Image size
             augment=augment,  # Enable data augmentation
             hsv_h=0.015,  # Hue adjustment
             hsv_s=0.7,    # Saturation adjustment
@@ -65,15 +79,9 @@ class Yolo8:
 
         return results
     
-    def evaluate_model(self, dataset_path="Data/MeerDown/yolo/dataset.yaml", split="test"):
-        # Evaluate the model on the specified dataset split (e.g., "test")
-        metrics = self.model.val(data=dataset_path, split=split)
-        
-        # Extract mAP@0.5 score
-        map_50 = metrics['metrics/mAP_0.5']
-        print(f"mAP@0.5: {map_50:.4f}")
-        
-        return metrics
+    def evaluate_model(self, dataset_path="Data/Formated/yolo/dataset.yaml", split="test"):
+        results = self.model.val(data=dataset_path, split=split)
+        return results.results_dict
 
     def process_video(self, video_path, thresh=0.3, save_path=None):
         # Load the video file
@@ -175,3 +183,5 @@ if __name__ == "__main__":
             yolo8.process_video("Data/MeerDown/origin/Unannotated_videos/22-11-07_C3_10.mp4",thresh=thresh)
         else:
             yolo8.process_video(video_path,thresh=thresh, save_path="ObjectDetection/Yolo8/output/output.mp4")
+
+    print(yolo8.evaluate_model())
