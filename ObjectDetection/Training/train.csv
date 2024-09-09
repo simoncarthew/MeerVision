@@ -1,8 +1,9 @@
-model,batchsize,lr,freeze,new,augment,epochs,percval
-yolo8,std,std,12,FALSE,FALSE,std,0.0
-yolo8,std,std,12,FALSE,TRUE,std,0.0
-yolo8,std,std,12,FALSE,TRUE,std,0.1
-yolo8,std,std,12,FALSE,TRUE,std,0.25
-yolo8,std,std,12,FALSE,TRUE,std,0.5
-megadetector,std,std,12,FALSE,TRUE,std,0.5
-mobile,std,std,12,FALSE,TRUE,std,0.5
+model,batchsize,lr,freeze,new,augment,epochs,percval,obs_no,md_z1_train_val,md_z2_trainval,md_test_no
+yolo8n,std,std,std,std,std,std,std,std,std,std,std
+yolo8s,std,std,std,std,std,std,std,std,std,std,std
+yolo8m,std,std,std,std,std,std,std,std,std,std,std
+yolo8m,std,std,std,std,FALSE,std,std,std,std,std,std
+yolo5s,std,std,std,std,std,std,std,std,std,std,std
+yolo5m,std,std,std,std,std,std,std,std,std,std,std
+yolo5l,std,std,std,std,std,std,std,std,std,std,std
+mega5,std,std,12,std,std,std,std,std,std,std,std

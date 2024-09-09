@@ -1,128 +1,76 @@
-import cv2
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 import torch
-import os
+import cv2
+import time
+from pathlib import Path
+from yolov5 import train, detect  # Make sure YOLOv5 repository is in your PYTHONPATH
 
 class Yolo5:
-
-    def __init__(self, yolo_path='ObjectDetection/Yolo5', model_load="pre"):
-        # Load selected model
-        if model_load == "new":
-            model_size = input("Enter model size (s/m/l/x): ")
-            self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=yolo_path + "/yolov5" + model_size + ".yaml")
-        elif model_load == "tune":
-            model_size = input("Enter model size (s/m/l/x): ")
-            self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=yolo_path + "/yolov5" + model_size + ".pt")
-        elif model_load == "latest":
-            # all directories
-            all_directories = [d for d in os.listdir(yolo_path) if os.path.isdir(os.path.join(yolo_path, d))]
-
-            # train directories
-            train_directories = [d for d in all_directories if d.startswith('train')]
-
-            # sort trained directories numerically
-            train_directories_sorted = sorted(train_directories, key=lambda x: int(x[5:]) if x[5:].isdigit() else 0)
-
-            # get the latest directory
-            latest_directory = train_directories_sorted[-1] if train_directories_sorted else None
-
-            self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=yolo_path + "/" + latest_directory + "/weights/best.pt")
-        elif model_load == "custom":
-            model_path = input("Please paste model path: ")
-            self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path, force_reload=True)
+    def __init__(self, model_size='s', device=None):
+        model_size = "yolov5" + model_size
+        self.device = device or ('cuda:0' if torch.cuda.is_available() else 'cpu')
+        # self.device = 'cpu'
+        self.model = torch.hub.load('ultralytics/yolov5', model_size, pretrained=True).to(self.device)
     
-    def train(self, batch=16, imgsz=640, lr=0.02, optimizer='AdamW', epochs=50, dataset_path="Data/MeerDown/yolo/dataset.yaml", save_path='ObjectDetection/Yolo5', augment=False):
-        # Check device
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-        # set augmenting variables
-        if augment:
-            self.model.train(data=dataset_path, batch_size=batch, epochs=epochs, imgsz=imgsz, project=save_path,
-                             save=True, optimizer=optimizer, lr0=lr, device=device,
-                             augment=True)  # Augment=True applies default augmentations in YOLOv5
-        else:
-            self.model.train(data=dataset_path, batch_size=batch, epochs=epochs, imgsz=imgsz, project=save_path,
-                             save=True, optimizer=optimizer, lr0=lr, device=device)
-
-    def process_video(self, video_path, thresh=0.3):
-        # Load the video file
+    def train(self, data_path, epochs=30, batch_size=16, img_size=640, save_path = "ObjectDetection/Yolo5"):
+        train.run(
+            data=data_path,
+            epochs=epochs,
+            batch_size=batch_size,
+            imgsz=img_size,
+            device=self.device,
+            project = save_path
+        )
+    
+    def detect_video(self, video_path, output_path=None, conf_thres=0.25):
+        # Open the video file
         cap = cv2.VideoCapture(video_path)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = int(cap.get(cv2.CAP_PROP_FPS))
 
-        # Check if the video was loaded correctly
-        if not cap.isOpened():
-            print("Error: Could not open video.")
-            exit()
+        # Define the codec and create VideoWriter object to save output
+        if output_path:
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
-        # Process the video frame by frame
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
 
-            # Predict bounding boxes on the current frame
-            results = self.model(frame)
+            # Convert the frame to a format YOLOv5 expects (BGR to RGB, then resize)
+            img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = self.model(img, size=640)  # Run inference
 
-            # Draw bounding boxes on the frame
-            for result in results.xyxy[0]:  # result.xyxy[0] contains predictions for the first image
-                conf = result[4]  # Confidence score
-                if conf > thresh:
-                    x1, y1, x2, y2 = map(int, result[:4])  # Bounding box coordinates
-                    
-                    cls = int(result[5])  # Class label
-                    label = self.model.names[cls]
+            # Draw bounding boxes and labels on the frame
+            annotated_frame = results.render()[0]  # results.render() returns a list of images (in BGR format)
+            
+            # Display the annotated frame
+            cv2.imshow('YOLOv5 Detection', annotated_frame)
 
-                    # Draw the bounding box
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    cv2.putText(frame, f'{label} {conf:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            # Write the frame to the output video
+            if output_path:
+                out.write(annotated_frame)
 
-            # Display the frame with bounding boxes
-            cv2.imshow('YOLOv5 Detection', frame)
-
-            # Break the loop if 'q' is pressed
+            # Exit when 'q' is pressed
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-        # Release the video capture object and close display windows
         cap.release()
+        if output_path:
+            out.release()
         cv2.destroyAllWindows()
 
-if __name__ == "__main__":
+# Example usage
+yolo = Yolo5(model_size='s')
 
-    # would you like to train?
-    train = False
-    if input("Would you like to train a model (y/n)? ") == "y":
-        train = True
+# Train the model on a custom dataset
+yolo.train(data_path='Data/Formated/yolo/dataset.yaml', epochs=1)
 
-    # would you like to train new or start fresh?
-    train_select = ""
-    while (train_select == "" and train == True):
-        train_select = input("Select train mode (new/tune/latest)? ")
-        if train_select not in ["new", "latest", "tune"]:
-            train_select = ""
+# Detect and annotate objects in a video
+# yolo.detect_video(video_path='input_video.mp4', output_path='output_video.mp4')
 
-    # select latest if no training
-    if not train:
-        if input("Would you like to use custom model (y/n)? ") == "y":
-            train_select = "custom"
-        else:
-            train_select = "latest"
 
-    # load the model
-    yolo5 = Yolo5(model_load=train_select)
-
-    # would you like to show test video
-    video = False
-    if input("Would you like to see test video(y/n)? ") == "y":
-        video = True
-
-    # train model
-    if train:
-        yolo5.train(dataset_path='Data/MeerDown/yolo/yolo_val_mix_half/dataset.yaml', epochs=7, batch=4, lr=0.02, augment=False)
-
-    # test the trained model
-    if video:
-        video_path = input("Please paste video path: ")
-        thresh = 0.1
-        if video_path == "":
-            yolo5.process_video("Data/MeerDown/origin/Unannotated_videos/22-11-07_C3_10.mp4", thresh=thresh)
-        else:
-            yolo5.process_video(video_path, thresh=thresh)

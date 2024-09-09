@@ -44,25 +44,23 @@ class DataManager():
             if image_id in image_annotations:
                 image_annotations[image_id].append(ann)
 
-        # Initialize index for frame navigation
-        index = 0
+        # Create a named window and set it to full-screen
+        cv2.namedWindow('Frame', cv2.WINDOW_NORMAL)
+        cv2.setWindowProperty('Frame', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-        while True:
+        index = 0
+        while index < len(coco["images"]):
             # Load and display the current frame
-            frame_file = frame_files[index]
-            frame = cv2.imread(frame_file)
+            frame_file = coco["images"][index]["file_name"]
+            file_path = os.path.join(frame_folder,frame_file)
+            frame = cv2.imread(file_path)
 
             if frame is None:
                 print(f"Error loading frame: {frame_file}")
                 break
 
             # Get the image ID for the current frame
-            frame_name = os.path.basename(frame_file)
-            image_id = next((img["id"] for img in coco["images"] if img["file_name"] == frame_name), None)
-
-            if image_id is None:
-                print(f"No image ID found for frame: {frame_name}")
-                break
+            image_id =  coco["images"][index]["id"]
 
             # Draw bounding boxes on the frame
             if image_id in image_annotations:
@@ -70,7 +68,7 @@ class DataManager():
                     x, y, w, h = ann['bbox']
                     cv2.rectangle(frame, (int(x), int(y)), (int(x + w), int(y + h)), (0, 255, 0), 2)
 
-            # Show the frame
+            # Show the frame in full-screen mode
             cv2.imshow('Frame', frame)
 
             # Wait for user input
@@ -81,12 +79,13 @@ class DataManager():
                 index = (index + 1) % len(frame_files)
             elif key == ord('n'):
                 index = (index - 1) % len(frame_files)
-            elif key == 27:
+            elif key == 27:  # ESC key
                 break
 
+        # Close the window
         cv2.destroyAllWindows()
 
-    def display_yolo_annotations(self,images_folder, labels_folder, num_samples=5):
+    def view_yolo_annotations(self,images_folder, labels_folder, num_samples=5):
         # List all image files and annotation files
         image_files = [f for f in os.listdir(images_folder) if f.endswith('.jpg') or f.endswith('.png')]
         label_files = [f for f in os.listdir(labels_folder) if f.endswith('.txt')]
@@ -275,19 +274,22 @@ class DataManager():
         return md_train, md_val, md_test
     
     def filter_observed(self, obs_no):
-        # set sizes to full if -1
-        if obs_no == -1: obs_no = len(self.obs_coco['images']) 
+        # test images
+        test_images = [image for image in self.obs_coco['images'] if image.get('camera_trap') == True]
 
         # extract images from annotations
-        all_images = self.obs_coco.get('images', [])
+        non_test_images = [image for image in self.obs_coco['images'] if image.get('camera_trap') == False]
+
+        # set sizes to full if -1
+        if obs_no == -1: obs_no = len(non_test_images) 
 
         # ensure there are enough observations
-        if len(all_images) < obs_no:
+        if len(non_test_images) < obs_no:
             print("Requested too many observation images")
             exit()
 
         # randomly sample total images
-        sampled_images = random.sample(all_images, obs_no)
+        sampled_images = random.sample(non_test_images, obs_no)
 
         # randomly sample validation images
         num_val_images = int(obs_no * self.perc_val)
@@ -299,20 +301,24 @@ class DataManager():
         # final coco sets
         obs_train = {"images": [], "annotations": [], "categories": self.obs_coco.get("categories", [])}
         obs_val = {"images": [], "annotations": [], "categories": self.obs_coco.get("categories", [])}
+        obs_test = {"images": [], "annotations": [], "categories": self.obs_coco.get("categories", [])}
 
         # populate coco sets with images
         obs_train['images'] = train_images
         obs_val['images'] = val_images
+        obs_test['images'] = test_images
 
         # extract the image ids
         train_image_ids = {image['id'] for image in train_images}
         val_image_ids = {image['id'] for image in val_images}
+        test_image_ids = {image['id'] for image in test_images}
 
         # Populate annotations for each dataset
         obs_train['annotations'] = [ann for ann in self.obs_coco.get('annotations', []) if ann['image_id'] in train_image_ids]
         obs_val['annotations'] = [ann for ann in self.obs_coco.get('annotations', []) if ann['image_id'] in val_image_ids]
+        obs_test['annotations'] = [ann for ann in self.obs_coco.get('annotations', []) if ann['image_id'] in test_image_ids]
 
-        return obs_train, obs_val
+        return obs_train, obs_val, obs_test
 
     def merge_coco(self, coco1, coco2):
         # initialize merged coco
@@ -359,54 +365,43 @@ class DataManager():
         
         return merged_coco
 
-    def merge_images(self, coco1, coco2, images1_folder, images2_folder, destination_folder, img_size = None):
-        # make destination fodler
+    def merge_images(self, coco1, coco2, images1_folder, images2_folder, destination_folder, img_size=None):
+        # Create destination folder
         if os.path.exists(destination_folder):
             shutil.rmtree(destination_folder)
         os.makedirs(destination_folder)
 
-        # get image names from the first dataset
-        image_ids1 = {img['file_name'] for img in coco1['images']}
+        def copy_and_resize_image(image_file, source_folder, dest_folder, img_size):
+            source_path = os.path.join(source_folder, image_file)
+            dest_path = os.path.join(dest_folder, image_file)
 
-        # copy images from the first folder
-        for image_file in os.listdir(images1_folder):
-            if image_file in image_ids1:
-                source_path = os.path.join(images1_folder, image_file)
-                dest_path = os.path.join(destination_folder, image_file)
-                
-                if img_size is not None:
-                    # Open image
-                    with Image.open(source_path) as img:
+            if img_size is not None:
+                with Image.open(source_path) as img:
+                    if img.size != img_size:
                         # Convert to RGB if necessary
                         if img.mode == 'RGBA':
                             img = img.convert('RGB')
                         img = img.resize(img_size, Image.LANCZOS)
                         img.save(dest_path)
-                else:
-                    # Just copy the image without resizing
-                    shutil.copy(source_path, dest_path)
+                    else:
+                        # If the image size matches, copy without resizing
+                        shutil.copy(source_path, dest_path)
+            else:
+                # Just copy the image without resizing
+                shutil.copy(source_path, dest_path)
 
+        # Copy and resize images from the first dataset
+        image_ids1 = {img['file_name'] for img in coco1['images']}
+        for image_file in os.listdir(images1_folder):
+            if image_file in image_ids1:
+                copy_and_resize_image(image_file, images1_folder, destination_folder, img_size)
+
+        # Copy and resize images from the second dataset
         if coco2 is not None and images2_folder is not None:
-            # get image names from the second dataset
             image_ids2 = {img['file_name'] for img in coco2['images']}
-            
-            # copy images from the second folder
             for image_file in os.listdir(images2_folder):
                 if image_file in image_ids2:
-                    source_path = os.path.join(images2_folder, image_file)
-                    dest_path = os.path.join(destination_folder, image_file)
-                    
-                    if img_size is not None:
-                        # Open image
-                        with Image.open(source_path) as img:
-                            # Convert to RGB if necessary
-                            if img.mode == 'RGBA':
-                                img = img.convert('RGB')
-                            img = img.resize(img_size, Image.LANCZOS)
-                            img.save(dest_path)
-                    else:
-                        # Just copy the image without resizing
-                        shutil.copy(source_path, dest_path)
+                    copy_and_resize_image(image_file, images2_folder, destination_folder, img_size)
 
     def create_yolo_dataset(self, obs_no, md_z1_trainval_no, md_z2_trainval_no, md_test_no, yolo_path, img_size = (640,640)):
         # delete the existing output directory if it exists
@@ -414,14 +409,16 @@ class DataManager():
             shutil.rmtree(yolo_path)
 
         # filter datasets
-        obs_train, obs_val = self.filter_observed(obs_no)
+        obs_train, obs_val, obs_test = self.filter_observed(obs_no)
         if self.debug: print("Filtered observed.")
-        md_train, md_val, test = self.filter_md(md_z1_trainval_no, md_z2_trainval_no, md_test_no)
+        md_train, md_val, md_test = self.filter_md(md_z1_trainval_no, md_z2_trainval_no, md_test_no)
         if self.debug: print("Filtered MeerDown.")
 
         # merge datasets
         train = self.merge_coco(obs_train, md_train)
         val = self.merge_coco(obs_val, md_val)
+        test = self.merge_coco(obs_test, md_test)
+        if self.debug: print("Mereged datasets.")
 
         # convert coco to yolo
         self.coco_to_yolo(train,yolo_path,"train")
@@ -441,7 +438,7 @@ class DataManager():
         if self.debug: print("Copied training images")
         self.merge_images(obs_val,md_val,self.obs_frames_path,self.md_frames_path,os.path.join(yolo_path,"images","val"),img_size=img_size)
         if self.debug: print("Copied validation images")
-        self.merge_images(test,None,"Data/MeerDown/raw/frames",None,os.path.join(yolo_path,"images","test"),img_size=img_size)
+        self.merge_images(md_test,obs_test,"Data/MeerDown/raw/frames","Data/Observed/frames",os.path.join(yolo_path,"images","test"),img_size=img_size)
         if self.debug: print("Copied test images")
 
         # Create the .yaml file
@@ -460,7 +457,20 @@ class DataManager():
 
 if __name__ == "__main__":
     dm = DataManager()
-    dm.create_yolo_dataset(-1,1000,0,1000,"Data/dm_test/yolo")
-    # dm.display_yolo_annotations("Data/dm_test/yolo/images/test","Data/dm_test/yolo/labels/test",50)
+    dm.create_yolo_dataset(-1,1000,1000,0,"Data/Formated/yolo")
+    # dm.view_yolo_annotations("Data/Formated/yolo/images/test","Data/Formated/yolo/labels/test",10)
+
+    # test filter_obsserved
+    # obs_train, obs_val, obs_test = dm.filter_observed(-1)
+    # dm.view_coco_annotations("Data/Observed/frames",obs_test)
+    # print("Number of obs training images: " + str(len(obs_train["images"])))
+    # print("Number of obs validation images: " + str(len(obs_val["images"])))
+    # print("Number of obs testing images: " + str(len(obs_test["images"])))
+
+    # test filter_md
+    # md_train, md_val, md_test = dm.filter_md(1000,1000,0)
+    # print("Number of md training images: " + str(len(md_train["images"])))
+    # print("Number of md validation images: " + str(len(md_val["images"])))
+    # print("Number of md testing images: " + str(len(md_test["images"])))
 
     

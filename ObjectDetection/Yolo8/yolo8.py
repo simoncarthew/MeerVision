@@ -31,7 +31,7 @@ class Yolo8:
             model_path = input("Please paste model path: ")
             self.model = YOLO(model_path)
     
-    def train(self, batch = 32, imgsz = 640, lr = 0.01, optimizer = 'AdamW', epochs = 50, dataset_path="Data/MeerDown/yolo/dataset.yaml", save_path = 'ObjectDetection/Yolo8', augment = False):
+    def train(self, batch = 32, imgsz = 640, lr = 0.01, optimizer = 'SGD', epochs = 50, dataset_path="Data/MeerDown/yolo/dataset.yaml", save_path = 'ObjectDetection/Yolo8', augment = False):
         # Check device
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -164,7 +164,7 @@ if __name__ == "__main__":
 
     # train model
     if train == True:
-        yolo8.train(dataset_path='Data/MeerDown/yolo/yolo_val_mix_half/dataset.yaml',epochs=7, batch = 4, lr=0.02, augment = False)
+        yolo8.train(dataset_path='Data/Formated/yolo/dataset.yaml',epochs=7, batch = 16, lr=0.01, augment = True)
 
     # test the trained model
     if video:

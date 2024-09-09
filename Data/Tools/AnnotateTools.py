@@ -121,6 +121,6 @@ def save():
         json.dump(coco, f, indent=4)
 
 # do the thing
-# count_camera_trap()
-# display_camera_trap()
-review_camera_trap_labels()
+count_camera_trap()
+display_camera_trap()
+# review_camera_trap_labels()
