@@ -1,0 +1,26 @@
+paths:
+  training: 'ObjectDetection/Training/train.csv'
+  results: 'ObjectDetection/Training/Results'
+  yolo: 'Data/SmallTest/yolo'
+  meerdown_frame: 'Data/MeerDown/raw/frames'
+  meerdown_annot: 'Data/MeerDown/raw/annotations.json'
+  obs_frames: 'Data/Observed/frames'
+  obs_annot: 'Data/Observed/annotations.json'
+  data_path: 'ObjectDetection/Training/Data'
+  yolo5_path: 'ObjectDetection/Yolo5'
+  yolo8_path: 'ObjectDetection/Yolo8'
+
+parameters:
+  batch: 32
+  lr: 0.01
+  augment: True
+  percval: 0.2
+  freeze: 0
+  pretrained: True
+  epochs: 20
+  obs_no: -1
+  md_z1_trainval: 1000
+  md_z2_trainval: 1000
+  md_test_no: 0
+  img_sz: 640
+  optimizer: 'SGD'

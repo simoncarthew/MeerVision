@@ -75,7 +75,7 @@ class Yolo5:
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     
-    def evaluate(self, data_path, model_path, task="test"):
+    def evaluate_model(self, data_path, model_path, task="test"):
         results = val.run(
             data=data_path,
             weights=model_path,
@@ -109,7 +109,6 @@ if __name__ == "__main__":
     # Example usage
     yolo = Yolo5(model_size='s',model_path="ObjectDetection/Yolo5/train/weights/best.pt")
     # yolo.train(data_path='Data/Formated/yolo/dataset.yaml', epochs=1)
-    print(yolo.evaluate("Data/Formated/yolo/dataset.yaml","ObjectDetection/Yolo5/train/weights/best.pt"))
-    yolo.detect_video(video_path='Data/YoutubeCameraTrap/A Wide shot of three Juvenile Meerkat or Suricate, Suricata suricatta  just outside their burrow..mp4')
-
+    print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml","ObjectDetection/Yolo5/train/weights/best.pt"))
+    # yolo.detect_video(video_path='Data/YoutubeCameraTrap/A Wide shot of three Juvenile Meerkat or Suricate, Suricata suricatta  just outside their burrow..mp4')
 

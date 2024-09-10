@@ -13,13 +13,38 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "HARDWARE AQUIRING.md",
+                "file": "TECHNICAL PLANNING BRAINSTORMING.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "96d0ba3f4de54e63",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "DOODLING.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "eb4a8b8682940829",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "MAKING SENSE OF WHERE I AM AT.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -85,7 +110,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "HARDWARE AQUIRING.md",
+                "file": "MAKING SENSE OF WHERE I AM AT.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +127,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "HARDWARE AQUIRING.md",
+                "file": "MAKING SENSE OF WHERE I AM AT.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +150,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "HARDWARE AQUIRING.md"
+                "file": "MAKING SENSE OF WHERE I AM AT.md"
               }
             }
           }
@@ -146,8 +171,16 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "47a5cef1392b2b6e",
+  "active": "eb4a8b8682940829",
   "lastOpenFiles": [
+    "DOODLING.md",
+    "MAKING SENSE OF WHERE I AM AT.md",
+    "TECHNICAL PLANNING BRAINSTORMING.md",
+    "SUBSYSTEMS.md",
+    "REQUIREMENTS AND SPECIFICATIONS.md",
+    "PROPOSED SOLUTION.md",
+    "PROBLEM STATEMENT.md",
+    "MEETING NOTES.md",
     "HARDWARE AQUIRING.md"
   ]
 }

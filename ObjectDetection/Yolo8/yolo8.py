@@ -47,7 +47,6 @@ class Yolo8:
         for k, v in self.model.named_parameters():
             v.requires_grad = True 
             if any(x in k for x in freeze):
-                print(f"freezing {k}")
                 v.requires_grad = False
 
     def train(self, batch = 32, freeze = 0, img_sz = 640, lr = 0.01, optimizer = 'SGD', epochs = 50, dataset_path="Data/MeerDown/yolo/dataset.yaml", save_path = 'ObjectDetection/Yolo8', augment = False):
@@ -187,4 +186,5 @@ if __name__ == "__main__":
         else:
             yolo8.process_video(video_path,thresh=thresh, save_path="ObjectDetection/Yolo8/output/output.mp4")
 
-    print(yolo8.evaluate_model())
+    results = yolo8.evaluate_model()
+    print(results)

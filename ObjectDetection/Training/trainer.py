@@ -1,12 +1,3 @@
-# CLASS SCRIPT PATHS
-import sys
-yolo5_path = 'ObjectDetection/Yolo5'
-yolo8_path = 'ObjectDetection/Yolo8'
-data_path = 'Data'
-sys.path.append(yolo5_path)
-sys.path.append(yolo8_path)
-sys.path.append(data_path)
-
 # IMPORTS
 import pandas as pd
 import os
@@ -14,23 +5,32 @@ import shutil
 import logging
 import yaml
 
-from yolo5 import Yolo5
-from yolo8 import Yolo8
-from DataManager import DataManager
-
 # READ CONFIG
-with open('ObjectDetection/config.yaml', 'r') as file:
+with open('ObjectDetection/Training/config_test.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
 # GLOBALS PATHS
-TRAINING_CSV = 'ObjectDetection/Training/train_test.csv'
-RESULTS_PATH = 'ObjectDetection/Training/Results'
-YOLO_PATH = 'Data/SmallTest/yolo'
-MEERDOWN_FRAMES = 'Data/MeerDown/raw/frames'
-MEERDOWN_ANNOT = 'Data/MeerDown/raw/annotations.json'
-OBS_FRAMES = 'Data/Observed/frames'
-OBS_ANNOT = 'Data/Observed/annotations.json'
-DATA_PATH = 'ObjectDetection/Training/Data'
+TRAINING_CSV = config['paths']['training']
+RESULTS_PATH = config['paths']['results']
+YOLO_PATH = config['paths']['yolo']
+MEERDOWN_FRAMES = config['paths']['meerdown_frame']
+MEERDOWN_ANNOT = config['paths']['meerdown_annot']
+OBS_FRAMES = config['paths']['obs_frames']
+OBS_ANNOT = config['paths']['obs_annot']
+DATA_PATH = config['paths']['data_path']
+
+# CLASS SCRIPT IMPORTS
+import sys
+yolo5_path = config['paths']['yolo5_path']
+yolo8_path = config['paths']['yolo8_path']
+data_path = 'Data'
+sys.path.append(yolo5_path)
+sys.path.append(yolo8_path)
+sys.path.append(data_path)
+
+from yolo5 import Yolo5
+from yolo8 import Yolo8
+from DataManager import DataManager
 
 # RESULTS_FOLDER
 existing_results = [d for d in os.listdir(RESULTS_PATH) if os.path.isdir(os.path.join(RESULTS_PATH, d))]
@@ -70,21 +70,25 @@ logging.info('Starting the training script.')
 
 # READ IN TRAINING CSV
 train_df = pd.read_csv(TRAINING_CSV)
+train_df['precision'] = None
+train_df['recall'] = None
+train_df['mAP50'] = None
+train_df['mAP5090'] = None
 
 # SET STD TRAINING PARAMETERS
-BATCH = 16
-LR = 0.01
-AUGMENT = True
-PERCVAL = 0.2
-FREEZE = 0
-PRETRAINED = True
-EPOCHS = 1
-OBS_NO = 50
-MD_Z1_TRAINVAL = 50
-MD_Z2_TRAINVAL = 50
-MD_TEST_NO = 0
-IMG_SZ=640
-OPTIMIZER = 'SGD'
+BATCH = config['parameters']['batch']
+LR = config['parameters']['lr']
+AUGMENT = config['parameters']['augment']
+PERCVAL = config['parameters']['percval']
+FREEZE = config['parameters']['freeze']
+PRETRAINED = config['parameters']['pretrained']
+EPOCHS = config['parameters']['epochs']
+OBS_NO = config['parameters']['obs_no']
+MD_Z1_TRAINVAL = config['parameters']['md_z1_trainval']
+MD_Z2_TRAINVAL = config['parameters']['md_z2_trainval']
+MD_TEST_NO = config['parameters']['md_test_no']
+IMG_SZ = config['parameters']['img_sz']
+OPTIMIZER = config['parameters']['optimizer']
 STD_PARAM = {
     "img_sz": IMG_SZ,"optimizer" : OPTIMIZER, "batch": BATCH, "epochs": EPOCHS, "lr": LR, "augment": AUGMENT, "percval": PERCVAL, "freeze": FREEZE, "pretrained": PRETRAINED, "obs_no": OBS_NO, "md_z1_trainval": MD_Z1_TRAINVAL, "md_z2_trainval": MD_Z2_TRAINVAL, "md_test_no": MD_TEST_NO
 }
@@ -99,9 +103,17 @@ def check_std(row):
             if key in ["img_sz","percval","obs_no","md_z1_trainval","md_z2_trainval","md_test_no"]: new_data = True
     return var_dict, new_data
 
-def update_train_csv(df, row_index, parameters):
+def update_train_csv(df, row_index, parameters,results):
+    # update from standard parameters
     for key, value in parameters.items():
         df.at[row_index, key] = value
+
+    # add results
+    df.at[row_index, 'precision'] = results['metrics/precision(B)']
+    df.at[row_index, 'recall'] = results['metrics/recall(B)']
+    df.at[row_index, 'mAP50'] = results['metrics/mAP50(B)']
+    df.at[row_index, 'mAP5090'] = results['metrics/mAP50-95(B)']
+
     return df
 
 logging.info('Processing training instances.')
@@ -114,7 +126,7 @@ for index, row in train_df.iterrows():
     parameters, new_data = check_std(row)
 
     # SET MODEL_PATH
-    model_path = os.path.join(RESULTS_PATH,'models')
+    models_path = os.path.join(RESULTS_PATH,'models')
 
     # create new dataset if necessary
     yolo_path = os.path.join(YOLO_PATH,"dataset.yaml")
@@ -141,24 +153,20 @@ for index, row in train_df.iterrows():
                 img_sz=parameters["img_sz"],
                 freeze=int(parameters["freeze"]),
                 optimizer=parameters["optimizer"],
-                save_path=model_path
+                save_path=models_path
             )
             logging.info(f'Trained {row["model"]}.')
 
-            # change the name of the results
-            train_dir = os.path.join(model_path, 'train')
-            if os.path.exists(train_dir):
-                os.rename(train_dir, os.path.join(model_path, 'model_' + str(row["id"])))
-                logging.info(f'Renamed results directory to model_{row["id"]}.')
-            else:
-                logging.error(f'Train directory not found: {train_dir}')
-
+            # evaluate model
+            logging.info(f'Evaluating model{row["model"]}')
+            yolo.evaluate_model(data_path=yolo_path, model_path=os.path.join(models_path,"train","weights","best.pt"), task="test")
         except Exception as e:
             logging.error(f'Error training {row["model"]}: {e}')
 
     # YOLOV8
     if "yolo8" in row["model"]:
         try:
+
             # load and train
             size = row["model"][5:]
             yolo = Yolo8(model_size=size, pretrained=parameters["pretrained"])
@@ -171,22 +179,35 @@ for index, row in train_df.iterrows():
                 img_sz=parameters["img_sz"],
                 freeze=int(parameters["freeze"]),
                 optimizer=parameters["optimizer"],
-                save_path=model_path
+                save_path=models_path
             )
             logging.info(f'Trained {row["model"]}.')
 
-            # change the name of the results
-            train_dir = os.path.join(model_path, 'train')
-            if os.path.exists(train_dir):
-                os.rename(train_dir, os.path.join(model_path, 'model_' + str(row["id"])))
-                logging.info(f'Renamed results directory to model_{row["id"]}.')
-            else:
-                logging.error(f'Train directory not found: {train_dir}')
+            # evaluate model
+            logging.info(f'Evaluating model{row["model"]}')
+            results = yolo.evaluate_model(dataset_path=yolo_path, split="test")
+
+            # move test images to correct folder
+            for filename in os.listdir(os.path.join(models_path,"train2")):
+                new_filename = filename.replace("val", "test")
+                if "confusion" in new_filename: new_filename = "test_" + new_filename
+                shutil.move(os.path.join(os.path.join(models_path,"train2"), filename), os.path.join(os.path.join(models_path,"train", new_filename)))
+            shutil.rmtree(os.path.join(models_path,"train2")) 
+
         except Exception as e:
             logging.error(f'Error training {row["model"]}: {e}')
 
     # Update the train_df with the actual parameters
-    train_df = update_train_csv(train_df, index, parameters)
+    train_df = update_train_csv(train_df, index, parameters,results)
+
+    # rename train directory
+    train_dir = os.path.join(models_path, 'train')
+    if os.path.exists(train_dir):
+        os.rename(train_dir, os.path.join(models_path, 'model_' + str(row["id"])))
+        logging.info(f'Renamed results directory to model_{row["id"]}.')
+    else:
+        logging.error(f'Train directory not found: {train_dir}')
+
 
 # SAVE UPDATED TRAINING_DF
 updated_train_csv_path = os.path.join(RESULTS_PATH, 'train.csv')
