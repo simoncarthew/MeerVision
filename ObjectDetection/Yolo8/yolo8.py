@@ -5,7 +5,7 @@ from ultralytics import YOLO
 
 class Yolo8:
 
-    def __init__(self, model_path = "", yolo_path = 'ObjectDetection/Yolo8', model_size = None, model_load = ""):
+    def __init__(self, model_path = "", yolo_path = 'ObjectDetection/Yolo8', model_size = None, pretrained=True ,model_load = ""):
         # Load selected model
         if model_load == "new":
             self.model = YOLO(yolo_path + "/yolov8" + model_size + ".yaml")
@@ -29,7 +29,10 @@ class Yolo8:
             model_path = input("Please paste model path: ")
             self.model = YOLO(model_path)
         elif model_size is not None:
-            self.model = YOLO(yolo_path + "/yolov8" + model_size + ".yaml")
+            if pretrained:
+                self.model = YOLO(yolo_path + "/yolov8" + model_size + ".pt")
+            else:
+                self.model = YOLO(yolo_path + "/yolov8" + model_size + ".yaml")
         elif model_path != "":
             self.model = YOLO(model_path)
         else:

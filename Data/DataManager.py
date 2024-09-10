@@ -458,8 +458,8 @@ class DataManager():
 
 if __name__ == "__main__":
     dm = DataManager()
-    dm.create_yolo_dataset(-1,1000,1000,0,"Data/Formated/yolo")
-    dm.create_yolo_dataset()
+    dm.create_yolo_dataset(50,50,50,0,"Data/SmallTest/yolo")
+    # dm.create_yolo_dataset()
     # dm.view_yolo_annotations("Data/Formated/yolo/images/test","Data/Formated/yolo/labels/test",10)
 
     # test filter_obsserved

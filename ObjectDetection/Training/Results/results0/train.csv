@@ -1,0 +1,5 @@
+id,model,batch,lr,freeze,pretrained,augment,epochs,percval,obs_no,md_z1_trainval,md_z2_trainval,md_test_no,optimizer,img_sz
+0,yolo8n,16,0.01,0,True,True,1,0.2,50,50,50,0,Adam,640
+1,yolo8s,16,0.02,10,True,True,1,0.2,50,50,50,0,AdamW,640
+2,yolo5s,16,0.01,0,True,True,1,0.2,50,50,50,0,Adam,640
+3,yolo5m,16,0.02,10,True,True,1,0.2,50,50,50,0,AdamW,640
