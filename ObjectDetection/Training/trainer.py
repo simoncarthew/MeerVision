@@ -12,9 +12,15 @@ import pandas as pd
 import os
 import shutil
 import logging
+import yaml
+
 from yolo5 import Yolo5
 from yolo8 import Yolo8
 from DataManager import DataManager
+
+# READ CONFIG
+with open('ObjectDetection/config.yaml', 'r') as file:
+    config = yaml.safe_load(file)
 
 # GLOBALS PATHS
 TRAINING_CSV = 'ObjectDetection/Training/train_test.csv'

@@ -3,7 +3,6 @@
 *.txt
 *.png
 *.cache
-*.yaml
 *.pt
 venv
 *.pyc

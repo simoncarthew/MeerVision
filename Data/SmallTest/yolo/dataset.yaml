@@ -1,0 +1,7 @@
+names:
+  0: meerkat
+nc: 1
+path: /home/simon/OneDrive/University/Fourth_Year/Second Semester/EEE4022S/MeerVision/Data/SmallTest/yolo
+test: images/test
+train: images/train
+val: images/val
