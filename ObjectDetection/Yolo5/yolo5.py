@@ -3,6 +3,9 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 import torch
 import cv2
+import time
+import glob
+import os
 from yolov5 import train, detect, val  # Make sure YOLOv5 repository is in your PYTHONPATH
 
 class Yolo5:
@@ -13,9 +16,6 @@ class Yolo5:
         else:
             model_size = "yolov5" + model_size
             self.model = torch.hub.load('ultralytics/yolov5', model_size, pretrained=pretrained).to(self.device)
-        
-        # Determine the model's precision
-        self.model_dtype = next(self.model.parameters()).dtype
     
     def freeze_layers(self, freeze):
         # Print the layers that will be frozen
@@ -104,12 +104,72 @@ class Yolo5:
         }
         
         return results_dict
+    
+    def inference_time(self, image_folder):
+        img_files = glob.glob(f"{image_folder}/*.jpg")
+        inf_times = []
 
+        for img_file in img_files:
+            img = cv2.imread(img_file)
+            start_time = time.time()
+            results = self.model(img)
+            end_time = time.time()
+            inf_times.append(end_time - start_time)
+
+        avg_inf = sum(inf_times) / len(inf_times)
+
+        output = {"avg_inf": avg_inf}
+
+        return output
+
+    
+    def detect(self, image_path, show=False, conf_thresh=0):
+        img = cv2.imread(image_path)  # Read the image
+        results = self.model(img)  # Perform detection
+
+        # Extract results
+        detected_boxes = []
+        for result in results.xyxy[0]:  # results.xyxy[0] gives the detections
+            x1, y1, x2, y2, conf, cls = result.tolist()
+            if conf >= conf_thresh and int(cls) == 0:
+                detected_boxes.append({
+                    'box': (int(x1), int(y1), int(x2), int(y2)),  # Bounding box coordinates
+                    'confidence': float(conf),  # Confidence score
+                    'class': int(cls)  # Class label
+                })
+
+        if show:
+            self.draw_detection(detected_boxes, img)
+
+        return detected_boxes
+    
+    def draw_detection(self, detected_boxes, img, thresh=0):
+        for detected in detected_boxes:
+            x1, y1, x2, y2 = detected['box']
+            conf = detected['confidence']
+            cls = detected['class']
+            label = self.model.names[cls]  # Get class name from model
+
+            if conf > thresh:
+                cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(img, f'{label} {conf:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+        cv2.imshow('YOLOv5 Detection', img)
+        while True:
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            if cv2.getWindowProperty('YOLOv5 Detection', cv2.WND_PROP_VISIBLE) < 1:
+                break
+        cv2.destroyAllWindows()
+
+        
 if __name__ == "__main__":
 
     # Example usage
-    yolo = Yolo5(model_size='s',model_path="ObjectDetection/Yolo5/train/weights/best.pt")
-    # yolo.train(data_path='Data/Formated/yolo/dataset.yaml', epochs=1)
-    print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml","ObjectDetection/Yolo5/train/weights/best.pt"))
-    # yolo.detect_video(video_path='Data/YoutubeCameraTrap/A Wide shot of three Juvenile Meerkat or Suricate, Suricata suricatta  just outside their burrow..mp4')
-
+    # model_path = "ObjectDetection/Yolo5/train/weights/best.pt"
+    model_path = "ObjectDetection/Yolo5/md_v5b.0.0.pt"
+    yolo = Yolo5(model_size='s',model_path=model_path)
+    jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
+    for file in jpg_files:
+        yolo.detect(image_path=file, show=True)
+    print(yolo.evaluate_model("Data/Formated/yolo/dataset_mega.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))

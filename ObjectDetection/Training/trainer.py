@@ -182,7 +182,7 @@ for index, row in train_df.iterrows():
             # load and train
             size = row["model"][5:]
             yolo = Yolo8(model_size=size, pretrained=parameters["pretrained"])
-            logging.info(f'Created {row["model"]} and starting training')
+            logging.info(f'Created {row["model"]}({row["id"]}) and starting training')
             yolo.train(
                 dataset_path=yolo_path,
                 lr=float(parameters["lr"]),
@@ -194,10 +194,10 @@ for index, row in train_df.iterrows():
                 optimizer=parameters["optimizer"],
                 save_path=models_path
             )
-            logging.info(f'Trained {row["model"]}.')
+            logging.info(f'Trained {row["model"]}({row["id"]}).')
 
             # evaluate model
-            logging.info(f'Evaluating model {row["model"]}')
+            logging.info(f'Evaluating model {row["model"]}({row["id"]})')
             results = yolo.evaluate_model(dataset_path=yolo_path, split="test")
 
             # move test images to correct folder
@@ -208,7 +208,7 @@ for index, row in train_df.iterrows():
             shutil.rmtree(os.path.join(models_path,"train2")) 
 
         except Exception as e:
-            logging.error(f'Error training {row["model"]}: {e}')
+            logging.error(f'Error training {row["model"]}({row["id"]}): {e}')
 
     # Update the train_df with the actual parameters
     train_df = update_train_csv(train_df, index, parameters, results)
@@ -222,7 +222,7 @@ for index, row in train_df.iterrows():
     else:
         logging.error(f'Train directory not found: {train_dir}')
 
-    logging.info(f'Completed model {row["model"]}')
+    logging.info(f'Completed model {row["model"]}({row["id"]})')
 
 
 # SAVE UPDATED TRAINING_DF

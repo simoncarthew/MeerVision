@@ -1,46 +1,22 @@
 import cv2
 import torch
 import os
+import glob
 from ultralytics import YOLO
 
 class Yolo8:
+    
+    def __init__(self, model_size='s', model_path = None, pretrained = True, device=None, yolo_path = os.path.join("ObjectDetection","Yolo8")):
+        self.device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
 
-    def __init__(self, model_path = "", yolo_path = 'ObjectDetection/Yolo8', model_size = None, pretrained=True ,model_load = ""):
-        # Load selected model
-        if model_load == "new":
-            self.model = YOLO(yolo_path + "/yolov8" + model_size + ".yaml")
-        elif model_load == "tune":
-            self.model = YOLO(yolo_path + "/yolov8" + model_size + ".pt")
-        elif model_load == "latest":
-            # all directories
-            all_directories = [d for d in os.listdir(yolo_path) if os.path.isdir(os.path.join(yolo_path, d))]
-
-            # train directories
-            train_directories = [d for d in all_directories if d.startswith('train')]
-
-            # sort trained numberically
-            train_directories_sorted = sorted(train_directories, key=lambda x: int(x[5:]) if x[5:].isdigit() else 0)
-
-            # get the latest directory
-            latest_directory = train_directories_sorted[-1] if train_directories_sorted else None
-
-            self.model = YOLO(yolo_path + "/" + latest_directory + "/weights/best.pt")
-        elif model_load == "custom":
-            model_path = input("Please paste model path: ")
+        if model_path is not None:
             self.model = YOLO(model_path)
-        elif model_size is not None:
+        else:
             if pretrained:
                 self.model = YOLO(yolo_path + "/yolov8" + model_size + ".pt")
             else:
                 self.model = YOLO(yolo_path + "/yolov8" + model_size + ".yaml")
-        elif model_path != "":
-            self.model = YOLO(model_path)
-        else:
-            print("Model select not adequate.")
-            exit()
-
-        # Check device
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        
     
     def freeze_layers(self, freeze):
         freeze = [f"model.{x}." for x in range(freeze)]
@@ -144,47 +120,76 @@ class Yolo8:
             out.release()
         cv2.destroyAllWindows()
 
+    def inference_time(self, yolo_path):
+        test_path = os.path.join(yolo_path,"images","test")
+        img_files = glob.glob(f"{test_path}/*.jpg")
+        pre_times = []
+        inf_times = []
+        post_times = []
+
+        for img_file in img_files:
+            # time inference
+            img = cv2.imread(img_file)
+            results = self.model(img)
+
+            # append times
+            pre_times.append(results[0].speed["preprocess"])
+            post_times.append(results[0].speed["postprocess"])
+            inf_times.append(results[0].speed["inference"])
+
+        # calculate averages
+        avg_pre = sum(pre_times)/len(pre_times)
+        avg_post = sum(post_times)/len(post_times)
+        avg_inf = sum(inf_times)/len(inf_times)
+
+        # create output dictionary
+        output = {"avg_inf":avg_inf,"avg_post":avg_post,"avg_pre":avg_pre}
+
+        return output
+    
+    def detect(self, image_path, show = False, conf_thresh=0):
+        img = cv2.imread(image_path)  # raed image
+        results = self.model(img)  # detect
+        detected_boxes = [] 
+
+        # Iterate through results and filter based on the confidence threshold
+        for result in results:
+            boxes = result.boxes
+            for box in boxes:
+                conf = box.conf[0].item()
+                if conf >= conf_thresh: 
+                    x1, y1, x2, y2 = map(int, box.xyxy[0]) 
+                    detected_boxes.append({
+                        'box': (x1, y1, x2, y2),
+                        'confidence': conf,  
+                        'class': int(box.cls[0])
+                    })
+
+        if show: self.draw_detection(detected_boxes,img)
+
+        return detected_boxes
+
+    def draw_detection(self, detected_boxes, img, thresh = 0):
+        for detected in detected_boxes:
+            x1, y1, x2, y2 = detected['box']
+            conf = detected['confidence']
+            cls = detected['class']
+            label = self.model.names[cls] 
+
+            if conf > thresh:
+                cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(img, f'{label} {conf:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+        cv2.imshow('YOLOv8 Detection', img)
+        while True:
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            if cv2.getWindowProperty('YOLOv8 Detection', cv2.WND_PROP_VISIBLE) < 1:
+                break
+        cv2.destroyAllWindows()
+
 if __name__ == "__main__":
 
-    # would you like to train ?
-    train = False
-    if input("Would you like to train a model (y/n)? ") == "y":
-        train = True
-
-    # would you like to train new or start fresh?
-    train_select = ""
-    while (train_select == "" and train == True):
-        train_select = input("Select train mode (new/tune/latest)? ")
-        if train_select not in ["new", "latest", "tune"]:
-            train_select = ""
-
-    # select latest if no training
-    if train == False:
-        if input("Would you like to use custome model (y/n)? ") == "y":
-            train_select = "custom"
-        else:
-            train_select = "latest"
-
-    # load the model
-    yolo8 = Yolo8(model_load=train_select)
-
-    # would you like to show test video
-    video = False
-    if input("Would you like to see test video(y/n)? ") == "y":
-        video = True
-
-    # train model
-    if train == True:
-        yolo8.train(dataset_path='Data/Formated/yolo/dataset.yaml',epochs=7, batch = 16, lr=0.01, augment = True)
-
-    # test the trained model
-    if video:
-        video_path = input("Please paste video path: ")
-        thresh = 0.3
-        if video_path =="":
-            yolo8.process_video("Data/MeerDown/origin/Unannotated_videos/22-11-07_C3_10.mp4",thresh=thresh)
-        else:
-            yolo8.process_video(video_path,thresh=thresh, save_path="ObjectDetection/Yolo8/output/output.mp4")
-
-    results = yolo8.evaluate_model()
-    print(results)
+    yolo = Yolo8(model_path="ObjectDetection/Yolo8/colab/train13/weights/best.pt")
+    # print(yolo.inference_time(yolo_path="Data/Formated/yolo"))
+    detections = yolo.detect(image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg")

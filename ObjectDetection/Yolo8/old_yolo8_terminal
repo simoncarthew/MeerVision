@@ -1,0 +1,73 @@
+def terminal_interface():
+    # would you like to train ?
+    train = False
+    if input("Would you like to train a model (y/n)? ") == "y":
+        train = True
+
+    # would you like to train new or start fresh?
+    train_select = ""
+    while (train_select == "" and train == True):
+        train_select = input("Select train mode (new/tune/latest)? ")
+        if train_select not in ["new", "latest", "tune"]:
+            train_select = ""
+
+    # select latest if no training
+    if train == False:
+        if input("Would you like to use custome model (y/n)? ") == "y":
+            train_select = "custom"
+        else:
+            train_select = "latest"
+
+    # load the model
+    yolo8 = Yolo8(model_load=train_select)
+
+    # would you like to show test video
+    video = False
+    if input("Would you like to see test video(y/n)? ") == "y":
+        video = True
+
+    # train model
+    if train == True:
+        yolo8.train(dataset_path='Data/Formated/yolo/dataset.yaml',epochs=7, batch = 16, lr=0.01, augment = True)
+
+    # test the trained model
+    if video:
+        video_path = input("Please paste video path: ")
+        thresh = 0.3
+        if video_path =="":
+            yolo8.process_video("Data/MeerDown/origin/Unannotated_videos/22-11-07_C3_10.mp4",thresh=thresh)
+        else:
+            yolo8.process_video(video_path,thresh=thresh, save_path="ObjectDetection/Yolo8/output/output.mp4")
+
+    # Load selected model
+        if model_load == "new":
+            self.model = YOLO(yolo_path + "/yolov8" + model_size + ".yaml")
+        elif model_load == "tune":
+            self.model = YOLO(yolo_path + "/yolov8" + model_size + ".pt")
+        elif model_load == "latest":
+            # all directories
+            all_directories = [d for d in os.listdir(yolo_path) if os.path.isdir(os.path.join(yolo_path, d))]
+
+            # train directories
+            train_directories = [d for d in all_directories if d.startswith('train')]
+
+            # sort trained numberically
+            train_directories_sorted = sorted(train_directories, key=lambda x: int(x[5:]) if x[5:].isdigit() else 0)
+
+            # get the latest directory
+            latest_directory = train_directories_sorted[-1] if train_directories_sorted else None
+
+            self.model = YOLO(yolo_path + "/" + latest_directory + "/weights/best.pt")
+        elif model_load == "custom":
+            model_path = input("Please paste model path: ")
+            self.model = YOLO(model_path)
+        elif model_size is not None:
+            if pretrained:
+                self.model = YOLO(yolo_path + "/yolov8" + model_size + ".pt")
+            else:
+                self.model = YOLO(yolo_path + "/yolov8" + model_size + ".yaml")
+        elif model_path != "":
+            self.model = YOLO(model_path)
+        else:
+            print("Model select not adequate.")
+            exit()
