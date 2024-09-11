@@ -75,11 +75,12 @@ class Yolo5:
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     
-    def evaluate_model(self, data_path, model_path, task="test"):
+    def evaluate_model(self, data_path, model_path, save_path, task="test"):
         results = val.run(
             data=data_path,
             weights=model_path,
             device=self.device,
+            project=save_path,
             task=task
         )
         

@@ -74,6 +74,7 @@ train_df['precision'] = None
 train_df['recall'] = None
 train_df['mAP50'] = None
 train_df['mAP5090'] = None
+logging.info('Added testing columns to the training df')
 
 # SET STD TRAINING PARAMETERS
 BATCH = config['parameters']['batch']
@@ -92,6 +93,7 @@ OPTIMIZER = config['parameters']['optimizer']
 STD_PARAM = {
     "img_sz": IMG_SZ,"optimizer" : OPTIMIZER, "batch": BATCH, "epochs": EPOCHS, "lr": LR, "augment": AUGMENT, "percval": PERCVAL, "freeze": FREEZE, "pretrained": PRETRAINED, "obs_no": OBS_NO, "md_z1_trainval": MD_Z1_TRAINVAL, "md_z2_trainval": MD_Z2_TRAINVAL, "md_test_no": MD_TEST_NO
 }
+logging.info('Read in the STD parameters')
 
 # ALTERING_STD
 def check_std(row):
@@ -120,10 +122,11 @@ logging.info('Processing training instances.')
 
 # LOOP OVER ALL TRAINING INSTANCES
 for index, row in train_df.iterrows():
-    logging.info(f'Processing model {row["model"]}.')
+    logging.info(f'Starting model {row["model"]}.')
 
     # SET PARAMETERS
     parameters, new_data = check_std(row)
+    logging.info('Set parameters.')
 
     # SET MODEL_PATH
     models_path = os.path.join(RESULTS_PATH,'models')
@@ -144,6 +147,7 @@ for index, row in train_df.iterrows():
             # load and train
             size = row["model"][5:]
             yolo = Yolo5(model_size=size, pretrained=parameters["pretrained"])
+            logging.info(f'Created {row["model"]} and starting training')
             yolo.train(
                 data_path=yolo_path,
                 lr=float(parameters["lr"]),
@@ -158,8 +162,16 @@ for index, row in train_df.iterrows():
             logging.info(f'Trained {row["model"]}.')
 
             # evaluate model
-            logging.info(f'Evaluating model{row["model"]}')
-            yolo.evaluate_model(data_path=yolo_path, model_path=os.path.join(models_path,"train","weights","best.pt"), task="test")
+            logging.info(f'Evaluating model {row["model"]}')
+            results = yolo.evaluate_model(data_path=yolo_path, model_path=os.path.join(models_path,"train","weights","best.pt"), task="test", save_path=os.path.join(models_path,"train"))
+
+             # move test images to correct folder
+            for filename in os.listdir(os.path.join(models_path,"train","exp")):
+                new_filename = filename.replace("val", "test")
+                if "confusion" in new_filename: new_filename = "test_" + new_filename
+                shutil.move(os.path.join(models_path,"train","exp", filename), os.path.join(os.path.join(models_path,"train", new_filename)))
+            shutil.rmtree(os.path.join(models_path,"train","exp")) 
+
         except Exception as e:
             logging.error(f'Error training {row["model"]}: {e}')
 
@@ -170,6 +182,7 @@ for index, row in train_df.iterrows():
             # load and train
             size = row["model"][5:]
             yolo = Yolo8(model_size=size, pretrained=parameters["pretrained"])
+            logging.info(f'Created {row["model"]} and starting training')
             yolo.train(
                 dataset_path=yolo_path,
                 lr=float(parameters["lr"]),
@@ -184,7 +197,7 @@ for index, row in train_df.iterrows():
             logging.info(f'Trained {row["model"]}.')
 
             # evaluate model
-            logging.info(f'Evaluating model{row["model"]}')
+            logging.info(f'Evaluating model {row["model"]}')
             results = yolo.evaluate_model(dataset_path=yolo_path, split="test")
 
             # move test images to correct folder
@@ -198,7 +211,8 @@ for index, row in train_df.iterrows():
             logging.error(f'Error training {row["model"]}: {e}')
 
     # Update the train_df with the actual parameters
-    train_df = update_train_csv(train_df, index, parameters,results)
+    train_df = update_train_csv(train_df, index, parameters, results)
+    logging.info('Updated the training results')
 
     # rename train directory
     train_dir = os.path.join(models_path, 'train')
@@ -207,6 +221,8 @@ for index, row in train_df.iterrows():
         logging.info(f'Renamed results directory to model_{row["id"]}.')
     else:
         logging.error(f'Train directory not found: {train_dir}')
+
+    logging.info(f'Completed model {row["model"]}')
 
 
 # SAVE UPDATED TRAINING_DF

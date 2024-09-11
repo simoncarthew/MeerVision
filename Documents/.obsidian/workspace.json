@@ -32,6 +32,25 @@
             }
           },
           {
+            "id": "95a0357488155942",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "OBJECTIVES.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          }
+        ],
+        "currentTab": 2
+      },
+      {
+        "id": "5d2bdfa05442c064",
+        "type": "tabs",
+        "children": [
+          {
             "id": "eb4a8b8682940829",
             "type": "leaf",
             "state": {
@@ -43,8 +62,7 @@
               }
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -173,8 +191,9 @@
   },
   "active": "eb4a8b8682940829",
   "lastOpenFiles": [
-    "DOODLING.md",
+    "OBJECTIVES.md",
     "MAKING SENSE OF WHERE I AM AT.md",
+    "DOODLING.md",
     "TECHNICAL PLANNING BRAINSTORMING.md",
     "SUBSYSTEMS.md",
     "REQUIREMENTS AND SPECIFICATIONS.md",

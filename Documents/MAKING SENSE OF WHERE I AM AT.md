@@ -4,22 +4,20 @@
 #### WHATS BEEN DONE
 * working yolo5 and yolo8 classes
 * working datamanager
-
 #### WHATS BEING DONE
 * trainer script
 #### WHAT NEEDS TO BE DONE
 * create functions for the models that output an array of bboxes for a given image
-* get the models running on the pi's
 * create an inference time testing function for every model
+* get the models running on the pi's
+* create a global inference time tester
 * fix mega detector class
 	* loads the models
 	* detects boxes
 	* combines with classifier
 	* figure out how to do evaluation
-* create a global inference time tester
-* decide what will be output by the processing button on the camera to determine what still needs to be done with the OD
-## CLASSIFICATION
 
+## CLASSIFIER
 #### WHAT NEEDS TO BE DONE
 * extract cut out images of meerkats (possibly in data manager)
 * data loader function on data manger
