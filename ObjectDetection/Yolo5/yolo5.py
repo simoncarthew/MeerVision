@@ -123,7 +123,7 @@ class Yolo5:
         return output
 
     
-    def detect(self, image_path, show=False, conf_thresh=0):
+    def sgl_detect(self, image_path, show=False, conf_thresh=0):
         img = cv2.imread(image_path)  # Read the image
         results = self.model(img)  # Perform detection
 
@@ -143,6 +143,20 @@ class Yolo5:
 
         return detected_boxes
     
+    def test_detect(self,yolo_path):
+        # get image files
+        img_files = glob.glob(os.path.join(yolo_path, "images", "test", '*.jpg'))
+        
+        # initialise all detections
+        all_detections = {}
+
+        # iterate over images
+        for img_file in img_files:
+            detection = self.sgl_detect(img_file,show=False)
+            all_detections[os.path.basename(img_file)] = detection
+        
+        return all_detections
+
     def draw_detection(self, detected_boxes, img, thresh=0):
         for detected in detected_boxes:
             x1, y1, x2, y2 = detected['box']
@@ -166,10 +180,11 @@ class Yolo5:
 if __name__ == "__main__":
 
     # Example usage
-    # model_path = "ObjectDetection/Yolo5/train/weights/best.pt"
-    model_path = "ObjectDetection/Yolo5/md_v5b.0.0.pt"
+    model_path = "ObjectDetection/Yolo5/train/weights/best.pt"
+    # model_path = "ObjectDetection/Yolo5/md_v5b.0.0.pt"
     yolo = Yolo5(model_size='s',model_path=model_path)
-    jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
-    for file in jpg_files:
-        yolo.detect(image_path=file, show=True)
-    print(yolo.evaluate_model("Data/Formated/yolo/dataset_mega.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
+    # jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
+    # for file in jpg_files:
+    #     print(yolo.detect(image_path=file, show=True))
+    print(yolo.test_detect(yolo_path='Data/Formated/yolo'))
+    # print(yolo.evaluate_model("Data/Formated/yolo/dataset_mega.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
