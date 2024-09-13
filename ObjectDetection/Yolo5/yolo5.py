@@ -1,12 +1,20 @@
+# BLOVK WARNINGS
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+# IMPORTS
 import torch
 import cv2
 import time
 import glob
 import os
+import sys
 from yolov5 import train, detect, val  # Make sure YOLOv5 repository is in your PYTHONPATH
+
+# IMPORT EVAL
+eval_path = os.path.join("ObjectDetection")
+sys.path.append(eval_path)
+from ObjectDetection.EvaluateOld import EvaluateModel
 
 class Yolo5:
     def __init__(self, model_size='s', model_path = None, pretrained = True, device=None):
@@ -105,6 +113,18 @@ class Yolo5:
         
         return results_dict
     
+    def cust_evaluate(self, yolo_path, img_width=640, img_height=640):
+        # test detection
+        detections = self.test_detect(yolo_path=yolo_path)
+
+        # evaluation class
+        eval = EvaluateModel()
+
+        # evaluate
+        eval.full_evaluation(yolo_path=yolo_path, pred_list=detections, img_height=img_height, img_width=img_width)
+        
+        # return out
+
     def inference_time(self, image_folder):
         img_files = glob.glob(f"{image_folder}/*.jpg")
         inf_times = []
@@ -123,7 +143,7 @@ class Yolo5:
         return output
 
     
-    def sgl_detect(self, image_path, show=False, conf_thresh=0):
+    def sgl_detect(self, image_path, show=False, conf_thresh=0, format = "yolo"):
         img = cv2.imread(image_path)  # Read the image
         results = self.model(img)  # Perform detection
 
@@ -132,8 +152,16 @@ class Yolo5:
         for result in results.xyxy[0]:  # results.xyxy[0] gives the detections
             x1, y1, x2, y2, conf, cls = result.tolist()
             if conf >= conf_thresh and int(cls) == 0:
+                if format == "std":
+                    box = [int(x1), int(y1), int(x2), int(y2)]
+                elif format == "yolo":
+                    box = [int(x1), int(y1), int(x2 - x1), int(y2 - y1)]
+                else:
+                    print(f"{format} is not a supported box format.")
+                    exit()
                 detected_boxes.append({
-                    'box': (int(x1), int(y1), int(x2), int(y2)),  # Bounding box coordinates
+                    'image_id' : os.path.basename(image_path),
+                    'box': box,  # Bounding box coordinates
                     'confidence': float(conf),  # Confidence score
                     'class': int(cls)  # Class label
                 })
@@ -143,18 +171,18 @@ class Yolo5:
 
         return detected_boxes
     
-    def test_detect(self,yolo_path):
-        # get image files
+    def test_detect(self, yolo_path, conf_thresh=0):
+        # Get image files
         img_files = glob.glob(os.path.join(yolo_path, "images", "test", '*.jpg'))
         
-        # initialise all detections
-        all_detections = {}
+        # Initialize all detections
+        all_detections = []
 
-        # iterate over images
+        # Iterate over images
         for img_file in img_files:
-            detection = self.sgl_detect(img_file,show=False)
-            all_detections[os.path.basename(img_file)] = detection
-        
+            detections = self.sgl_detect(img_file, conf_thresh=conf_thresh)  # Adjust conf_thresh as needed
+            all_detections += detections
+
         return all_detections
 
     def draw_detection(self, detected_boxes, img, thresh=0):
@@ -187,4 +215,6 @@ if __name__ == "__main__":
     # for file in jpg_files:
     #     print(yolo.detect(image_path=file, show=True))
     print(yolo.test_detect(yolo_path='Data/Formated/yolo'))
-    # print(yolo.evaluate_model("Data/Formated/yolo/dataset_mega.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
+    # print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
+    # print(yolo.cust_evaluate(yolo_path="Data/Formated/yolo"))
+    # print(yolo.sgl_detect("Data/Formated/yolo/images/test/Suricata_Desmarest_10.jpg", show = True))
