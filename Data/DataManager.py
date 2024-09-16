@@ -10,7 +10,7 @@ from PIL import Image
 import yaml
 
 class DataManager():
-    def __init__(self, perc_val = 0.2 , md_coco_path = "Data/MeerDown/raw/annotations.json", md_frames_path = "Data/MeerDown/raw/frames", obs_coco_path = "Data/Observed/annotations.json", obs_frames_path = "Data/Observed/frames", debug = True):
+    def __init__(self, perc_val = 0.2 , md_coco_path = os.path.join("Data","MeerDown","raw","annotations.json"), md_frames_path = os.path.join("Data","MeerDown","raw","frames"), obs_coco_path = os.path.join("Data","Observed","annotations.json"), obs_frames_path = os.path.join("Data","Observed","frames"), debug = True):
         # set class variables
         self.perc_val, self.debug = perc_val, debug
         self.obs_frames_path = obs_frames_path
@@ -438,7 +438,7 @@ class DataManager():
         if self.debug: print("Copied training images")
         self.merge_images(obs_val,md_val,self.obs_frames_path,self.md_frames_path,os.path.join(yolo_path,"images","val"),img_size=img_size)
         if self.debug: print("Copied validation images")
-        self.merge_images(md_test,obs_test,"Data/MeerDown/raw/frames","Data/Observed/frames",os.path.join(yolo_path,"images","test"),img_size=img_size)
+        self.merge_images(md_test,obs_test,os.path.join("Data","MeerDown","raw","frames"),os.path.join("Data","Observed","frames"),os.path.join(yolo_path,"images","test"),img_size=img_size)
         if self.debug: print("Copied test images")
 
         # Create the .yaml file

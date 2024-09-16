@@ -33,7 +33,7 @@ class Yolo5:
             else:
                 v.requires_grad = True
 
-    def train(self, data_path, lr = 0.01, epochs=30, batch_size=16, img_sz=640, freeze = 10, optimizer = 'SGD', augment = True, save_path = "ObjectDetection/Yolo5"):
+    def train(self, data_path, lr = 0.01, epochs=30, batch_size=16, img_sz=640, freeze = 10, optimizer = 'SGD', augment = True, save_path = os.path.join("ObjectDetection","Yolo5")):
         self.freeze_layers(freeze)
 
         train.run(

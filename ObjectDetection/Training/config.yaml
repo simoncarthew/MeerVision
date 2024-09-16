@@ -17,7 +17,7 @@ parameters:
   percval: 0.2
   freeze: 0
   pretrained: True
-  epochs: 20
+  epochs: 1
   obs_no: -1
   md_z1_trainval: 1000
   md_z2_trainval: 1000

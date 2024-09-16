@@ -34,7 +34,7 @@ class Yolo8:
             if any(x in k for x in freeze):
                 v.requires_grad = False
 
-    def train(self, batch = 32, freeze = 0, img_sz = 640, lr = 0.01, optimizer = 'SGD', epochs = 50, dataset_path="Data/MeerDown/yolo/dataset.yaml", save_path = 'ObjectDetection/Yolo8', augment = False):
+    def train(self, batch = 32, freeze = 0, img_sz = 640, lr = 0.01, optimizer = 'SGD', epochs = 50, dataset_path=os.path.join("Data","Formated","yolo","dataset.yaml"), save_path = os.path.join('ObjectDetection','Yolo8'), augment = False):
         self.freeze_layers(freeze)
 
         # set augmenting variables
@@ -66,7 +66,7 @@ class Yolo8:
 
         return results
     
-    def native_evaluate(self, dataset_path="Data/Formated/yolo/dataset.yaml", split="test"):
+    def native_evaluate(self, dataset_path=os.path.join("Data","Formated","yolo","dataset.yaml"), split="test"):
         results = self.model.val(data=dataset_path, split=split)
         return results.results_dict
 
@@ -138,7 +138,7 @@ class Yolo8:
 
     def inference_time(self, yolo_path):
         test_path = os.path.join(yolo_path,"images","test")
-        img_files = glob.glob(f"{test_path}/*.jpg")
+        img_files = glob.glob(os.path.join(test_path, "*.jpg"))
         inf_times = []
 
         for img_file in img_files:

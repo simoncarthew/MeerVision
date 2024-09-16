@@ -7,7 +7,7 @@ import yaml
 import traceback
 
 # READ CONFIG
-with open('ObjectDetection/Training/config_test.yaml', 'r') as file:
+with open(os.path.join('ObjectDetection','Training','config.yaml'), 'r') as file:
     config = yaml.safe_load(file)
 
 # GLOBALS PATHS
@@ -129,8 +129,6 @@ for index, row in train_df.iterrows():
 
     # SET PARAMETERS
     parameters, new_data = check_std(row)
-    for key in parameters:
-        print(key + " : " + str(parameters[key]))
     logging.info('Set parameters.')
 
     # SET MODEL_PATH
@@ -138,9 +136,11 @@ for index, row in train_df.iterrows():
 
     # create new dataset if necessary
     yolo_path = os.path.join(YOLO_PATH,"dataset.yaml")
+    yolo_dir_path = os.path.join(YOLO_PATH)
     if new_data:
         logging.info(f'Creating new yolo dataset for model_{row["id"]}')
         yolo_path = os.path.join(DATA_PATH,"yolo")
+        yolo_dir_path = yolo_path
         dm = DataManager(parameters["percval"], MEERDOWN_ANNOT, MEERDOWN_FRAMES, OBS_ANNOT, OBS_FRAMES, debug = True)
         dm.create_yolo_dataset(int(parameters["obs_no"]),int(parameters["md_z1_trainval"]),int(parameters["md_z2_trainval"]),int(parameters["md_test_no"]),yolo_path)
         yolo_path = os.path.join(yolo_path,"dataset.yaml")
@@ -171,14 +171,16 @@ for index, row in train_df.iterrows():
 
         except Exception as e:
             logging.error(f'Error training {row["model"]}: {e}')
+            trained = False
 
         try:
             # evaluate model
             logging.info(f'Evaluating model {row["model"]}')
-            results = yolo.evaluate(YOLO_PATH,parameters["img_sz"],parameters["img_sz"])
+            results = yolo.evaluate(yolo_dir_path,parameters["img_sz"],parameters["img_sz"])
 
         except Exception as e:
             logging.error(f'Error evaluating {row["model"]}: {e}\n{traceback.format_exc()}')
+            trained = False
 
     # YOLOV8
     elif "yolo8" in row["model"]:
@@ -203,26 +205,29 @@ for index, row in train_df.iterrows():
             logging.info(f'Trained {row["model"]}({row["id"]}).')
         except Exception as e:
             logging.error(f'Error training {row["model"]}: {e}\n{traceback.format_exc()}')
+            trained = False
 
         try:
             # evaluate model
             logging.info(f'Evaluating model {row["model"]}({row["id"]})')
-            results = yolo.evaluate(YOLO_PATH,parameters["img_sz"],parameters["img_sz"])
+            results = yolo.evaluate(yolo_dir_path,parameters["img_sz"],parameters["img_sz"])
 
         except Exception as e:
             logging.error(f'Error evaluating {row["model"]}: {e}\n{traceback.format_exc()}')
+            trained = False
 
     # Update the train_df with the actual parameters
-    train_df = update_train_csv(train_df, index, parameters, results)
-    logging.info('Updated the training results')
+    if trained:
+        train_df = update_train_csv(train_df, index, parameters, results)
+        logging.info('Updated the training results')
 
-    # rename train directory
-    train_dir = os.path.join(models_path, 'train')
-    if os.path.exists(train_dir):
-        os.rename(train_dir, os.path.join(models_path, 'model_' + str(row["id"])))
-        logging.info(f'Renamed results directory to model_{row["id"]}.')
-    else:
-        logging.error(f'Train directory not found: {train_dir}')
+        # rename train directory
+        train_dir = os.path.join(models_path, 'train')
+        if os.path.exists(train_dir):
+            os.rename(train_dir, os.path.join(models_path, 'model_' + str(row["id"])))
+            logging.info(f'Renamed results directory to model_{row["id"]}.')
+        else:
+            logging.error(f'Train directory not found: {train_dir}')
 
     logging.info(f'Completed model {row["model"]}({row["id"]})')
 
