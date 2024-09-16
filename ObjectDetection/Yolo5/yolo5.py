@@ -14,7 +14,7 @@ from yolov5 import train, detect, val  # Make sure YOLOv5 repository is in your 
 # IMPORT EVAL
 eval_path = os.path.join("ObjectDetection")
 sys.path.append(eval_path)
-from ObjectDetection.EvaluateOld import EvaluateModel
+from Evaluate import EvaluateModel
 
 class Yolo5:
     def __init__(self, model_size='s', model_path = None, pretrained = True, device=None):
@@ -83,7 +83,7 @@ class Yolo5:
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     
-    def evaluate_model(self, data_path, model_path, save_path, task="test"):
+    def native_evaluate(self, data_path, model_path, save_path, task="test"):
         results = val.run(
             data=data_path,
             weights=model_path,
@@ -113,17 +113,12 @@ class Yolo5:
         
         return results_dict
     
-    def cust_evaluate(self, yolo_path, img_width=640, img_height=640):
-        # test detection
-        detections = self.test_detect(yolo_path=yolo_path)
-
-        # evaluation class
-        eval = EvaluateModel()
-
-        # evaluate
-        eval.full_evaluation(yolo_path=yolo_path, pred_list=detections, img_height=img_height, img_width=img_width)
-        
-        # return out
+    def evaluate(self, yolo_path, img_width=640, img_height=640):
+        pred_detections = self.test_detect(yolo_path=yolo_path)
+        eval = EvaluateModel(yolo_path,pred_detections,img_width,img_height)
+        results = eval.run_evaluation()
+        results['inference'] = self.inference_time(os.path.join(yolo_path,"images","test"))
+        return results
 
     def inference_time(self, image_folder):
         img_files = glob.glob(f"{image_folder}/*.jpg")
@@ -138,12 +133,9 @@ class Yolo5:
 
         avg_inf = sum(inf_times) / len(inf_times)
 
-        output = {"avg_inf": avg_inf}
+        return avg_inf
 
-        return output
-
-    
-    def sgl_detect(self, image_path, show=False, conf_thresh=0, format = "yolo"):
+    def sgl_detect(self, image_path, show=False, conf_thresh=0, format="yolo"):
         img = cv2.imread(image_path)  # Read the image
         results = self.model(img)  # Perform detection
 
@@ -155,56 +147,113 @@ class Yolo5:
                 if format == "std":
                     box = [int(x1), int(y1), int(x2), int(y2)]
                 elif format == "yolo":
+                    h, w = img.shape[:2]
+                    x_center = (x1 + x2) / 2 / w
+                    y_center = (y1 + y2) / 2 / h
+                    width = (x2 - x1) / w
+                    height = (y2 - y1) / h
+                    box = [x_center, y_center, width, height]
+                elif format == "coco":
                     box = [int(x1), int(y1), int(x2 - x1), int(y2 - y1)]
                 else:
                     print(f"{format} is not a supported box format.")
                     exit()
                 detected_boxes.append({
-                    'image_id' : os.path.basename(image_path),
-                    'box': box,  # Bounding box coordinates
-                    'confidence': float(conf),  # Confidence score
+                    'image_id': os.path.basename(image_path),
+                    'bbox': box,  # Bounding box coordinates
+                    'score': float(conf),  # Confidence score
                     'class': int(cls)  # Class label
                 })
 
         if show:
-            self.draw_detection(detected_boxes, img)
+            self.draw_detection(detected_boxes, img, thresh=conf_thresh, format=format)
 
         return detected_boxes
-    
+
+    def draw_detection(self, detected_boxes, img, thresh=0, format="yolo"):
+        for detected in detected_boxes:
+            conf = detected['score']
+            cls = detected['class']
+            label = self.model.names[cls]  # Get class name from model
+            
+            if conf > thresh:
+                if format == "std":
+                    x1, y1, x2, y2 = detected['bbox']
+                elif format == "yolo":
+                    x_center, y_center, width, height = detected['bbox']
+                    h, w = img.shape[:2]
+                    x1 = int((x_center - width / 2) * w)
+                    y1 = int((y_center - height / 2) * h)
+                    x2 = int((x_center + width / 2) * w)
+                    y2 = int((y_center + height / 2) * h)
+                elif format == "coco":
+                    x1, y1, width, height = detected['bbox']
+                    x2 = x1 + width
+                    y2 = y1 + height
+                else:
+                    print(f"{format} is not a supported box format.")
+                    continue
+
+                # Draw the bounding box
+                cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(img, f'{label} {conf:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+        # Display the image with detections
+        cv2.imshow('Detection', img)
+        while True:
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            if cv2.getWindowProperty('Detection', cv2.WND_PROP_VISIBLE) < 1:
+                break
+        cv2.destroyAllWindows()
+
     def test_detect(self, yolo_path, conf_thresh=0):
         # Get image files
         img_files = glob.glob(os.path.join(yolo_path, "images", "test", '*.jpg'))
         
-        # Initialize all detections
-        all_detections = []
+        # Initialize COCO structure
+        coco_format = {
+            "images": [],
+            "annotations": [],
+            "categories": [
+                {"id": 0, "name": "meerkat"}  # Example class, replace as needed
+            ]
+        }
+
+        annotation_id = 0
 
         # Iterate over images
-        for img_file in img_files:
-            detections = self.sgl_detect(img_file, conf_thresh=conf_thresh)  # Adjust conf_thresh as needed
-            all_detections += detections
+        for image_id, img_file in enumerate(img_files):
+            # Add image information to COCO format
+            img_name = os.path.basename(img_file)
+            img_info = {
+                "id": image_id,
+                "file_name": img_name,
+                # You can use any library to get image dimensions. Here we assume OpenCV
+                "height": cv2.imread(img_file).shape[0],
+                "width": cv2.imread(img_file).shape[1]
+            }
+            coco_format["images"].append(img_info)
 
-        return all_detections
+            # Get detections from the image
+            detections = self.sgl_detect(img_file, conf_thresh=conf_thresh,format="coco")  # Adjust conf_thresh as needed
 
-    def draw_detection(self, detected_boxes, img, thresh=0):
-        for detected in detected_boxes:
-            x1, y1, x2, y2 = detected['box']
-            conf = detected['confidence']
-            cls = detected['class']
-            label = self.model.names[cls]  # Get class name from model
+            # Add detections to COCO format
+            for detection in detections:
+                annotation = {
+                    "id": annotation_id,
+                    "image_id": image_id,
+                    "category_id": detection["class"],  # Class ID, assuming 0 for meerkats
+                    "bbox": detection["bbox"],
+                    "score": detection["score"],  # Detection confidence score
+                    "area": detection["bbox"][2] * detection["bbox"][3],  # bbox_width * bbox_height
+                    "iscrowd": 0,  # COCO requires this field, setting it to 0 (non-crowd)
+                    "segmentation": []  # If no segmentation, leave it empty
+                }
+                coco_format["annotations"].append(annotation)
+                annotation_id += 1
+        return coco_format
 
-            if conf > thresh:
-                cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(img, f'{label} {conf:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-        cv2.imshow('YOLOv5 Detection', img)
-        while True:
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-            if cv2.getWindowProperty('YOLOv5 Detection', cv2.WND_PROP_VISIBLE) < 1:
-                break
-        cv2.destroyAllWindows()
-
-        
 if __name__ == "__main__":
 
     # Example usage
@@ -214,7 +263,9 @@ if __name__ == "__main__":
     # jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
     # for file in jpg_files:
     #     print(yolo.detect(image_path=file, show=True))
-    print(yolo.test_detect(yolo_path='Data/Formated/yolo'))
+    
     # print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
     # print(yolo.cust_evaluate(yolo_path="Data/Formated/yolo"))
-    # print(yolo.sgl_detect("Data/Formated/yolo/images/test/Suricata_Desmarest_10.jpg", show = True))
+    print(yolo.sgl_detect("Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg", show = True,format="std"))
+
+    # print(yolo.evaluate(os.path.join('Data','Formated','yolo')))

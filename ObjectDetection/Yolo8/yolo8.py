@@ -3,7 +3,14 @@ import cv2
 import torch
 import os
 import glob
+import time
+import sys
 from ultralytics import YOLO
+
+# IMPORT EVAL
+eval_path = os.path.join("ObjectDetection")
+sys.path.append(eval_path)
+from Evaluate import EvaluateModel
 
 class Yolo8:
     
@@ -58,9 +65,16 @@ class Yolo8:
 
         return results
     
-    def evaluate_model(self, dataset_path="Data/Formated/yolo/dataset.yaml", split="test"):
+    def native_evaluate(self, dataset_path="Data/Formated/yolo/dataset.yaml", split="test"):
         results = self.model.val(data=dataset_path, split=split)
         return results.results_dict
+
+    def evaluate(self, yolo_path, img_width=640, img_height=640):
+        pred_detections = self.test_detect(yolo_path=yolo_path)
+        eval = EvaluateModel(yolo_path,pred_detections,img_width,img_height)
+        results = eval.run_evaluation()
+        results['inference'] = self.inference_time(yolo_path=yolo_path)
+        return results
 
     def process_video(self, video_path, thresh=0.3, save_path=None):
         # Load the video file
@@ -124,73 +138,151 @@ class Yolo8:
     def inference_time(self, yolo_path):
         test_path = os.path.join(yolo_path,"images","test")
         img_files = glob.glob(f"{test_path}/*.jpg")
-        pre_times = []
         inf_times = []
-        post_times = []
 
         for img_file in img_files:
             # time inference
             img = cv2.imread(img_file)
+            start_time = time.time()
             results = self.model(img)
-
-            # append times
-            pre_times.append(results[0].speed["preprocess"])
-            post_times.append(results[0].speed["postprocess"])
-            inf_times.append(results[0].speed["inference"])
+            end_time = time.time()
+            inf_times.append(end_time - start_time)
 
         # calculate averages
-        avg_pre = sum(pre_times)/len(pre_times)
-        avg_post = sum(post_times)/len(post_times)
         avg_inf = sum(inf_times)/len(inf_times)
 
-        # create output dictionary
-        output = {"avg_inf":avg_inf,"avg_post":avg_post,"avg_pre":avg_pre}
-
-        return output
+        return avg_inf
     
-    def detect(self, image_path, show = False, conf_thresh=0):
-        img = cv2.imread(image_path)  # raed image
-        results = self.model(img)  # detect
-        detected_boxes = [] 
+    def sgl_detect(self, image_path, show=False, conf_thresh=0, format="yolo"):
+        img = cv2.imread(image_path)  # Read the image
+        results = self.model(img)  # Perform detection
 
-        # Iterate through results and filter based on the confidence threshold
+        # Extract results
+        detected_boxes = []
         for result in results:
-            boxes = result.boxes
-            for box in boxes:
-                conf = box.conf[0].item()
-                if conf >= conf_thresh: 
-                    x1, y1, x2, y2 = map(int, box.xyxy[0]) 
+            # result.xyxy[0] contains the bounding boxes and scores for the first image in the batch
+            boxes = result.boxes.xyxy  # Get bounding boxes in xyxy format
+            confidences = result.boxes.conf  # Get confidence scores
+            classes = result.boxes.cls  # Get class labels
+            
+            for box, conf, cls in zip(boxes, confidences, classes):
+                x1, y1, x2, y2 = box.tolist()
+                if conf >= conf_thresh and int(cls) == 0:
+                    if format == "std":
+                        box = [int(x1), int(y1), int(x2), int(y2)]
+                    elif format == "yolo":
+                        h, w = img.shape[:2]
+                        x_center = (x1 + x2) / 2 / w
+                        y_center = (y1 + y2) / 2 / h
+                        width = (x2 - x1) / w
+                        height = (y2 - y1) / h
+                        box = [x_center, y_center, width, height]
+                    elif format == "coco":
+                        box = [int(x1), int(y1), int(x2 - x1), int(y2 - y1)]
+                    else:
+                        print(f"{format} is not a supported box format.")
+                        exit()
                     detected_boxes.append({
-                        'box': (x1, y1, x2, y2),
-                        'confidence': conf,  
-                        'class': int(box.cls[0])
+                        'image_id': os.path.basename(image_path),
+                        'bbox': box,  # Bounding box coordinates
+                        'score': float(conf),  # Confidence score
+                        'class': int(cls)  # Class label
                     })
 
-        if show: self.draw_detection(detected_boxes,img)
+        if show:
+            self.draw_detection(detected_boxes, img,thresh=conf_thresh, format=format)
 
         return detected_boxes
 
-    def draw_detection(self, detected_boxes, img, thresh = 0):
+    def draw_detection(self, detected_boxes, img, thresh=0, format="yolo"):
         for detected in detected_boxes:
-            x1, y1, x2, y2 = detected['box']
-            conf = detected['confidence']
+            conf = detected['score']
             cls = detected['class']
-            label = self.model.names[cls] 
-
+            label = self.model.names[cls]  # Get class name from model
+            
             if conf > thresh:
+                if format == "std":
+                    x1, y1, x2, y2 = detected['bbox']
+                elif format == "yolo":
+                    x_center, y_center, width, height = detected['bbox']
+                    h, w = img.shape[:2]
+                    x1 = int((x_center - width / 2) * w)
+                    y1 = int((y_center - height / 2) * h)
+                    x2 = int((x_center + width / 2) * w)
+                    y2 = int((y_center + height / 2) * h)
+                elif format == "coco":
+                    x1, y1, width, height = detected['bbox']
+                    x2 = x1 + width
+                    y2 = y1 + height
+                else:
+                    print(f"{format} is not a supported box format.")
+                    continue
+
+                # Draw the bounding box
                 cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.putText(img, f'{label} {conf:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        cv2.imshow('YOLOv8 Detection', img)
+        # Display the image with detections
+        cv2.imshow('Detection', img)
         while True:
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-            if cv2.getWindowProperty('YOLOv8 Detection', cv2.WND_PROP_VISIBLE) < 1:
+            if cv2.getWindowProperty('Detection', cv2.WND_PROP_VISIBLE) < 1:
                 break
         cv2.destroyAllWindows()
 
-if __name__ == "__main__":
+    def test_detect(self, yolo_path, conf_thresh=0):
+        # Get image files
+        img_files = glob.glob(os.path.join(yolo_path, "images", "test", '*.jpg'))
+        
+        # Initialize COCO structure
+        coco_format = {
+            "images": [],
+            "annotations": [],
+            "categories": [
+                {"id": 0, "name": "meerkat"}
+            ]
+        }
 
-    yolo = Yolo8(model_path="ObjectDetection/Yolo8/colab/train13/weights/best.pt")
+        annotation_id = 0
+
+        # Iterate over images
+        for image_id, img_file in enumerate(img_files):
+            # Add image information to COCO format
+            img_name = os.path.basename(img_file)
+            img_info = {
+                "id": image_id,
+                "file_name": img_name,
+                "height": cv2.imread(img_file).shape[0],
+                "width": cv2.imread(img_file).shape[1]
+            }
+            coco_format["images"].append(img_info)
+
+            # Get detections from the image
+            detections = self.sgl_detect(img_file, conf_thresh=conf_thresh,format="coco")  # Adjust conf_thresh as needed
+
+            # Add detections to COCO format
+            for detection in detections:
+                annotation = {
+                    "id": annotation_id,
+                    "image_id": image_id,
+                    "category_id": detection["class"],  # Class ID, assuming 0 for meerkats
+                    "bbox": detection["bbox"],  # YOLO bbox already in [x_min, y_min, width, height]
+                    "score": detection["score"],  # Detection confidence score
+                    "area": detection["bbox"][2] * detection["bbox"][3],  # bbox_width * bbox_height
+                    "iscrowd": 0,  # COCO requires this field, setting it to 0 (non-crowd)
+                    "segmentation": []  # If no segmentation, leave it empty
+                }
+                coco_format["annotations"].append(annotation)
+                annotation_id += 1
+
+        return coco_format
+
+if __name__ == "__main__":
+    # yolo = Yolo8(model_path="ObjectDetection/Yolo8/colab/train13/weights/best.pt")
+    yolo = Yolo8(model_size='n',pretrained=False)
     # print(yolo.inference_time(yolo_path="Data/Formated/yolo"))
-    detections = yolo.detect(image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg")
+    image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg"
+    # detections = yolo.sgl_detect(image_path,show=True, format="coco")
+    # print(yolo.test_detect(yolo_path='Data/Formated/yolo'))
+    print(yolo.evaluate(yolo_path='Data/Formated/yolo'))

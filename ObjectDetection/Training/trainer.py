@@ -4,6 +4,7 @@ import os
 import shutil
 import logging
 import yaml
+import traceback
 
 # READ CONFIG
 with open('ObjectDetection/Training/config_test.yaml', 'r') as file:
@@ -70,10 +71,11 @@ logging.info('Starting the training script.')
 
 # READ IN TRAINING CSV
 train_df = pd.read_csv(TRAINING_CSV)
-train_df['precision'] = None
-train_df['recall'] = None
+train_df['mAP5095'] = None
+train_df['mAP75'] = None
 train_df['mAP50'] = None
-train_df['mAP5090'] = None
+train_df['AR5095'] = None
+train_df['inference'] = None
 logging.info('Added testing columns to the training df')
 
 # SET STD TRAINING PARAMETERS
@@ -111,10 +113,11 @@ def update_train_csv(df, row_index, parameters,results):
         df.at[row_index, key] = value
 
     # add results
-    df.at[row_index, 'precision'] = results['metrics/precision(B)']
-    df.at[row_index, 'recall'] = results['metrics/recall(B)']
-    df.at[row_index, 'mAP50'] = results['metrics/mAP50(B)']
-    df.at[row_index, 'mAP5090'] = results['metrics/mAP50-95(B)']
+    df.at[row_index, 'mAP5095'] = results['mAP5095']
+    df.at[row_index, 'mAP75'] = results['mAP75']
+    df.at[row_index, 'mAP50'] = results['mAP50']
+    df.at[row_index, 'AR5095'] = results['AR5095']
+    df.at[row_index, 'inference'] = results['inference']
 
     return df
 
@@ -161,19 +164,22 @@ for index, row in train_df.iterrows():
             )
             logging.info(f'Trained {row["model"]}.')
 
-            # evaluate model
-            logging.info(f'Evaluating model {row["model"]}')
-            results = yolo.evaluate_model(data_path=yolo_path, model_path=os.path.join(models_path,"train","weights","best.pt"), task="test", save_path=os.path.join(models_path,"train"))
-
-             # move test images to correct folder
-            for filename in os.listdir(os.path.join(models_path,"train","exp")):
-                new_filename = filename.replace("val", "test")
-                if "confusion" in new_filename: new_filename = "test_" + new_filename
-                shutil.move(os.path.join(models_path,"train","exp", filename), os.path.join(os.path.join(models_path,"train", new_filename)))
-            shutil.rmtree(os.path.join(models_path,"train","exp")) 
-
         except Exception as e:
             logging.error(f'Error training {row["model"]}: {e}')
+
+        try:
+            # evaluate model
+            logging.info(f'Evaluating model {row["model"]}')
+            results = yolo.evaluate(YOLO_PATH,parameters["img_sz"],parameters["img_sz"])
+
+             # move test images to correct folder
+            # for filename in os.listdir(os.path.join(models_path,"train","exp")):
+            #     new_filename = filename.replace("val", "test")
+            #     if "confusion" in new_filename: new_filename = "test_" + new_filename
+            #     shutil.move(os.path.join(models_path,"train","exp", filename), os.path.join(os.path.join(models_path,"train", new_filename)))
+            # shutil.rmtree(os.path.join(models_path,"train","exp")) 
+        except Exception as e:
+            logging.error(f'Error evaluating {row["model"]}: {e}\n{traceback.format_exc()}')
 
     # YOLOV8
     if "yolo8" in row["model"]:
@@ -186,29 +192,31 @@ for index, row in train_df.iterrows():
             yolo.train(
                 dataset_path=yolo_path,
                 lr=float(parameters["lr"]),
-                augment=parameters["augment"],
+                augment=bool(parameters["augment"]),
                 epochs=int(parameters["epochs"]),
                 batch=int(parameters["batch"]),
-                img_sz=parameters["img_sz"],
+                img_sz=int(parameters["img_sz"]),
                 freeze=int(parameters["freeze"]),
                 optimizer=parameters["optimizer"],
                 save_path=models_path
             )
             logging.info(f'Trained {row["model"]}({row["id"]}).')
+        except Exception as e:
+            logging.error(f'Error training {row["model"]}: {e}\n{traceback.format_exc()}')
 
+        try:
             # evaluate model
             logging.info(f'Evaluating model {row["model"]}({row["id"]})')
-            results = yolo.evaluate_model(dataset_path=yolo_path, split="test")
+            results = yolo.evaluate(YOLO_PATH,parameters["img_sz"],parameters["img_sz"])
 
             # move test images to correct folder
-            for filename in os.listdir(os.path.join(models_path,"train2")):
-                new_filename = filename.replace("val", "test")
-                if "confusion" in new_filename: new_filename = "test_" + new_filename
-                shutil.move(os.path.join(os.path.join(models_path,"train2"), filename), os.path.join(os.path.join(models_path,"train", new_filename)))
-            shutil.rmtree(os.path.join(models_path,"train2")) 
-
+            # for filename in os.listdir(os.path.join(models_path,"train2")):
+            #     new_filename = filename.replace("val", "test")
+            #     if "confusion" in new_filename: new_filename = "test_" + new_filename
+            #     shutil.move(os.path.join(os.path.join(models_path,"train2"), filename), os.path.join(os.path.join(models_path,"train", new_filename)))
+            # shutil.rmtree(os.path.join(models_path,"train2")) 
         except Exception as e:
-            logging.error(f'Error training {row["model"]}({row["id"]}): {e}')
+            logging.error(f'Error evaluating {row["model"]}: {e}\n{traceback.format_exc()}')
 
     # Update the train_df with the actual parameters
     train_df = update_train_csv(train_df, index, parameters, results)
