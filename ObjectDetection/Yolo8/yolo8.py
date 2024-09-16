@@ -5,6 +5,7 @@ import os
 import glob
 import time
 import sys
+import math
 from ultralytics import YOLO
 
 # IMPORT EVAL
@@ -23,7 +24,7 @@ class Yolo8:
             if pretrained:
                 self.model = YOLO(yolo_path + "/yolov8" + model_size + ".pt")
             else:
-                self.model = YOLO(yolo_path + "/yolov8" + model_size + ".yaml")
+                self.model = YOLO("yolov8" + model_size + ".yaml")
         
     
     def freeze_layers(self, freeze):
@@ -152,26 +153,37 @@ class Yolo8:
         avg_inf = sum(inf_times)/len(inf_times)
 
         return avg_inf
-    
+
     def sgl_detect(self, image_path, show=False, conf_thresh=0, format="yolo"):
         img = cv2.imread(image_path)  # Read the image
+        if img is None:
+            raise ValueError(f"Image at {image_path} could not be loaded.")
+        
         results = self.model(img)  # Perform detection
 
         # Extract results
         detected_boxes = []
         for result in results:
-            # result.xyxy[0] contains the bounding boxes and scores for the first image in the batch
             boxes = result.boxes.xyxy  # Get bounding boxes in xyxy format
             confidences = result.boxes.conf  # Get confidence scores
             classes = result.boxes.cls  # Get class labels
             
             for box, conf, cls in zip(boxes, confidences, classes):
                 x1, y1, x2, y2 = box.tolist()
-                if conf >= conf_thresh and int(cls) == 0:
+
+                # Ensure the confidence score is valid
+                if conf is None or any(math.isnan(val) for val in [x1, y1, x2, y2]):
+                    continue  # Skip this bounding box if invalid
+
+                if conf >= conf_thresh and int(cls) == 0:  # Class 0 condition
+                    h, w = img.shape[:2]
+                    if w == 0 or h == 0:
+                        raise ValueError(f"Image dimensions are invalid: width={w}, height={h}")
+                    
+                    # YOLO format bounding box conversion
                     if format == "std":
                         box = [int(x1), int(y1), int(x2), int(y2)]
                     elif format == "yolo":
-                        h, w = img.shape[:2]
                         x_center = (x1 + x2) / 2 / w
                         y_center = (y1 + y2) / 2 / h
                         width = (x2 - x1) / w
@@ -182,17 +194,19 @@ class Yolo8:
                     else:
                         print(f"{format} is not a supported box format.")
                         exit()
+
                     detected_boxes.append({
                         'image_id': os.path.basename(image_path),
-                        'bbox': box,  # Bounding box coordinates
-                        'score': float(conf),  # Confidence score
-                        'class': int(cls)  # Class label
+                        'bbox': box,
+                        'score': float(conf),
+                        'class': int(cls)
                     })
 
         if show:
-            self.draw_detection(detected_boxes, img,thresh=conf_thresh, format=format)
+            self.draw_detection(detected_boxes, img, thresh=conf_thresh, format=format)
 
         return detected_boxes
+
 
     def draw_detection(self, detected_boxes, img, thresh=0, format="yolo"):
         for detected in detected_boxes:
@@ -280,7 +294,8 @@ class Yolo8:
 
 if __name__ == "__main__":
     # yolo = Yolo8(model_path="ObjectDetection/Yolo8/colab/train13/weights/best.pt")
-    yolo = Yolo8(model_size='n',pretrained=False)
+    yolo = Yolo8(model_size='n',pretrained=True)
+    yolo.train(batch=16,epochs=1,dataset_path="Data/Formated/yolo/dataset.yaml",augment=True)
     # print(yolo.inference_time(yolo_path="Data/Formated/yolo"))
     image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg"
     # detections = yolo.sgl_detect(image_path,show=True, format="coco")

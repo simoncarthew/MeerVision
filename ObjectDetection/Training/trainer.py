@@ -129,6 +129,8 @@ for index, row in train_df.iterrows():
 
     # SET PARAMETERS
     parameters, new_data = check_std(row)
+    for key in parameters:
+        print(key + " : " + str(parameters[key]))
     logging.info('Set parameters.')
 
     # SET MODEL_PATH
@@ -144,6 +146,8 @@ for index, row in train_df.iterrows():
         yolo_path = os.path.join(yolo_path,"dataset.yaml")
         logging.info(f'Created new YOLO dataset at {yolo_path}.')
 
+    trained = True
+
     # YOLOV5
     if "yolo5" in row["model"]:
         try:
@@ -151,17 +155,18 @@ for index, row in train_df.iterrows():
             size = row["model"][5:]
             yolo = Yolo5(model_size=size, pretrained=parameters["pretrained"])
             logging.info(f'Created {row["model"]} and starting training')
-            yolo.train(
-                data_path=yolo_path,
-                lr=float(parameters["lr"]),
-                augment=parameters["augment"],
-                epochs=int(parameters["epochs"]),
-                batch_size=int(parameters["batch"]),
-                img_sz=parameters["img_sz"],
-                freeze=int(parameters["freeze"]),
-                optimizer=parameters["optimizer"],
-                save_path=models_path
-            )
+            if parameters["epochs"] > 0:
+                yolo.train(
+                    data_path=yolo_path,
+                    lr=float(parameters["lr"]),
+                    augment=parameters["augment"],
+                    epochs=int(parameters["epochs"]),
+                    batch_size=int(parameters["batch"]),
+                    img_sz=parameters["img_sz"],
+                    freeze=int(parameters["freeze"]),
+                    optimizer=parameters["optimizer"],
+                    save_path=models_path
+                )
             logging.info(f'Trained {row["model"]}.')
 
         except Exception as e:
@@ -172,34 +177,29 @@ for index, row in train_df.iterrows():
             logging.info(f'Evaluating model {row["model"]}')
             results = yolo.evaluate(YOLO_PATH,parameters["img_sz"],parameters["img_sz"])
 
-             # move test images to correct folder
-            # for filename in os.listdir(os.path.join(models_path,"train","exp")):
-            #     new_filename = filename.replace("val", "test")
-            #     if "confusion" in new_filename: new_filename = "test_" + new_filename
-            #     shutil.move(os.path.join(models_path,"train","exp", filename), os.path.join(os.path.join(models_path,"train", new_filename)))
-            # shutil.rmtree(os.path.join(models_path,"train","exp")) 
         except Exception as e:
             logging.error(f'Error evaluating {row["model"]}: {e}\n{traceback.format_exc()}')
 
     # YOLOV8
-    if "yolo8" in row["model"]:
+    elif "yolo8" in row["model"]:
         try:
 
             # load and train
             size = row["model"][5:]
             yolo = Yolo8(model_size=size, pretrained=parameters["pretrained"])
             logging.info(f'Created {row["model"]}({row["id"]}) and starting training')
-            yolo.train(
-                dataset_path=yolo_path,
-                lr=float(parameters["lr"]),
-                augment=bool(parameters["augment"]),
-                epochs=int(parameters["epochs"]),
-                batch=int(parameters["batch"]),
-                img_sz=int(parameters["img_sz"]),
-                freeze=int(parameters["freeze"]),
-                optimizer=parameters["optimizer"],
-                save_path=models_path
-            )
+            if parameters["epochs"] > 0:
+                yolo.train(
+                    dataset_path=yolo_path,
+                    lr=float(parameters["lr"]),
+                    augment=bool(parameters["augment"]),
+                    epochs=int(parameters["epochs"]),
+                    batch=int(parameters["batch"]),
+                    img_sz=int(parameters["img_sz"]),
+                    freeze=int(parameters["freeze"]),
+                    optimizer=parameters["optimizer"],
+                    save_path=models_path
+                )
             logging.info(f'Trained {row["model"]}({row["id"]}).')
         except Exception as e:
             logging.error(f'Error training {row["model"]}: {e}\n{traceback.format_exc()}')
@@ -209,12 +209,6 @@ for index, row in train_df.iterrows():
             logging.info(f'Evaluating model {row["model"]}({row["id"]})')
             results = yolo.evaluate(YOLO_PATH,parameters["img_sz"],parameters["img_sz"])
 
-            # move test images to correct folder
-            # for filename in os.listdir(os.path.join(models_path,"train2")):
-            #     new_filename = filename.replace("val", "test")
-            #     if "confusion" in new_filename: new_filename = "test_" + new_filename
-            #     shutil.move(os.path.join(os.path.join(models_path,"train2"), filename), os.path.join(os.path.join(models_path,"train", new_filename)))
-            # shutil.rmtree(os.path.join(models_path,"train2")) 
         except Exception as e:
             logging.error(f'Error evaluating {row["model"]}: {e}\n{traceback.format_exc()}')
 
