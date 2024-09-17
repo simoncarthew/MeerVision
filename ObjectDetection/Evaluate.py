@@ -28,15 +28,15 @@ class EvaluateModel:
         # Save ground truth to temp file
         with open(temp_gt_path, 'w') as coco_file:
             json.dump(self.gt_detections, coco_file)
-        self.gt_detections = COCO(temp_gt_path)
+        self.gt_coco = COCO(temp_gt_path)
 
         # Save predicted detections to temp file
         with open(temp_pred_path, 'w') as coco_file:
             json.dump(self.pred_detections, coco_file)
-        self.pred_detections = COCO(temp_pred_path)
+        self.pred_coco = COCO(temp_pred_path)
 
         # Initialize COCO evaluation
-        self.coco_eval = COCOeval(self.gt_detections, self.pred_detections, 'bbox')
+        self.coco_eval = COCOeval(self.gt_coco, self.pred_coco, 'bbox')
 
         # remove temporary files
         os.remove(temp_gt_path)
@@ -118,6 +118,68 @@ class EvaluateModel:
 
         return predicted_coco
 
+    def calculate_iou(self, box1, box2):
+        """Calculate Intersection over Union (IoU) between two bounding boxes."""
+        x1, y1, w1, h1 = box1
+        x2, y2, w2, h2 = box2
+
+        # Calculate intersection
+        xi1 = max(x1, x2)
+        yi1 = max(y1, y2)
+        xi2 = min(x1 + w1, x2 + w2)
+        yi2 = min(y1 + h1, y2 + h2)
+        
+        inter_area = max(0, xi2 - xi1) * max(0, yi2 - yi1)
+        
+        # Calculate union
+        box1_area = w1 * h1
+        box2_area = w2 * h2
+        union_area = box1_area + box2_area - inter_area
+        
+        return inter_area / union_area if union_area > 0 else 0
+
+    def compute_precision_recall(self, predictions, ground_truths, iou_threshold=0.6):
+        tp, fp, fn = 0, 0, 0
+        used_gt = set()
+
+        # Convert COCO annotations to dictionary for easier access
+        gt_by_id = {gt['id']: gt for gt in ground_truths['annotations']}
+        
+        for pred in predictions['annotations']:
+            pred_box = pred['bbox']
+            pred_class = pred['category_id']
+            
+            best_iou = 0
+            best_gt = None
+            
+            for gt_id, gt in gt_by_id.items():
+                if gt_id in used_gt:
+                    continue
+                
+                gt_box = gt['bbox']
+                gt_class = gt['category_id']
+                
+                if pred_class == gt_class:
+                    iou = self.calculate_iou(pred_box, gt_box)
+                    if iou > best_iou:
+                        best_iou = iou
+                        best_gt = gt
+            
+            if best_gt is not None and best_iou >= iou_threshold:
+                tp += 1
+                used_gt.add(best_gt['id'])
+            else:
+                fp += 1
+        
+        fn = len(ground_truths['annotations']) - len(used_gt)
+        
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+        
+        f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+        
+        return precision, recall, f1
+
     def run_evaluation(self):
         """
         Run COCO evaluation and print results summary.
@@ -126,12 +188,17 @@ class EvaluateModel:
         self.coco_eval.accumulate()
         self.coco_eval.summarize()
 
+        precision, recall, f1 = self.compute_precision_recall(self.pred_detections,self.gt_detections)
+
         # Return evaluation stats with adjusted names
         results = {
             'mAP5095': self.coco_eval.stats[0],
             'mAP50': self.coco_eval.stats[1],
             'mAP75': self.coco_eval.stats[2],
             'AR5095': self.coco_eval.stats[8],
+            'precision':precision,
+            'recall':recall,
+            'f1':f1
         }
         
         return results

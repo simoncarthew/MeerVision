@@ -76,6 +76,9 @@ train_df['mAP75'] = None
 train_df['mAP50'] = None
 train_df['AR5095'] = None
 train_df['inference'] = None
+train_df['precision'] = None
+train_df['recall'] = None
+train_df['f1'] = None
 logging.info('Added testing columns to the training df')
 
 # SET STD TRAINING PARAMETERS
@@ -118,6 +121,9 @@ def update_train_csv(df, row_index, parameters,results):
     df.at[row_index, 'mAP50'] = results['mAP50']
     df.at[row_index, 'AR5095'] = results['AR5095']
     df.at[row_index, 'inference'] = results['inference']
+    df.at[row_index, 'precision'] = results['precision']
+    df.at[row_index, 'recall'] = results['recall']
+    df.at[row_index, 'f1'] = results['f1']
 
     return df
 
@@ -219,6 +225,8 @@ for index, row in train_df.iterrows():
     # Update the train_df with the actual parameters
     if trained:
         train_df = update_train_csv(train_df, index, parameters, results)
+        updated_train_csv_path = os.path.join(RESULTS_PATH, 'train.csv')
+        train_df.to_csv(updated_train_csv_path, index=False)
         logging.info('Updated the training results')
 
         # rename train directory
@@ -228,11 +236,13 @@ for index, row in train_df.iterrows():
             logging.info(f'Renamed results directory to model_{row["id"]}.')
         else:
             logging.error(f'Train directory not found: {train_dir}')
+    
+    if new_data:
+        shutil.rmtree(os.path.join(DATA_PATH,"yolo"))
 
     logging.info(f'Completed model {row["model"]}({row["id"]})')
-
 
 # SAVE UPDATED TRAINING_DF
 updated_train_csv_path = os.path.join(RESULTS_PATH, 'train.csv')
 train_df.to_csv(updated_train_csv_path, index=False)
-logging.info(f'Saved updated training CSV to {updated_train_csv_path}.')
+logging.info(f'Saved final training CSV to {updated_train_csv_path}.')
