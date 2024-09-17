@@ -8,6 +8,10 @@ import random
 import cv2
 from PIL import Image
 import yaml
+from torchvision import transforms
+from torchvision.datasets import CocoDetection
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 # PATHS
 MD_COCO = os.path.join("Data","MeerDown","raw","annotations.json")
@@ -444,7 +448,7 @@ class DataManager():
         if self.debug: print("Copied training images")
         self.merge_images(obs_val,md_val,self.obs_frames_path,self.md_frames_path,os.path.join(yolo_path,"images","val"),img_size=img_size)
         if self.debug: print("Copied validation images")
-        self.merge_images(md_test,obs_test,os.path.join("Data","MeerDown","raw","frames"),os.path.join("Data","Observed","frames"),os.path.join(yolo_path,"images","test"),img_size=img_size)
+        self.merge_images(md_test,obs_test,self.md_frames_path,self.obs_frames_path,os.path.join(yolo_path,"images","test"),img_size=img_size)
         if self.debug: print("Copied test images")
 
         # Create the .yaml file
@@ -458,13 +462,155 @@ class DataManager():
         }
         with open(os.path.join(yolo_path, 'dataset.yaml'), 'w') as yaml_file:
             yaml.dump(yaml_content, yaml_file, default_flow_style=False)
-        
-    def create_dataloaders(self):
-        pass
+
+    def create_cutouts_and_annotations(self, coco_data, uncut_images_path, cut_images_path, img_size):
+
+        new_annotations = {
+            "images": [],
+            "annotations": [],
+            "categories": coco_data["categories"],
+        }
+
+        annotation_id = 1 
+        for image_info in tqdm(coco_data["images"]):
+            img_id = image_info["id"]
+            img_path = os.path.join(uncut_images_path, image_info["file_name"])
+
+            # Load the image
+            img = Image.open(img_path).convert("RGB")
+
+            # Get all annotations for this image
+            img_annotations = [ann for ann in coco_data["annotations"] if ann["image_id"] == img_id]
+
+            for ann in img_annotations:
+                bbox = ann['bbox']  # COCO format is [x_min, y_min, width, height]
+                x_min, y_min, width, height = map(int, bbox)
+
+                # Cut out the bounding box from the image
+                cropped_img = img.crop((x_min, y_min, x_min + width, y_min + height))
+
+                # Resize the cropped image
+                resized_img = cropped_img.resize(img_size)
+
+                # Save the cropped image
+                cut_image_name = f"{img_id}_{annotation_id}.jpg"
+                cut_image_path = os.path.join(cut_images_path, cut_image_name)
+                resized_img.save(cut_image_path)
+
+                # Add new image entry to COCO annotations
+                new_image_info = {
+                    "id": annotation_id,
+                    "file_name": cut_image_name,
+                    "width": img_size[0],
+                    "height": img_size[1],
+                }
+                new_annotations["images"].append(new_image_info)
+
+                # Add new annotation for this cutout
+                new_annotation = {
+                    "id":annotation_id,
+                    "image_id": annotation_id,
+                    "category_id": ann['category_id'],  # Keep the same category
+                    "area": img_size[0] * img_size[1],  # Area of the resized bbox
+                    "iscrowd": ann['iscrowd'],
+                }
+                new_annotations["annotations"].append(new_annotation)
+
+                annotation_id += 1
+
+        return new_annotations
+
+    def create_class_dataloaders(self, raw_path, batch = 32, num_workers=8, obs_no = -1, md_z1_trainval_no = 2000, md_z2_trainval_no = 2000, md_test_no = 0, img_size = (64,64), new_cuts = False):        
+        # filter datasets to create coco_annotations for obs and md
+        obs_train, obs_val, obs_test = self.filter_observed(obs_no)
+        if self.debug: print("Filtered observed.")
+        md_train, md_val, md_test = self.filter_md(md_z1_trainval_no, md_z2_trainval_no, md_test_no)
+        if self.debug: print("Filtered MeerDown.")
+
+        # merge to create coco annotations for train test and val
+        train = self.merge_coco(obs_train, md_train)
+        val = self.merge_coco(obs_val, md_val)
+        test = self.merge_coco(obs_test, md_test)
+        if self.debug: print("Mereged datasets.")
+
+        # set paths
+        cut_images_path = os.path.join(raw_path, "cut_images")
+        cut_train_path = os.path.join(cut_images_path, "train")
+        cut_val_path = os.path.join(cut_images_path, "val")
+        cut_test_path = os.path.join(cut_images_path, "test")
+        train_ann_file = os.path.join(cut_train_path, 'train_coco.json')
+        val_ann_file = os.path.join(cut_val_path, 'val_coco.json')
+        test_ann_file = os.path.join(cut_test_path, 'test_coco.json')
+
+        if new_cuts:
+            # create raw image folder
+            uncut_images_path = os.path.join(raw_path,"uncut_images")
+            if os.path.exists(uncut_images_path):
+                shutil.rmtree(uncut_images_path)
+            Path(uncut_images_path).mkdir(parents=True, exist_ok=True)
+
+            # store images
+            if self.debug: print("Copying images to new folder")
+            self.merge_images(obs_train,md_train,self.obs_frames_path,self.md_frames_path,os.path.join(uncut_images_path,"train"),img_size=None)
+            if self.debug: print("Copied training images")
+            self.merge_images(obs_val,md_val,self.obs_frames_path,self.md_frames_path,os.path.join(uncut_images_path,"val"),img_size=None)
+            if self.debug: print("Copied validation images")
+            self.merge_images(md_test,obs_test,self.md_frames_path,self.obs_frames_path,os.path.join(uncut_images_path,"test"),img_size=None)
+            if self.debug: print("Copied test images")
+
+            # create the new paths
+            if os.path.exists(cut_images_path):
+                shutil.rmtree(cut_images_path)
+            Path(cut_images_path).mkdir(parents=True, exist_ok=True)
+            Path(cut_train_path).mkdir(parents=True, exist_ok=True)
+            Path(cut_val_path).mkdir(parents=True, exist_ok=True)
+            Path(cut_test_path).mkdir(parents=True, exist_ok=True)
+
+            # cut images and create annotations file
+            if self.debug: print("Starting to create cutout images and new annotations.")
+            cut_train = self.create_cutouts_and_annotations(train, os.path.join(uncut_images_path,"train"), cut_train_path, img_size)
+            if self.debug: print("Finnished cutting train.")
+            cut_val = self.create_cutouts_and_annotations(val, os.path.join(uncut_images_path,"val"), cut_val_path, img_size)
+            if self.debug: print("Finnished cutting val.")
+            cut_test = self.create_cutouts_and_annotations(test, os.path.join(uncut_images_path,"test"), cut_test_path, img_size)
+            if self.debug: print("Finnished cutting test.")
+            if self.debug: print("Finished creating cutout images and new annotations.")
+
+            # save the new annotations
+            with open(train_ann_file, "w") as f:
+                json.dump(cut_train, f, indent=4)
+            with open(val_ann_file, "w") as f:
+                json.dump(cut_val, f, indent=4)
+            with open(test_ann_file, "w") as f:
+                json.dump(cut_test, f, indent=4)
+
+        if os.path.exists(cut_images_path):
+            # define simple transform
+            transform = transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # ImageNet normalization
+            ])
+
+            # load the coco_annotations as coco_datasets
+            train_dataset = CocoDetection(root=cut_train_path, annFile=train_ann_file, transform=transform)
+            val_dataset = CocoDetection(root=cut_val_path, annFile=val_ann_file, transform=transform)
+            test_dataset = CocoDetection(root=cut_test_path, annFile=test_ann_file, transform=transform)
+
+            # create dataloaders
+            train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True, num_workers=num_workers)
+            val_loader = DataLoader(val_dataset, batch_size=batch, shuffle=True, num_workers=num_workers)
+            test_loader = DataLoader(test_dataset, batch_size=batch, shuffle=True, num_workers=num_workers)
+        else:
+            raise FileNotFoundError(f"{cut_images_path} not found")
+
+        return train_loader, val_loader, test_loader
+
 
 if __name__ == "__main__":
     dm = DataManager()
-    dm.create_yolo_dataset(50,50,50,0,"Data/SmallTest/yolo")
+    # dm.create_yolo_dataset(50,50,50,0,"Data/SmallTest/yolo")
+    train_loader, val_loader, test_loader = dm.create_class_dataloaders("Data/Classification",obs_no=50,md_z1_trainval_no=50,md_z2_trainval_no=50,md_test_no=0,new_cuts=True)
     # dm.create_yolo_dataset()
     # dm.view_yolo_annotations("Data/Formated/yolo/images/test","Data/Formated/yolo/labels/test",10)
 

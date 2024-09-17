@@ -266,6 +266,6 @@ if __name__ == "__main__":
     
     # print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
     # print(yolo.cust_evaluate(yolo_path="Data/Formated/yolo"))
-    print(yolo.sgl_detect("Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg", show = True,format="std"))
-
-    # print(yolo.evaluate(os.path.join('Data','Formated','yolo')))
+    # print(yolo.sgl_detect("Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg", show = True,format="std"))
+    print(yolo.native_evaluate(os.path.join('Data','Formated','yolo','dataset.yaml'), model_path, save_path='ObjectDetection/Yolo5/testing', task="test"))
+    print(yolo.evaluate(os.path.join('Data','Formated','yolo')))
