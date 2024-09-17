@@ -9,8 +9,14 @@ import cv2
 from PIL import Image
 import yaml
 
+# PATHS
+MD_COCO = os.path.join("Data","MeerDown","raw","annotations.json")
+MD_FRAMES = os.path.join("Data","MeerDown","raw","frames")
+OBS_COCO = os.path.join("Data","Observed","annotations.json")
+OBS_FRAMES = os.path.join("Data","Observed","frames")
+
 class DataManager():
-    def __init__(self, perc_val = 0.2 , md_coco_path = os.path.join("Data","MeerDown","raw","annotations.json"), md_frames_path = os.path.join("Data","MeerDown","raw","frames"), obs_coco_path = os.path.join("Data","Observed","annotations.json"), obs_frames_path = os.path.join("Data","Observed","frames"), debug = True):
+    def __init__(self, perc_val = 0.2 , md_coco_path = MD_COCO, md_frames_path = MD_FRAMES, obs_coco_path = OBS_COCO, obs_frames_path = OBS_FRAMES, debug = True):
         # set class variables
         self.perc_val, self.debug = perc_val, debug
         self.obs_frames_path = obs_frames_path
