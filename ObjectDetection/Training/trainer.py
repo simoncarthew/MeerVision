@@ -5,9 +5,15 @@ import shutil
 import logging
 import yaml
 import traceback
+import argparse
+
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description='YOLOv5 Training Script with Config')
+parser.add_argument('--config', type=str, required=True, help='Path to the configuration YAML file')
+args = parser.parse_args()
 
 # READ CONFIG
-with open(os.path.join('ObjectDetection','Training','config.yaml'), 'r') as file:
+with open(args.config, 'r') as file:
     config = yaml.safe_load(file)
 
 # GLOBALS PATHS

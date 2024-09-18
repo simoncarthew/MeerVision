@@ -269,7 +269,7 @@ if __name__ == "__main__":
     # for file in jpg_files:
     #     print(yolo.detect(image_path=file, show=True))
     print("Starting Training")
-    yolo.train(data_path='/scratch/crtsim008/Formated/yolo/dataset.yaml',epochs=2,batch_size=32)
+    yolo.train(data_path='/scratch/crtsim008/Formated/yolo/dataset.yaml',epochs=10,batch_size=32)
     print("Finnished Training")
     # print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
     # print(yolo.cust_evaluate(yolo_path="Data/Formated/yolo"))
