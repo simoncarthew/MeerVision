@@ -114,7 +114,6 @@ pyrate-limiter==2.10.0
 python-dateutil==2.9.0.post0
 python-forge==18.6.0
 python-multipart==0.0.9
-PytorchWildlife==1.0.2.16
 pytz==2024.1
 PyYAML==6.0.2
 requests==2.32.3
