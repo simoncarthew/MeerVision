@@ -263,7 +263,7 @@ if __name__ == "__main__":
     # yolo = Yolo5(model_size='s',model_path=model_path)
     # print("Previous Model Loaded")
     print("Loading new Model")
-    yolo = Yolo5(model_size='s')
+    yolo = Yolo5(model_size='m')
     print("New Model Loaded")
     # jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
     # for file in jpg_files:
