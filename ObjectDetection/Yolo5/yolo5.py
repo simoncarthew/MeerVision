@@ -257,7 +257,7 @@ class Yolo5:
 if __name__ == "__main__":
 
     # Example usage
-    model_path = "ObjectDetection/Yolo5/train/weights/best.pt"
+    model_path = "ObjectDetection/Yolo5/best.pt"
     # model_path = "ObjectDetection/Yolo5/md_v5b.0.0.pt"
     yolo = Yolo5(model_size='s',model_path=model_path)
     # jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
@@ -267,5 +267,5 @@ if __name__ == "__main__":
     # print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
     # print(yolo.cust_evaluate(yolo_path="Data/Formated/yolo"))
     # print(yolo.sgl_detect("Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg", show = True,format="std"))
-    print(yolo.native_evaluate(os.path.join('Data','Formated','yolo','dataset.yaml'), model_path, save_path='ObjectDetection/Yolo5/testing', task="test"))
-    print(yolo.evaluate(os.path.join('Data','Formated','yolo')))
+    # print(yolo.native_evaluate(os.path.join('Data','Formated','yolo','dataset.yaml'), model_path, save_path='ObjectDetection/Yolo5/testing', task="test"))
+    # print(yolo.evaluate(os.path.join('Data','Formated','yolo')))
