@@ -505,7 +505,7 @@ class DataManager():
                     "height": img_size[1],
                 }
                 new_annotations["images"].append(new_image_info)
-
+                
                 # Add new annotation for this cutout
                 new_annotation = {
                     "id":annotation_id,
@@ -520,7 +520,7 @@ class DataManager():
 
         return new_annotations
 
-    def create_class_dataloaders(self, raw_path, batch = 32, num_workers=8, obs_no = -1, md_z1_trainval_no = 2000, md_z2_trainval_no = 2000, md_test_no = 0, img_size = (64,64), new_cuts = False):        
+    def create_class_dataloaders(self, raw_path, batch = 32, num_workers=8, obs_no = -1, md_z1_trainval_no = 2000, md_z2_trainval_no = 2000, md_test_no = 0, img_size = (64,64), new_cuts = False, behaviour = False):        
         # filter datasets to create coco_annotations for obs and md
         obs_train, obs_val, obs_test = self.filter_observed(obs_no)
         if self.debug: print("Filtered observed.")
@@ -610,7 +610,7 @@ class DataManager():
 if __name__ == "__main__":
     dm = DataManager()
     # dm.create_yolo_dataset(50,50,50,0,"Data/SmallTest/yolo")
-    train_loader, val_loader, test_loader = dm.create_class_dataloaders("Data/Classification",obs_no=50,md_z1_trainval_no=50,md_z2_trainval_no=50,md_test_no=0,new_cuts=True)
+    train_loader, val_loader, test_loader = dm.create_class_dataloaders("Data/Classification",obs_no=-1,md_z1_trainval_no=2000,md_z2_trainval_no=2000,md_test_no=0,new_cuts=True)
     # dm.create_yolo_dataset()
     # dm.view_yolo_annotations("Data/Formated/yolo/images/test","Data/Formated/yolo/labels/test",10)
 

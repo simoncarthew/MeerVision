@@ -137,6 +137,26 @@ class MeerDown():
                         # Increment image ID
                         image_id += 1
 
+                    # {
+                    #     "1": "Moving",
+                    #     "2": "Lying/resting (stationary)",
+                    #     "3": "Raised Guarding (Vigilant)",
+                    #     "4": "Sunbathe",
+                    #     "5": "Foraging",
+                    #     "6": "High sitting/standing (Vigilant)",
+                    #     "7": "Low sitting/standing (stationary)",
+                    #     "8": "Groom",
+                    #     "9": "Allogroom",
+                    #     "10": "Interacting with foreign object",
+                    #     "11": "Playfight",
+                    #     "12": "Dig burrow",
+                    #     "13": "Human Interaction",
+                    #     "14": "Interact with pup",
+                    #     "15": "Carry pup",
+                    #     "16": "None"
+                    # }
+                    # if int(row['behaviour_index']) in [3,5]:
+                    
                     # Add annotation
                     annotation_info = {
                         "id": annotation_id,

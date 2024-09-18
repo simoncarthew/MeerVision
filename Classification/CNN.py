@@ -4,6 +4,12 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 import torch.nn.functional as F
+import sys
+import os
+
+sys.path.append(os.path.join('Data'))
+
+from DataManager import DataManager
 
 class CNN(nn.Module):
     def __init__(self, input_channels=3, num_classes=1, layers=None):
@@ -120,7 +126,7 @@ class Trainer:
     
     def predict(self, image):
         self.model.eval()
-        image = image.unsqueeze(0).to(self.device)  # Add batch dimension
+        image = image.unsqueeze(0).to(self.device) 
         with torch.no_grad():
             outputs = self.model(image)
             _, predicted = torch.max(outputs, 1)
