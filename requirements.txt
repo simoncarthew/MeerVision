@@ -155,7 +155,6 @@ typing_extensions==4.12.2
 tzdata==2024.1
 ultralytics==8.2.78
 ultralytics-thop==2.0.2
-ultralytics-yolov5==0.1.1
 url-normalize==1.4.3
 urllib3==2.2.2
 uvicorn==0.30.6
