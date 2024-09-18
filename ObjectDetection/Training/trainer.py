@@ -8,7 +8,7 @@ import traceback
 import argparse
 
 # Parse command-line arguments
-parser = argparse.ArgumentParser(description='YOLOv5 Training Script with Config')
+parser = argparse.ArgumentParser(description='Training Script with Config')
 parser.add_argument('--config', type=str, required=True, help='Path to the configuration YAML file')
 args = parser.parse_args()
 

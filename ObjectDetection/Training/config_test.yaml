@@ -11,13 +11,13 @@ paths:
   yolo8_path: 'ObjectDetection/Yolo8'
 
 parameters:
-  batch: 32
+  batch: 64
   lr: 0.01
   augment: True
   percval: 0.2
   freeze: 0
   pretrained: True
-  epochs: 10
+  epochs: 2
   obs_no: -1
   md_z1_trainval: 1000
   md_z2_trainval: 1000
