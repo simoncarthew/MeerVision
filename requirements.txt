@@ -95,7 +95,7 @@ pexpect==4.9.0
 pillow==10.4.0
 platformdirs==4.2.2
 prompt_toolkit==3.0.47
-protobuf==3.20.1
+protobuf
 psutil==6.0.0
 ptyprocess==0.7.0
 pure_eval==0.2.3
@@ -155,6 +155,7 @@ typing_extensions==4.12.2
 tzdata==2024.1
 ultralytics==8.2.78
 ultralytics-thop==2.0.2
+ultralytics-yolov5==0.1.1
 url-normalize==1.4.3
 urllib3==2.2.2
 uvicorn==0.30.6
