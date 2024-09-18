@@ -257,11 +257,11 @@ class Yolo5:
 if __name__ == "__main__":
 
     # Example usage
-    model_path = "ObjectDetection/Yolo5/best.pt"
+    # model_path = "ObjectDetection/Yolo5/best.pt"
     # model_path = "ObjectDetection/Yolo5/md_v5b.0.0.pt"
-    print("Loading Previous Model")
-    yolo = Yolo5(model_size='s',model_path=model_path)
-    print("Previous Model Loaded")
+    # print("Loading Previous Model")
+    # yolo = Yolo5(model_size='s',model_path=model_path)
+    # print("Previous Model Loaded")
     print("Loading new Model")
     yolo = Yolo5(model_size='s')
     print("New Model Loaded")
