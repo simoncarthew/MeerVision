@@ -1,5 +1,5 @@
 paths:
-  training: 'ObjectDetection/Training/train_yolo5.csv'
+  training: 'ObjectDetection/Training/train_yolo8.csv'
   results: 'ObjectDetection/Training/Results'
   yolo: '/scratch/crtsim008/Formated/yolo'
   meerdown_frame: '/scratch/crtsim008/MeerDown/frames'
