@@ -81,10 +81,10 @@ train_df['mAP5095'] = None
 train_df['mAP75'] = None
 train_df['mAP50'] = None
 train_df['AR5095'] = None
-train_df['inference'] = None
 train_df['precision'] = None
 train_df['recall'] = None
 train_df['f1'] = None
+train_df['inference'] = None
 logging.info('Added testing columns to the training df')
 
 # SET STD TRAINING PARAMETERS
