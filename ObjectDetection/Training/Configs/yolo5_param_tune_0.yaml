@@ -1,6 +1,6 @@
 paths:
-  training: 'ObjectDetection/Training/train_test.csv'
-  results: 'ObjectDetection/Training/Results'
+  training: 'ObjectDetection/Training/Parameters/yolo5_param_tune_0.csv'
+  results: '/scratch/crtsim008/Results'
   yolo: '/scratch/crtsim008/Formated/yolo'
   meerdown_frame: '/scratch/crtsim008/MeerDown/frames'
   meerdown_annot: '/scratch/crtsim008/MeerDown/annotations.json'
@@ -11,13 +11,13 @@ paths:
   yolo8_path: 'ObjectDetection/Yolo8'
 
 parameters:
-  batch: 64
+  batch: 32
   lr: 0.01
   augment: True
   percval: 0.2
   freeze: 0
   pretrained: True
-  epochs: 1
+  epochs: 30
   obs_no: -1
   md_z1_trainval: 1000
   md_z2_trainval: 1000
