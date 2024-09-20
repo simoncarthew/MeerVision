@@ -188,6 +188,8 @@ for index, row in train_df.iterrows():
         try:
             # evaluate model
             logging.info(f'Evaluating model {row["model"]}')
+            best_path = os.path.join(models_path, 'train','weights','best.pt')
+            yolo = Yolo5(model_path = best_path)
             results = yolo.evaluate(yolo_dir_path,parameters["img_sz"],parameters["img_sz"])
 
         except Exception as e:
@@ -222,6 +224,8 @@ for index, row in train_df.iterrows():
         try:
             # evaluate model
             logging.info(f'Evaluating model {row["model"]}({row["id"]})')
+            best_path = os.path.join(models_path, 'train','weights','best.pt')
+            yolo = Yolo8(model_path = best_path)
             results = yolo.evaluate(yolo_dir_path,parameters["img_sz"],parameters["img_sz"])
 
         except Exception as e:

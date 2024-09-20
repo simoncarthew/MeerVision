@@ -9,4 +9,5 @@ venv
 *.pyc
 events.*
 *.zip
+ObjectDetection/Training/Results
 Housing/Dimensions

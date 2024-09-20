@@ -260,15 +260,17 @@ if __name__ == "__main__":
     # model_path = "ObjectDetection/Yolo5/best.pt"
     # model_path = 'ObjectDetection/Yolo5/hpc/first.pt'
     # model_path = "ObjectDetection/Yolo5/md_v5b.0.0.pt"
+    # model_path = "ObjectDetection/Yolo5/train/weights/best.pt"
+    model_path = "ObjectDetection/Training/Results/yolo5_first_test/models/model_0/weights/best.pt"
     # print("Loading Previous Model")
-    # yolo = Yolo5(model_path=model_path)
+    yolo = Yolo5(model_path=model_path)
     # print("Previous Model Loaded")
     # print("Loading new Model")
     # yolo = Yolo5(model_size='s')
     # print("New Model Loaded")
-    # jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
-    # for file in jpg_files:
-    #     print(yolo.sgl_detect(image_path=file, show=True))
+    jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
+    for file in jpg_files:
+        print(yolo.sgl_detect(image_path=file, show=True))
     # print("Starting Training")
     # yolo.train(data_path='/scratch/crtsim008/Formated/yolo/dataset.yaml',epochs=30,batch_size=32)
     # print("Finnished Training")
@@ -278,11 +280,11 @@ if __name__ == "__main__":
     # print(yolo.native_evaluate(os.path.join('Data','Formated','yolo','dataset.yaml'), model_path, save_path='ObjectDetection/Yolo5/testing', task="test"))
     # print(yolo.evaluate(os.path.join('Data','Formated','yolo')))
 
-    yolo = Yolo5(model_size='s')
-    yolo.train(data_path='/scratch/crtsim008/Formated/yolo/dataset.yaml',epochs=20,batch_size=32)
+    # yolo = Yolo5(model_size='s')
+    # yolo.train(data_path='/scratch/crtsim008/Formated/yolo/dataset.yaml',epochs=20,batch_size=32)
 
-    yolo = Yolo5(model_size='m')
-    yolo.train(data_path='/scratch/crtsim008/Formated/yolo/dataset.yaml',epochs=20,batch_size=32)
+    # yolo = Yolo5(model_size='m')
+    # yolo.train(data_path='/scratch/crtsim008/Formated/yolo/dataset.yaml',epochs=20,batch_size=32)
 
-    yolo = Yolo5(model_size='l')
-    yolo.train(data_path='/scratch/crtsim008/Formated/yolo/dataset.yaml',epochs=20,batch_size=32)
+    # yolo = Yolo5(model_size='l')
+    # yolo.train(data_path='/scratch/crtsim008/Formated/yolo/dataset.yaml',epochs=20,batch_size=32)

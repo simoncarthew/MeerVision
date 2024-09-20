@@ -6,7 +6,7 @@ import multiprocessing as mp
 import cv2
 
 class MeerDown():
-    def __init__(self, annotations_folder, videos_folder, output_folder, sampling_rate=30):
+    def __init__(self, annotations_folder, videos_folder, output_folder, sampling_rate=30, name = "annotations.json"):
         self.annotations_folder = annotations_folder
         self.videos_folder = videos_folder
         self.output_folder = output_folder
@@ -21,7 +21,7 @@ class MeerDown():
         print("Loaded video files.")
         
         # create or load annotations folder
-        coco_path = os.path.join(self.output_folder,"annotations.json")
+        coco_path = os.path.join(self.output_folder,name)
         self.annot_exists = False
         if os.path.exists(coco_path):
             with open(coco_path, 'r') as f:
@@ -137,26 +137,13 @@ class MeerDown():
                         # Increment image ID
                         image_id += 1
 
-                    # {
-                    #     "1": "Moving",
-                    #     "2": "Lying/resting (stationary)",
-                    #     "3": "Raised Guarding (Vigilant)",
-                    #     "4": "Sunbathe",
-                    #     "5": "Foraging",
-                    #     "6": "High sitting/standing (Vigilant)",
-                    #     "7": "Low sitting/standing (stationary)",
-                    #     "8": "Groom",
-                    #     "9": "Allogroom",
-                    #     "10": "Interacting with foreign object",
-                    #     "11": "Playfight",
-                    #     "12": "Dig burrow",
-                    #     "13": "Human Interaction",
-                    #     "14": "Interact with pup",
-                    #     "15": "Carry pup",
-                    #     "16": "None"
-                    # }
-                    # if int(row['behaviour_index']) in [3,5]:
-                    
+                    if int(row["behaviour_index"]) in [3,6]:
+                        behaviour = 0
+                    elif int(row["behaviour_index"]) in [5]:
+                        behaviour = 1
+                    else:
+                        behaviour = 2
+
                     # Add annotation
                     annotation_info = {
                         "id": annotation_id,
@@ -164,6 +151,7 @@ class MeerDown():
                         "category_id": 1,
                         "bbox": [row['x1'], row['y1'], row['x2'] - row['x1'], row['y2'] - row['y1']],
                         "area": (row['x2'] - row['x1']) * (row['y2'] - row['y1']),
+                        "behaviour": behaviour,
                         "iscrowd": 0
                     }
                     self.coco["annotations"].append(annotation_info)
@@ -173,8 +161,8 @@ class MeerDown():
 
                 print("Completed " + video_name + " annotations.")
 
-    def save_coco_file(self):
-        with open(os.path.join(self.output_folder, "annotations.json"), 'w') as f:
+    def save_coco_file(self, name = "annotations.json"):
+        with open(os.path.join(self.output_folder, name), 'w') as f:
             json.dump(self.coco, f, indent=4)
 
     def process_videos(self):
@@ -260,7 +248,7 @@ class MeerDown():
 
 
 if __name__ == "__main__":
-    md = MeerDown("Data/MeerDown/origin/Annotations","Data/MeerDown/origin/Annotated_videos","Data/MeerDown/raw")
+    md = MeerDown("Data/MeerDown/origin/Annotations","Data/MeerDown/origin/Annotated_videos","Data/MeerDown/raw", name="behaviour_annotations.json")
     md.create_coco_annotations()
-    md.save_coco_file()
+    md.save_coco_file(name="behaviour_annotations.json")
     # md.view_annotations()

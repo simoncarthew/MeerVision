@@ -1,0 +1,91 @@
+## INTRODUCTION
+#### PROBLEM STATEMENT
+#### OBJECTIVES
+* build a robust camera trap 
+* investigate the feasibility of computer vision techniques to extract visual information from the images\
+#### SCOPE AND LIMITATIONS
+#### PROJECT DEVELOPMENT
+
+## LITERATURE REVIEW
+#### KALAHARI MEERKATS
+#### WILD LIFE MONITORING
+#### IMAGE CLASSIFICATION
+#### OBJECT DETECTION
+#### BEHAVIOUR AND TRACKING
+#### DEPTH ESTIMATION
+#### ON-BOARD PROCESSING
+
+## THEORETICAL BACKGROUND
+#### MICRO CONTROLLERS AND CAMERAS
+#### CNNS
+#### YOLO
+#### MEGADETECTOR
+#### EVALUATION METRICS
+
+## SYSTEM REQUIREMENTS
+Deployment Times
+Usability functions
+Robustness
+Minimum inference times to make onboard processing viable
+## CAMERA TRAP DESIGN
+#### DESIGN CHOICES
+Processing unit
+Camera
+Triggering
+Power
+Housing
+#### SUBSYSTEM DESCRIPTIONS
+#### SYSTEMS DIAGRAM
+## INVESTIGATED PROCESSING PIPELINES
+
+### DATA
+Acquisition
+Type of images present in datasets
+Benefits and drawbacks of each dataset
+Processing (raw to desired format)
+Diagrams of processing (directories and what they look like afterwards would look cool)
+### DETECTION
+#### YOLO
+Potential benefits and drawbacks
+Versions implemented and why
+How they are implemented (libraries used)
+What functionality is available
+Training
+#### MEGADETECTOR + CLASSIFIER
+Brief intro on how the megadetector and classifier compliment each other to form meerkat specific detection
+Potential benefits and drawbacks of this method
+How the megadetector is implemented
+How the classifier is implemented
+### BEHAVIOUR CLASSIFICATION
+How the previously explained implementation of the classifier can be extended to behaviour classification
+Implement only static classifier as a means to find out if temporal information is required to classify meerkat behaviour
+
+## TESTING PROCEDURES
+### CAMERA TRAP
+All tests will be run using a script that can be run through the gui and the results are saved to a CSV upon completion.
+
+| Tested Metric   | Varied parameters          | Procedure                                                                             |
+| --------------- | -------------------------- | ------------------------------------------------------------------------------------- |
+| Deployment Time | FPS (0.5 / 1 / 2)<br>Solar | Place in the garden with set parameters and start recording.                          |
+| Inference Times | Models used                | Perform inference on all test images and get average inference times for every model. |
+
+### MEERKAT DETECTION
+#### DESCRIPTION
+Varying sized yolo5 and yolo8 models are trained with different training parameters and training data.
+#### HYPER PARAMETER TUNING
+Training parameters and training data will be varied across the smallest versions of yolo5 and yolo8
+Report on best parameters found for yolo5 and 8
+#### BEST MODEL
+Best training parameters used to train larger models of yolo5 and yolo8
+Plot mAP on val vs test to show overfitting if present (not necessary for all just show examples of overfit and not overfit)
+Use evaluation metrics mAP50, mAP50-90, P, R from test images to interpret performance changes across models (Bar graphs probably make sense)
+### BEHAVIOUR RECOGNITION
+This is still under consideration
+Deciding between custom CNN or test different architectures
+Architectures more likely cause easy results
+
+## RESULTS AND DISCUSSION
+
+## CONCLUSION
+
+## FUTURE RECOMMENDATIONS

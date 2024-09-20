@@ -1,4 +1,2 @@
 id,model,batch,lr,freeze,pretrained,augment,epochs,percval,obs_no,md_z1_trainval,md_z2_trainval,md_test_no,optimizer,img_sz
 0,yolo8n,std,std,std,std,std,std,std,std,std,std,std,std,std
-1,yolo8s,std,std,std,std,std,std,std,std,std,std,std,std,std
-2,yolo8m,std,std,std,std,std,std,std,std,std,std,std,std,std

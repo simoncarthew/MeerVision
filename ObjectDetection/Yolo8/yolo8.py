@@ -293,13 +293,14 @@ class Yolo8:
         return coco_format
 
 if __name__ == "__main__":
-    
-    print("Loading Pretrained Model")
-    yolo = Yolo8(model_size='n',pretrained=True)
-    print("Loaded Pretrained Model")
-    yolo.train(batch=32,epochs=5,dataset_path="/scratch/crtsim008/Formated/yolo/dataset.yaml",augment=True)
+    model_path = "ObjectDetection/Training/Results/yolo8_first_test/models/model_0/weights/last.pt"
+    yolo = Yolo8(model_path=model_path)
+    # print("Loading Pretrained Model")
+    # yolo = Yolo8(model_size='n',pretrained=True)
+    # print("Loaded Pretrained Model")
+    # yolo.train(batch=32,epochs=5,dataset_path="/scratch/crtsim008/Formated/yolo/dataset.yaml",augment=True)
     # print(yolo.inference_time(yolo_path="Data/Formated/yolo"))
     # image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg"
     # detections = yolo.sgl_detect(image_path,show=True, format="coco")
     # print(yolo.test_detect(yolo_path='Data/Formated/yolo'))
-    # print(yolo.evaluate(yolo_path='Data/Formated/yolo'))
+    print(yolo.evaluate(yolo_path='Data/Formated/yolo'))
