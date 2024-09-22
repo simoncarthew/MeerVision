@@ -31,7 +31,7 @@ class LCD:
         # Display the image
         self.device.display(image)
 
-    def display_scroll_wheel(self, yellow_text, content, is_number=True):
+    def display_scroll_wheel(self, yellow_text, content):
         # Create blank image with black background
         image = Image.new('1', (self.device.width, self.device.height), 0)
         draw = ImageDraw.Draw(image)
