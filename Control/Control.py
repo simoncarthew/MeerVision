@@ -17,11 +17,11 @@ class Control:
 if __name__ == "__main__":
     control = Control()
     while True:
-        control.lcd.display_centered_text("YELLOW TEXT", "BLUE TEXT")
+        control.lcd.centered_text("YELLOW TEXT", "BLUE TEXT")
         sleep(2)
-        control.lcd.display_scroll_wheel("NUMBER SCROLL",10)
+        control.lcd.scroll_wheel("NUMBER SCROLL",10)
         sleep(2)
-        control.lcd.display_scroll_wheel("TEXT SCROLL","ITEM 1")
+        control.lcd.scroll_wheel("TEXT SCROLL","ITEM 1")
         sleep(2)
     # while True:
     #     sleep(0.5)
