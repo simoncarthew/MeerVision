@@ -77,9 +77,10 @@ Varying sized yolo5 and yolo8 models are trained with different training paramet
 Training parameters and training data will be varied across the smallest versions of yolo5 and yolo8
 Report on best parameters found for yolo5 and 8
 
-|     | LR   | BATCH | FREEZE |     |     |     |     |     |     |     |
-| --- | ---- | ----- | ------ | --- | --- | --- | --- | --- | --- | --- |
-| STD | 0.01 | 32    | 0      |     |     |     |     |     |     |     |
+|        | LR         | BATCH   | FREEZE | AUGMENT | PRETRAINED | PERCVAL | EPOCHS | MD_Z1_TRAINVAL | MD_Z2_TRAINVAL | IMG_SZ     |
+| ------ | ---------- | ------- | ------ | ------- | ---------- | ------- | ------ | -------------- | -------------- | ---------- |
+| STD    | 0.01       | 32      | 0      | True    | True       | 0.2     | 50     | 1000           | 1000           | 640        |
+| TUNING | 0.5 / 0.02 | 16 / 64 | 10     | False   | False      | -       | -      | 500 / 2000     | 500 / 2000     | 320 / 1280 |
 
 #### BEST MODEL
 Best training parameters used to train larger models of yolo5 and yolo8
@@ -87,17 +88,33 @@ Plot mAP on val vs test to show overfitting if present (not necessary for all ju
 Use evaluation metrics mAP50, mAP50-90, P, R from test images to interpret performance changes across models (Bar graphs probably make sense)
 
 ### MEGA TESTING
-Testing the mAP, precision and recall of megaA and megaB on test set with classifier
 Best accuracy of different model architectures (ResNet/EfficientNet/etc.)
+Testing the mAP, precision and recall of megaA and megaB on test set without classifier
 Testing the mAP, precision and recall of MegaA and MegaB on test set with best classifier
+### BEHAVIOUR CLASS
 ## RESULTS AND DISCUSSION
 ### CAMERA TRAP
-
+DEPLOYMENT TIMES
+![[IMG_0489.jpg]]
+INFERENCE TIMES
+![[IMG_0490.jpg]]
+DISCUSSION
 ### YOLO DETECTION
-
+HYPER PARAMETER TUNING
+![[IMG_0491.jpg]]
+![[IMG_0492.jpg]]
+MODEL SIZE (with best tuned parameters)
+![[IMG_0493.jpg]]
 ### MEGA TESTING
+CLASSIFIER ACCURACY
+![[IMG_0494.jpg]]
 
-### PIPELINE & MODEL CHOICES
+MEGA ACCURACY
+![[IMG_0495.jpg]]
+### BEHAVIOUR RECOGNITION
+![[IMG_0496.jpg]]
+
+### PIPELINE & MODEL CHOICES (BIG DISCUSSION)
 
 ## CONCLUSION
 
