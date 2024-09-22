@@ -1,60 +1,41 @@
-import RPi.GPIO as GPIO
-import time
+from gpiozero import Button
+from time import sleep
 
 class Buttons:
-    def __init__(self, pin_ok, pin_back, pin_up, pin_down, bounce_time=300):
-        # Set the GPIO mode
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)  # Disable warnings
+    def __init__(self, pin_ok, pin_back, pin_up, pin_down, bounce_time=0.3):
+        # Create Button objects
+        self.btn_ok = Button(pin_ok, bounce_time=bounce_time)
+        self.btn_back = Button(pin_back, bounce_time=bounce_time)
+        self.btn_up = Button(pin_up, bounce_time=bounce_time)
+        self.btn_down = Button(pin_down, bounce_time=bounce_time)
 
-        # Store pin numbers
-        self.pin_ok = pin_ok
-        self.pin_back = pin_back
-        self.pin_up = pin_up
-        self.pin_down = pin_down
-
-        # Set up pins for input reading
-        GPIO.setup(self.pin_ok, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(self.pin_back, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(self.pin_up, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(self.pin_down, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-        # Set debounce time
-        self.bounce_time = bounce_time
-
-        # Small delay to allow GPIO to settle
-        time.sleep(0.1)
-
-        # Set up event detection
-        try:
-            GPIO.add_event_detect(self.pin_ok, GPIO.FALLING, callback=self.on_ok_pressed, bouncetime=self.bounce_time)
-            GPIO.add_event_detect(self.pin_back, GPIO.FALLING, callback=self.on_back_pressed, bouncetime=self.bounce_time)
-            GPIO.add_event_detect(self.pin_up, GPIO.FALLING, callback=self.on_up_pressed, bouncetime=self.bounce_time)
-            GPIO.add_event_detect(self.pin_down, GPIO.FALLING, callback=self.on_down_pressed, bouncetime=self.bounce_time)
-        except RuntimeError as e:
-            print(f"Error setting up event detection: {e}")
+        # Set up event handlers
+        self.btn_ok.when_pressed = self.on_ok_pressed
+        self.btn_back.when_pressed = self.on_back_pressed
+        self.btn_up.when_pressed = self.on_up_pressed
+        self.btn_down.when_pressed = self.on_down_pressed
 
     def get_button_states(self):
         return {
-            "ok": GPIO.input(self.pin_ok),
-            "up": GPIO.input(self.pin_up),
-            "down": GPIO.input(self.pin_down),
-            "back": GPIO.input(self.pin_back)
+            "ok": not self.btn_ok.is_pressed,
+            "up": not self.btn_up.is_pressed,
+            "down": not self.btn_down.is_pressed,
+            "back": not self.btn_back.is_pressed
         }
 
-    def on_ok_pressed(self, channel):
+    def on_ok_pressed(self):
         print("OK button pressed")
         self.ok_action()
 
-    def on_back_pressed(self, channel):
+    def on_back_pressed(self):
         print("Back button pressed")
         self.back_action()
 
-    def on_up_pressed(self, channel):
+    def on_up_pressed(self):
         print("Up button pressed")
         self.up_action()
 
-    def on_down_pressed(self, channel):
+    def on_down_pressed(self):
         print("Down button pressed")
         self.down_action()
 
@@ -73,4 +54,5 @@ class Buttons:
 
     def cleanup(self):
         """Clean up the GPIO pins when done."""
-        GPIO.cleanup()
+        # gpiozero handles cleanup automatically, but we'll keep this method for consistency
+        pass

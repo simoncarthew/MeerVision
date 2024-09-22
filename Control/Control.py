@@ -20,15 +20,15 @@ class Control:
 
 if __name__ == "__main__":
     control = Control()
-    while True:
-        print(control.buttons.get_button_states())
-        print(control.rtc.read_time())
-        control.lcd.centered_text("YELLOW TEXT", "BLUE TEXT")
-        sleep(2)
-        control.lcd.scroll_wheel("NUMBER SCROLL",10)
-        sleep(2)
-        control.lcd.scroll_wheel("TEXT SCROLL","ITEM 1")
-        sleep(2)
+    try:
+        while True:
+            print(control.buttons.get_button_states())
+            sleep(0.1)  # Add a small delay to prevent CPU overuse
+    except KeyboardInterrupt:
+        print("Program terminated by user")
+    finally:
+        control.buttons.cleanup()
+
     # while True:
     #     sleep(0.5)
     #     control.camera.capture("Control/test.jpg")
