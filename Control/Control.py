@@ -9,12 +9,14 @@ sys.path.append("Control")
 from Camera import Camera
 from LCD import LCD
 from RTC import RTC
+from Buttons import Buttons
 
 class Control:
     def __init__(self):
         self.camera = Camera()
         self.lcd = LCD()
         self.rtc = RTC()
+        self.buttons = Buttons(pin_ok=23, pin_up=27, pin_down=22, pin_back=24)
 
 if __name__ == "__main__":
     control = Control()
