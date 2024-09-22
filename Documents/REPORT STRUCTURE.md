@@ -58,7 +58,7 @@ How the megadetector is implemented
 How the classifier is implemented
 ### BEHAVIOUR CLASSIFICATION
 How the previously explained implementation of the classifier can be extended to behaviour classification
-Implement only static classifier as a means to find out if temporal information is required to classify meerkat behaviour
+Implement only static classifier as a means to find out if temporal information is required to classify Meerkat behaviour
 
 ## TESTING PROCEDURES
 ### CAMERA TRAP
@@ -67,24 +67,37 @@ All tests will be run using a script that can be run through the gui and the res
 | Tested Metric   | Varied parameters          | Procedure                                                                             |
 | --------------- | -------------------------- | ------------------------------------------------------------------------------------- |
 | Deployment Time | FPS (0.5 / 1 / 2)<br>Solar | Place in the garden with set parameters and start recording.                          |
-| Inference Times | Models used                | Perform inference on all test images and get average inference times for every model. |
+| Inference Times | Models used<br>Device Used | Perform inference on all test images and get average inference times for every model. |
 
-### MEERKAT DETECTION
+
+### YOLO DETECTION
 #### DESCRIPTION
 Varying sized yolo5 and yolo8 models are trained with different training parameters and training data.
 #### HYPER PARAMETER TUNING
 Training parameters and training data will be varied across the smallest versions of yolo5 and yolo8
 Report on best parameters found for yolo5 and 8
+
+|     | LR   | BATCH | FREEZE |     |     |     |     |     |     |     |
+| --- | ---- | ----- | ------ | --- | --- | --- | --- | --- | --- | --- |
+| STD | 0.01 | 32    | 0      |     |     |     |     |     |     |     |
+
 #### BEST MODEL
 Best training parameters used to train larger models of yolo5 and yolo8
 Plot mAP on val vs test to show overfitting if present (not necessary for all just show examples of overfit and not overfit)
 Use evaluation metrics mAP50, mAP50-90, P, R from test images to interpret performance changes across models (Bar graphs probably make sense)
-### BEHAVIOUR RECOGNITION
-This is still under consideration
-Deciding between custom CNN or test different architectures
-Architectures more likely cause easy results
 
+### MEGA TESTING
+Testing the mAP, precision and recall of megaA and megaB on test set with classifier
+Best accuracy of different model architectures (ResNet/EfficientNet/etc.)
+Testing the mAP, precision and recall of MegaA and MegaB on test set with best classifier
 ## RESULTS AND DISCUSSION
+### CAMERA TRAP
+
+### YOLO DETECTION
+
+### MEGA TESTING
+
+### PIPELINE & MODEL CHOICES
 
 ## CONCLUSION
 
