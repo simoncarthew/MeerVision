@@ -33,7 +33,7 @@ class LCD:
         draw.text((x, y), text, font=self.font, fill="yellow")
 
         # display final image
-        self.device.display() 
+        self.device.display(image) 
 
     def display_scroll_wheel_number(self,number):
         # create blank background
@@ -57,7 +57,7 @@ class LCD:
         draw.text((number_x, number_y), str(number), font=self.font, fill="yellow")  # center number
 
         # display the image
-        self.device.display()  # Convert to monochrome for display
+        self.device.display(image)  # Convert to monochrome for display
 
     def display_scroll_wheel_text(self,text):
         # create blank background
@@ -81,4 +81,4 @@ class LCD:
         draw.text((text_x, text_y), text, font=self.font, fill="yellow")  # center text
 
         # display the image
-        self.device.display()  # Convert to monochrome for display
+        self.device.display(image)  # Convert to monochrome for display
