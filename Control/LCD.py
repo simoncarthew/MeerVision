@@ -21,7 +21,7 @@ class LCD:
     
     def display_centered_text(self, text):
         # create blank background
-        image = Image.new('RGB', (self.device.width, self.device.height), "blue")
+        image = Image.new('1', (self.device.width, self.device.height), "blue")
         draw = ImageDraw.Draw(image)
 
         # get text size to center
@@ -33,11 +33,11 @@ class LCD:
         draw.text((x, y), text, font=self.font, fill="yellow")
 
         # display final image
-        self.device.display(image.convert('1'))  # Convert to monochrome for display
+        self.device.display() 
 
     def display_scroll_wheel_number(self,number):
         # create blank background
-        image = Image.new('RGB', (self.device.width, self.device.height), "blue")
+        image = Image.new('1', (self.device.width, self.device.height), "blue")
         draw = ImageDraw.Draw(image)
 
         # get arrow info
@@ -57,11 +57,11 @@ class LCD:
         draw.text((number_x, number_y), str(number), font=self.font, fill="yellow")  # center number
 
         # display the image
-        self.device.display(image.convert('1'))  # Convert to monochrome for display
+        self.device.display()  # Convert to monochrome for display
 
     def display_scroll_wheel_text(self,text):
         # create blank background
-        image = Image.new('RGB', (self.device.width, self.device.height), "blue")
+        image = Image.new('1', (self.device.width, self.device.height), "blue")
         draw = ImageDraw.Draw(image)
 
         # get arrow info
@@ -81,4 +81,4 @@ class LCD:
         draw.text((text_x, text_y), text, font=self.font, fill="yellow")  # center text
 
         # display the image
-        self.device.display(image.convert('1'))  # Convert to monochrome for display
+        self.device.display()  # Convert to monochrome for display
