@@ -27,6 +27,9 @@ class Buttons:
         # GPIO.add_event_detect(self.pin_up, GPIO.FALLING, callback=self.on_up_pressed, bouncetime=self.bounce_time)
         # GPIO.add_event_detect(self.pin_down, GPIO.FALLING, callback=self.on_down_pressed, bouncetime=self.bounce_time)
 
+    def get_button_states(self):
+        return {"ok":GPIO.input(self.pin_ok), "up":GPIO.input(self.pin_up), "down":GPIO.input(self.pin_down), "back":GPIO.input(self.pin_back)}
+
     def on_ok_pressed(self, channel):
         print("OK button pressed")
         self.ok_action()
