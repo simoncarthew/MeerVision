@@ -8,15 +8,18 @@ from PIL import Image, ImageDraw, ImageFont
 sys.path.append("Control")
 from Camera import Camera
 from LCD import LCD
+from RTC import RTC
 
 class Control:
     def __init__(self):
         self.camera = Camera()
         self.lcd = LCD()
+        self.rtc = RTC()
 
 if __name__ == "__main__":
     control = Control()
     while True:
+        print(control.rtc.read_time())
         control.lcd.centered_text("YELLOW TEXT", "BLUE TEXT")
         sleep(2)
         control.lcd.scroll_wheel("NUMBER SCROLL",10)
