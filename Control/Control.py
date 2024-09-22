@@ -16,7 +16,13 @@ class Control:
 
 if __name__ == "__main__":
     control = Control()
-    control.lcd.display_text("HI from new soldered")
     while True:
-        sleep(0.5)
-        control.camera.capture("Control/test.jpg")
+        control.lcd.display_centered_text("Center Test")
+        sleep(2)
+        control.lcd.display_scroll_wheel_number(10)
+        sleep(2)
+        control.lcd.display_scroll_wheel_text("Scroll Test")
+        sleep(2)
+    # while True:
+    #     sleep(0.5)
+    #     control.camera.capture("Control/test.jpg")
