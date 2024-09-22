@@ -16,6 +16,7 @@ class Control:
 
 if __name__ == "__main__":
     control = Control()
+    control.lcd.display_text("HI from new soldered")
     while True:
         sleep(0.5)
         control.camera.capture("Control/test.jpg")
