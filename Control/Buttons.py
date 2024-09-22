@@ -22,10 +22,10 @@ class Buttons:
         self.bounce_time = bounce_time
 
         # set ip event detection
-        GPIO.add_event_detect(self.pin_ok, GPIO.FALLING, callback=self.on_ok_pressed, bouncetime=self.bounce_time)
-        GPIO.add_event_detect(self.pin_back, GPIO.FALLING, callback=self.on_back_pressed, bouncetime=self.bounce_time)
-        GPIO.add_event_detect(self.pin_up, GPIO.FALLING, callback=self.on_up_pressed, bouncetime=self.bounce_time)
-        GPIO.add_event_detect(self.pin_down, GPIO.FALLING, callback=self.on_down_pressed, bouncetime=self.bounce_time)
+        # GPIO.add_event_detect(self.pin_ok, GPIO.FALLING, callback=self.on_ok_pressed, bouncetime=self.bounce_time)
+        # GPIO.add_event_detect(self.pin_back, GPIO.FALLING, callback=self.on_back_pressed, bouncetime=self.bounce_time)
+        # GPIO.add_event_detect(self.pin_up, GPIO.FALLING, callback=self.on_up_pressed, bouncetime=self.bounce_time)
+        # GPIO.add_event_detect(self.pin_down, GPIO.FALLING, callback=self.on_down_pressed, bouncetime=self.bounce_time)
 
     def on_ok_pressed(self, channel):
         print("OK button pressed")
