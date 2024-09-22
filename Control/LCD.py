@@ -8,77 +8,59 @@ class LCD:
         self.device = ssd1306(self.serial)
         self.font = ImageFont.load_default()
 
-    def display_text(self, text):
-        # create the image
-        image = Image.new('1', (self.device.width, self.device.height), 1)
+    def display_centered_text(self, yellow_text, blue_text):
+        # Create blank image with black background
+        image = Image.new('1', (self.device.width, self.device.height), 0)
         draw = ImageDraw.Draw(image)
-        
-        # add text
-        draw.text((0, 0), text, font=self.font, fill=0)
-        
-        # display text
+
+        # Yellow section at the top
+        yellow_height = 16
+        yellow_text_width, yellow_text_height = draw.textsize(yellow_text, font=self.font)
+        yellow_x = (self.device.width - yellow_text_width) // 2
+        yellow_y = (yellow_height - yellow_text_height) // 2
+
+        # Blue section at the bottom
+        blue_text_width, blue_text_height = draw.textsize(blue_text, font=self.font)
+        blue_x = (self.device.width - blue_text_width) // 2
+        blue_y = yellow_height + (self.device.height - yellow_height - blue_text_height) // 2
+
+        # Draw the yellow and blue texts
+        draw.text((yellow_x, yellow_y), yellow_text, font=self.font, fill=1)  # Yellow part
+        draw.text((blue_x, blue_y), blue_text, font=self.font, fill=1)  # Blue part
+
+        # Display the image
         self.device.display(image)
-    
-    def display_centered_text(self, text):
-        # create blank background
-        image = Image.new('1', (self.device.width, self.device.height), "blue")
+
+    def display_scroll_wheel(self, yellow_text, content, is_number=True):
+        # Create blank image with black background
+        image = Image.new('1', (self.device.width, self.device.height), 0)
         draw = ImageDraw.Draw(image)
 
-        # get text size to center
-        text_width, text_height = draw.textsize(text, font=self.font)
-        x = (self.device.width - text_width) // 2
-        y = (self.device.height - text_height) // 2
+        # Yellow section for additional text
+        yellow_height = 16
+        yellow_text_width, yellow_text_height = draw.textsize(yellow_text, font=self.font)
+        yellow_x = (self.device.width - yellow_text_width) // 2
+        yellow_y = (yellow_height - yellow_text_height) // 2
 
-        # draw the text
-        draw.text((x, y), text, font=self.font, fill="yellow")
-
-        # display final image
-        self.device.display(image) 
-
-    def display_scroll_wheel_number(self,number):
-        # create blank background
-        image = Image.new('1', (self.device.width, self.device.height), "blue")
-        draw = ImageDraw.Draw(image)
-
-        # get arrow info
+        # Blue section for scroll wheel (arrows and content)
         arrow_up = "^"
         arrow_down = "v"
         arrow_size = draw.textsize(arrow_up, font=self.font)
 
-        # calculaate the positions on th eback
+        # Positions for arrows and content in the blue section
+        blue_start_y = yellow_height  # Blue section starts right after yellow section
         arrow_x = (self.device.width - arrow_size[0]) // 2
-        number_width, number_height = draw.textsize(str(number), font=self.font)
-        number_x = (self.device.width - number_width) // 2
-        number_y = (self.device.height - number_height) // 2
+        content_width, content_height = draw.textsize(str(content), font=self.font)
+        content_x = (self.device.width - content_width) // 2
+        content_y = blue_start_y + (self.device.height - blue_start_y - content_height) // 2
 
-        # Ddraw the arroes and number
-        draw.text((arrow_x, 0), arrow_up, font=self.font, fill="yellow")  # top arrow
-        draw.text((arrow_x, self.device.height - arrow_size[1]), arrow_down, font=self.font, fill="yellow")  # bottom arrow
-        draw.text((number_x, number_y), str(number), font=self.font, fill="yellow")  # center number
+        # Draw yellow text
+        draw.text((yellow_x, yellow_y), yellow_text, font=self.font, fill=1)  # Yellow part
 
-        # display the image
-        self.device.display(image)  # Convert to monochrome for display
+        # Draw arrows and content in the blue section
+        draw.text((arrow_x, blue_start_y), arrow_up, font=self.font, fill=1)  # Top arrow
+        draw.text((arrow_x, self.device.height - arrow_size[1]), arrow_down, font=self.font, fill=1)  # Bottom arrow
+        draw.text((content_x, content_y), str(content), font=self.font, fill=1)  # Center content (number or text)
 
-    def display_scroll_wheel_text(self,text):
-        # create blank background
-        image = Image.new('1', (self.device.width, self.device.height), "blue")
-        draw = ImageDraw.Draw(image)
-
-        # get arrow info
-        arrow_up = "^"
-        arrow_down = "v"
-        arrow_size = draw.textsize(arrow_up, font=self.font)
-
-        # calculate the positions of the arrows and text
-        arrow_x = (self.device.width - arrow_size[0]) // 2
-        text_width, text_height = draw.textsize(text, font=self.font)
-        text_x = (self.device.width - text_width) // 2
-        text_y = (self.device.height - text_height) // 2
-
-        # draw the arrows and text
-        draw.text((arrow_x, 0), arrow_up, font=self.font, fill="yellow")  # top arrow
-        draw.text((arrow_x, self.device.height - arrow_size[1]), arrow_down, font=self.font, fill="yellow")  # bottom arrow
-        draw.text((text_x, text_y), text, font=self.font, fill="yellow")  # center text
-
-        # display the image
-        self.device.display(image)  # Convert to monochrome for display
+        # Display the image
+        self.device.display(image)
