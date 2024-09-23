@@ -17,6 +17,9 @@ class Camera:
         
         # capture the photo
         self.camera.start()
-        sleep(1)
+        sleep(0.01)
         self.camera.capture_file(save_path)
         self.camera.stop()
+
+    def time_to_path(self,time, ext = ".jpg"):
+        return f"{time["year"]}_{time["month"]}_{time["day"]}_{time['hours']}_{time['minutes']}_{time['seconds']}{ext}"

@@ -11,6 +11,9 @@ from LCD import LCD
 from RTC import RTC
 from Buttons import Buttons
 
+SGL_CAP_PATH = os.path.join("Control","Images","SingleCapture")
+DEP_PATH = os.path.join("Control","Images","Deployments")
+
 class Control:
     def __init__(self, fps = 10,debug = True):
         # initialise peripherals
@@ -36,7 +39,7 @@ class Control:
 
         # set current menu_item index
         self.menu_index = "home"
-        self.menu_keys = list(control.menu_items.keys())
+        self.menu_keys = list(self.menu_items.keys())
 
     def wait_button(self):
         while True:
@@ -44,6 +47,9 @@ class Control:
                 return
             else:
                 sleep(1/self.fps)
+    
+    def reset_buttons(self):
+        self.pressed = {"ok":False,"up":False,"down":False,"back":False}
 
     def ok_action(self):
         self.pressed["ok"] = True
@@ -58,7 +64,21 @@ class Control:
         self.pressed["down"] = True
 
     def single_capture(self):
-        pass
+        while True:
+            self.lcd.centered_text(self.menu_items["sgl"],"Press OK to capture.")
+            
+            # wait for button input
+            self.wait_button()
+
+            # respond to button input
+            if self.pressed["ok"]:
+                self.camera.capture(save_path=SGL_CAP_PATH)
+                self.lcd.centered_text(self.menu_items["sgl"],"Captured Successfully")
+                sleep(2)
+            elif self.pressed["back"]:
+                return
+
+            self.reset_buttons()
 
 if __name__ == "__main__":
     # initialize main control
@@ -81,13 +101,13 @@ if __name__ == "__main__":
                 control.menu_index = control.menu_keys[(control.menu_keys.index(control.menu_index) + 1) % len(control.menu_items)]
 
             elif control.pressed["up"]: # move up the menu items
-                control.menu_index = control.menu_keys[len(control.menu_items) - 1] if control.menu_index == "home" else control.menu_keys[(control.menu_keys.index(control.menu_index - 1)) % len(control.menu_items)]
+                control.menu_index = control.menu_keys[len(control.menu_items) - 1] if control.menu_index == "home" else control.menu_keys[(control.menu_keys.index(control.menu_index) - 1) % len(control.menu_items)]
         
             elif control.pressed["ok"]: # enter desired mode
                 pass
 
             # set buttons states back
-            control.pressed = {"ok":False,"up":False,"down":False,"back":False}
+            control.reset_buttons()
     except KeyboardInterrupt:
         print("Program terminated by user")
     finally:
