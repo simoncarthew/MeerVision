@@ -12,7 +12,7 @@ from RTC import RTC
 from Buttons import Buttons
 
 class Control:
-    def __init__(self):
+    def __init__(self, debug = True):
         self.camera = Camera()
         self.lcd = LCD()
         self.rtc = RTC()
@@ -46,12 +46,15 @@ class Control:
 
     def up_action(self):
         self.up_pressed = True
+        if self.menu_index == 0:
+            self.menu_index = len(self.menu_items) - 1 
+        else:
+            self.menu_index = (self.menu_index - 1) % len(self.menu_items)
         pass
 
     def down_action(self):
         self.down_pressed = True
-        if self.menu_index == 0:
-            self.menu_index = (self.menu_index + 1) % len(self.menu_items)
+        self.menu_index = (self.menu_index + 1) % len(self.menu_items)
         pass
 
 if __name__ == "__main__":
