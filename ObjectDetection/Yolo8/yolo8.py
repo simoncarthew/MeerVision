@@ -302,8 +302,8 @@ if __name__ == "__main__":
     # print("Loaded Pretrained Model")
     # yolo.train(batch=32,epochs=5,dataset_path="/scratch/crtsim008/Formated/yolo/dataset.yaml",augment=True)
     # print(yolo.inference_time(yolo_path="Data/Formated/yolo"))
-    # image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg"
-    # detections = yolo.sgl_detect(image_path,show=True, format="coco")
+    image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg"
+    detections = yolo.sgl_detect(image_path,show=True, format="coco")
     # print(yolo.test_detect(yolo_path='Data/Formated/yolo'))
     # print(yolo.evaluate(yolo_path='Data/Formated/yolo'))
-    yolo.process_video(video_path="Data/YoutubeCameraTrap/istockphoto-1990464825-640_adpp_is.mp4",thresh=0.1)
+    # yolo.process_video(video_path="Data/YoutubeCameraTrap/istockphoto-1990464825-640_adpp_is.mp4",thresh=0.1)
