@@ -12,11 +12,15 @@ from RTC import RTC
 from Buttons import Buttons
 
 class Control:
-    def __init__(self, debug = True):
+    def __init__(self, fps = 10,debug = True):
+        # initialise peripherals
         self.camera = Camera()
         self.lcd = LCD()
         self.rtc = RTC()
         self.buttons = Buttons(pin_ok=23, pin_up=27, pin_down=22, pin_back=24)
+
+        # set fps
+        self.fps = fps
         
         # over ride the burron actions
         self.buttons.ok_action = self.ok_action
@@ -25,10 +29,7 @@ class Control:
         self.buttons.down_action = self.down_action
 
         # global button pressed states
-        self.ok_pressed = False
-        self.up_pressed = False
-        self.down_pressed = False
-        self.back_pressed = False
+        self.pressed = {"ok":False,"up":False,"down":False,"back":False}
 
         # set menu items
         self.menu_items = ["HOME", "SINGLE CAPTURE", "DEPLOY", "PROCESS", "TESTING", "SETTINGS"]
@@ -36,26 +37,24 @@ class Control:
         # set current menu_item index
         self.menu_index = 0
 
+    def wait_button(self):
+        while True:
+            if self.pressed != {"ok":False,"up":False,"down":False,"back":False}:
+                return
+            else:
+                sleep(1/self.fps)
+
     def ok_action(self):
-        self.ok_pressed = True
-        pass
+        self.pressed["ok"] = True
 
     def back_action(self):
-        self.back_pressed = True
-        pass
+        self.pressed["back"] = True
 
     def up_action(self):
-        self.up_pressed = True
-        if self.menu_index == 0:
-            self.menu_index = len(self.menu_items) - 1 
-        else:
-            self.menu_index = (self.menu_index - 1) % len(self.menu_items)
-        pass
+        self.pressed["up"] = True
 
     def down_action(self):
-        self.down_pressed = True
-        self.menu_index = (self.menu_index + 1) % len(self.menu_items)
-        pass
+        self.pressed["down"] = True
 
 if __name__ == "__main__":
     # initialize main control
@@ -68,9 +67,21 @@ if __name__ == "__main__":
             if control.menu_index == 0:
                 current_time = control.rtc.read_time()
                 blue_text = f"{current_time['hours']}:{current_time['minutes']}:{current_time['seconds']}"
-
             control.lcd.centered_text(control.menu_items[control.menu_index],blue_text)
-            sleep(0.5)
+            
+            # check if a button has been pressed
+            control.wait_button()
+
+            if control.pressed["down"]:
+                control.menu_index = (control.menu_index + 1) % len(control.menu_items)
+            elif control.pressed["up"]:
+                if control.menu_index == 0:
+                    control.menu_index = len(control.menu_items) - 1
+                else:
+                    control.menu_index = (control.menu_index - 1) % len(control.menu_items)
+
+            # set buttons states back
+            control.pressed = {"ok":False,"up":False,"down":False,"back":False}
     except KeyboardInterrupt:
         print("Program terminated by user")
     finally:
