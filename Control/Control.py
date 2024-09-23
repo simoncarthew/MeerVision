@@ -72,7 +72,8 @@ class Control:
 
             # respond to button input
             if self.pressed["ok"]:
-                self.camera.capture(save_path=SGL_CAP_PATH)
+                img_name = self.camera.time_to_path(self.rtc.read_time())
+                self.camera.capture(save_path=os.path.join(SGL_CAP_PATH,img_name))
                 self.lcd.centered_text(self.menu_items["sgl"],"Captured Successfully")
                 sleep(2)
             elif self.pressed["back"]:
