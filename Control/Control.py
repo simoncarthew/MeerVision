@@ -32,10 +32,11 @@ class Control:
         self.pressed = {"ok":False,"up":False,"down":False,"back":False}
 
         # set menu items
-        self.menu_items = ["HOME", "SINGLE CAPTURE", "DEPLOY", "PROCESS", "TESTING", "SETTINGS"]
+        self.menu_items = {"home":"HOME", "sgl":"SINGLE CAPTURE", "dep":"DEPLOY", "proc":"PROCESS", "test":"TESTING", "set":"SETTINGS"}
 
         # set current menu_item index
-        self.menu_index = 0
+        self.menu_index = "home"
+        self.menu_keys = list(control.menu_items.keys())
 
     def wait_button(self):
         while True:
@@ -56,6 +57,9 @@ class Control:
     def down_action(self):
         self.pressed["down"] = True
 
+    def single_capture(self):
+        pass
+
 if __name__ == "__main__":
     # initialize main control
     control = Control()
@@ -64,21 +68,23 @@ if __name__ == "__main__":
         while True:
             # display current menu item
             blue_text = ""
-            if control.menu_index == 0:
+            if control.menu_index == "home":
                 current_time = control.rtc.read_time()
                 blue_text = f"{current_time['hours']}:{current_time['minutes']}:{current_time['seconds']}"
             control.lcd.centered_text(control.menu_items[control.menu_index],blue_text)
             
-            # check if a button has been pressed
+            # wait for button input
             control.wait_button()
 
-            if control.pressed["down"]:
-                control.menu_index = (control.menu_index + 1) % len(control.menu_items)
-            elif control.pressed["up"]:
-                if control.menu_index == 0:
-                    control.menu_index = len(control.menu_items) - 1
-                else:
-                    control.menu_index = (control.menu_index - 1) % len(control.menu_items)
+            # respond to button input
+            if control.pressed["down"]: # move down the menu items
+                control.menu_index = control.menu_keys[(control.menu_keys.index(control.menu_index) + 1) % len(control.menu_items)]
+
+            elif control.pressed["up"]: # move up the menu items
+                control.menu_index = control.menu_keys[len(control.menu_items) - 1] if control.menu_index == "home" else control.menu_keys[(control.menu_keys.index(control.menu_index - 1)) % len(control.menu_items)]
+        
+            elif control.pressed["ok"]: # enter desired mode
+                pass
 
             # set buttons states back
             control.pressed = {"ok":False,"up":False,"down":False,"back":False}
