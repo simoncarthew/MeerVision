@@ -24,31 +24,49 @@ class Control:
         self.buttons.up_action = self.up_action
         self.buttons.down_action = self.down_action
 
+        # global button pressed states
+        self.ok_pressed = False
+        self.up_pressed = False
+        self.down_pressed = False
+        self.back_pressed = False
+
+        # set menu items
+        self.menu_items = ["HOME", "SINGLE CAPTURE", "DEPLOY", "PROCESS", "TESTING", "SETTINGS"]
+
+        # set current menu_item index
+        self.menu_index = 0
+
     def ok_action(self):
+        self.ok_pressed = True
         pass
 
     def back_action(self):
+        self.back_pressed = True
         pass
 
     def up_action(self):
+        self.up_pressed = True
         pass
 
     def down_action(self):
+        self.down_pressed = True
+        if self.menu_index == 0:
+            self.menu_index = (self.menu_index + 1) % len(self.menu_items)
         pass
 
 if __name__ == "__main__":
+    # initialize main control
     control = Control()
-    year = int(input("year: "))
-    month = int(input("month: "))
-    day = int(input("day: "))
-    hours = int(input("hours: "))
-    minutes = int(input("minutes: "))
-    seconds = int(input("seconds: "))
-    control.rtc.set_time(year, month, day, hours, minutes, seconds)
+
     try:
         while True:
-            sleep(1)  # Add a small delay to prevent CPU overuse
-            print(control.rtc.read_time())
+            # display current menu item
+            blue_text = ""
+            if control.menu_index == 0:
+                time = control.rtc.read_time()
+                blue_text = f"{time.hours}:{time.minutes}:{time.seconds}"
+            control.lcd.centered_text(control.menu_items[control.menu_index],blue_text)
+            sleep(0.5)
     except KeyboardInterrupt:
         print("Program terminated by user")
     finally:
