@@ -12,6 +12,7 @@ from torchvision import transforms
 from torchvision.datasets import CocoDetection
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import torch
 
 # PATHS
 MD_COCO = os.path.join("Data","MeerDown","raw","annotations.json")
@@ -520,7 +521,8 @@ class DataManager():
 
         return new_annotations
 
-    def create_class_dataloaders(self, raw_path, batch = 32, num_workers=8, obs_no = -1, md_z1_trainval_no = 2000, md_z2_trainval_no = 2000, md_test_no = 0, img_size = (64,64), new_cuts = False, behaviour = False):        
+    def create_dataloaders(self, raw_path, batch = 32, num_workers=8, obs_no = -1, md_z1_trainval_no = 2000, md_z2_trainval_no = 2000, md_test_no = 0, img_size = (64,64), new_cuts = False, behaviour = False):        
+        
         # filter datasets to create coco_annotations for obs and md
         obs_train, obs_val, obs_test = self.filter_observed(obs_no)
         if self.debug: print("Filtered observed.")
@@ -587,7 +589,7 @@ class DataManager():
         if os.path.exists(cut_images_path):
             # define simple transform
             transform = transforms.Compose([
-                transforms.Resize((224, 224)),
+                transforms.Resize(img_size),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # ImageNet normalization
             ])
@@ -610,7 +612,7 @@ class DataManager():
 if __name__ == "__main__":
     dm = DataManager()
     # dm.create_yolo_dataset(50,50,50,0,"Data/SmallTest/yolo")
-    train_loader, val_loader, test_loader = dm.create_class_dataloaders("Data/Classification",obs_no=-1,md_z1_trainval_no=2000,md_z2_trainval_no=2000,md_test_no=0,new_cuts=True)
+    train_loader, val_loader, test_loader = dm.create_dataloaders("Data/Classification",obs_no=-1,md_z1_trainval_no=2000,md_z2_trainval_no=2000,md_test_no=0,new_cuts=True)
     # dm.create_yolo_dataset()
     # dm.view_yolo_annotations("Data/Formated/yolo/images/test","Data/Formated/yolo/labels/test",10)
 
