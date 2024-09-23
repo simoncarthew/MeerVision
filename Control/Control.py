@@ -63,8 +63,8 @@ if __name__ == "__main__":
             # display current menu item
             blue_text = ""
             if control.menu_index == 0:
-                time = control.rtc.read_time()
-                blue_text = f"{time.hours}:{time.minutes}:{time.seconds}"
+                current_time = control.rtc.read_time()
+                blue_text = f"{current_time["hours"]}:{current_time["minutes"]}:{current_time["seconds"]}"
             control.lcd.centered_text(control.menu_items[control.menu_index],blue_text)
             sleep(0.5)
     except KeyboardInterrupt:
