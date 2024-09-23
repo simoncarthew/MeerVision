@@ -77,10 +77,10 @@ Varying sized yolo5 and yolo8 models are trained with different training paramet
 Training parameters and training data will be varied across the smallest versions of yolo5 and yolo8
 Report on best parameters found for yolo5 and 8
 
-|        | LR         | BATCH   | FREEZE | AUGMENT | PRETRAINED | PERCVAL | EPOCHS | MD_Z1_TRAINVAL | MD_Z2_TRAINVAL | IMG_SZ     |
-| ------ | ---------- | ------- | ------ | ------- | ---------- | ------- | ------ | -------------- | -------------- | ---------- |
-| STD    | 0.01       | 32      | 0      | True    | True       | 0.2     | 50     | 1000           | 1000           | 640        |
-| TUNING | 0.5 / 0.02 | 16 / 64 | 10     | False   | False      | -       | -      | 500 / 2000     | 500 / 2000     | 320 / 1280 |
+|        | LR         | BATCH   | FREEZE | AUGMENT | PRETRAINED | PERCVAL | EPOCHS | MD_Z1_TRAINVAL | MD_Z2_TRAINVAL | IMG_SZ     | obs_no |
+| ------ | ---------- | ------- | ------ | ------- | ---------- | ------- | ------ | -------------- | -------------- | ---------- | ------ |
+| STD    | 0.01       | 32      | 0      | True    | True       | 0.2     | 50     | 1000           | 1000           | 640        | -1     |
+| TUNING | 0.5 / 0.02 | 16 / 64 | 5 / 10 | -       | -          | -       | -      | 500 / 2000     | 500 / 2000     | 320 / 1280 | 0      |
 
 #### BEST MODEL
 Best training parameters used to train larger models of yolo5 and yolo8

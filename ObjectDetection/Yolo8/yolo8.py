@@ -293,8 +293,10 @@ class Yolo8:
         return coco_format
 
 if __name__ == "__main__":
-    model_path = "ObjectDetection/Training/Results/yolo8_first_test/models/model_0/weights/last.pt"
+    # model_path = "ObjectDetection/Training/Results/yolo8_first_test/models/model_0/weights/last.pt"
+    model_path = "ObjectDetection/Training/Results/hyper_tune_0/results5/models/model_0/weights/best.pt"
     yolo = Yolo8(model_path=model_path)
+    # yolo = Yolo8(model_size = "l")
     # print("Loading Pretrained Model")
     # yolo = Yolo8(model_size='n',pretrained=True)
     # print("Loaded Pretrained Model")
@@ -303,4 +305,5 @@ if __name__ == "__main__":
     # image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg"
     # detections = yolo.sgl_detect(image_path,show=True, format="coco")
     # print(yolo.test_detect(yolo_path='Data/Formated/yolo'))
-    print(yolo.evaluate(yolo_path='Data/Formated/yolo'))
+    # print(yolo.evaluate(yolo_path='Data/Formated/yolo'))
+    yolo.process_video(video_path="Data/YoutubeCameraTrap/istockphoto-1990464825-640_adpp_is.mp4",thresh=0.1)
