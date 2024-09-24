@@ -1,6 +1,7 @@
 import json
 import cv2
 import os
+from collections import defaultdict
 
 ANNOTATION_FILE = "Data/Observed/annotations.json"
 IMAGE_FOLDER = "Data/Observed/frames"
@@ -120,7 +121,29 @@ def save():
     with open(ANNOTATION_FILE, "w") as f:
         json.dump(coco, f, indent=4)
 
+def count_annotations_per_class(coco_file_path):
+    """Count the number of annotations for each class in the COCO dataset."""
+    # Load the COCO JSON file
+    with open(coco_file_path, 'r') as f:
+        coco_data = json.load(f)
+
+    # Create a dictionary to store counts for each category
+    class_counts = defaultdict(int)
+
+    # Iterate over annotations and count occurrences of each category_id
+    for annotation in coco_data['annotations']:
+        category_id = annotation['category_id']
+        class_counts[category_id] += 1
+
+    # Print the counts for each class
+    for category in coco_data['categories']:
+        class_id = category['id']
+        class_name = category['name']
+        count = class_counts.get(class_id, 0)
+        print(f"{class_name}: {count} annotations")
+
 # do the thing
-count_camera_trap()
-display_camera_trap()
+# count_camera_trap()
+count_annotations_per_class("Data/Observed/behaviour_annotations.json")
+# display_camera_trap()
 # review_camera_trap_labels()

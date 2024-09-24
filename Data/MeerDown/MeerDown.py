@@ -6,7 +6,7 @@ import multiprocessing as mp
 import cv2
 
 class MeerDown():
-    def __init__(self, annotations_folder, videos_folder, output_folder, sampling_rate=30, name = "annotations.json"):
+    def __init__(self, annotations_folder, videos_folder, output_folder, sampling_rate=30, name = "annotations.json", behaviour = False):
         self.annotations_folder = annotations_folder
         self.videos_folder = videos_folder
         self.output_folder = output_folder
@@ -28,16 +28,36 @@ class MeerDown():
                 self.coco = json.load(f)
             self.annot_exists = True
         else:
-            self.coco = {
-                "images": [],
-                "annotations": [],
-                "categories": [
-                    {
-                        "id": 1,
-                        "name": "meerkat"
-                    }
-                ]
-            }
+            if behaviour:
+                self.coco = {
+                    "images": [],
+                    "annotations": [],
+                    "categories": [
+                        {
+                            "id": 0,
+                            "name": "vigilant"
+                        },
+                        {
+                            "id": 1,
+                            "name": "foraging"
+                        },
+                        {
+                            "id": 2,
+                            "name": "other"
+                        }
+                    ]
+                }
+            else:
+                self.coco = {
+                    "images": [],
+                    "annotations": [],
+                    "categories": [
+                        {
+                            "id": 1,
+                            "name": "meerkat"
+                        }
+                    ]
+                }
 
         # set image dimensions 
         self.set_dimensions()
@@ -94,7 +114,7 @@ class MeerDown():
 
         cap.release()
 
-    def create_coco_annotations(self):
+    def create_coco_annotations(self, behaviour = False):
         do = True
         if self.annot_exists:
             do = False
@@ -136,22 +156,24 @@ class MeerDown():
                         
                         # Increment image ID
                         image_id += 1
-
-                    if int(row["behaviour_index"]) in [3,6]:
-                        behaviour = 0
-                    elif int(row["behaviour_index"]) in [5]:
-                        behaviour = 1
+                    
+                    if behaviour:
+                        if int(row["behaviour_index"]) in [3,6]:
+                            category_id = 0
+                        elif int(row["behaviour_index"]) in [5]:
+                            category_id = 1
+                        else:
+                            category_id = 2
                     else:
-                        behaviour = 2
+                        category_id = 1
 
                     # Add annotation
                     annotation_info = {
                         "id": annotation_id,
                         "image_id": image_id - 1,  # Use the most recent image ID
-                        "category_id": 1,
+                        "category_id": category_id,
                         "bbox": [row['x1'], row['y1'], row['x2'] - row['x1'], row['y2'] - row['y1']],
                         "area": (row['x2'] - row['x1']) * (row['y2'] - row['y1']),
-                        "behaviour": behaviour,
                         "iscrowd": 0
                     }
                     self.coco["annotations"].append(annotation_info)
@@ -248,7 +270,7 @@ class MeerDown():
 
 
 if __name__ == "__main__":
-    md = MeerDown("Data/MeerDown/origin/Annotations","Data/MeerDown/origin/Annotated_videos","Data/MeerDown/raw", name="behaviour_annotations.json")
-    md.create_coco_annotations()
+    md = MeerDown("Data/MeerDown/origin/Annotations","Data/MeerDown/origin/Annotated_videos","Data/MeerDown/raw", name="behaviour_annotations.json",behaviour=True)
+    md.create_coco_annotations(behaviour=True)
     md.save_coco_file(name="behaviour_annotations.json")
     # md.view_annotations()

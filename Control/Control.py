@@ -1,4 +1,5 @@
 from time import sleep
+import  time
 import os
 import sys
 from luma.oled.device import ssd1306
@@ -81,6 +82,14 @@ class Control:
 
             self.reset_buttons()
 
+    def continuous_capture(self,fps,duration):
+        save_dir = DEP_PATH
+
+        start_time = time.time()
+        while time.time() - start_time < duration:
+            self.rtc.read_time()
+            self.camera.capture()
+
 if __name__ == "__main__":
     # initialize main control
     control = Control()
@@ -105,7 +114,8 @@ if __name__ == "__main__":
                 control.menu_index = control.menu_keys[len(control.menu_items) - 1] if control.menu_index == "home" else control.menu_keys[(control.menu_keys.index(control.menu_index) - 1) % len(control.menu_items)]
         
             elif control.pressed["ok"]: # enter desired mode
-                pass
+                control.reset_buttons()
+                if control.menu_index == "sgl": control.single_capture()
 
             # set buttons states back
             control.reset_buttons()
