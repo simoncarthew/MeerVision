@@ -142,7 +142,6 @@ class EvaluateModel:
         tp, fp, fn = 0, 0, 0
         used_gt = set()
 
-        # Convert COCO annotations to dictionary for easier access
         gt_by_id = {gt['id']: gt for gt in ground_truths['annotations']}
         
         for pred in predictions['annotations']:

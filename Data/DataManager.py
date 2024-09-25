@@ -795,5 +795,7 @@ class DataManager():
 if __name__ == "__main__":
     # md_coco_path="Data/MeerDown/raw/behaviour_annotations.json"
     dm = DataManager()
-    train_loader, val_loader, test_loader = dm.create_dataloaders(obs_no = 50, md_z1_trainval_no=50,md_z2_trainval_no=50,snap_no=50,snap_test_no=50,new_cuts=True,behaviour=False)
+    # train_loader, val_loader, test_loader = dm.create_dataloaders(obs_no = 50, md_z1_trainval_no=50,md_z2_trainval_no=50,snap_no=50,snap_test_no=50,new_cuts=True,behaviour=False)
     # snap_train, snap_val, snap_test = dm.create_snap_coco(num_train_val=100,num_test=20)
+    # dm.create_yolo_dataset(-1,1000,1000,0,"Data/Formated")
+    dm.view_yolo_annotations("Data/Formated/yolo/images/test","Data/Formated/yolo/labels/test")

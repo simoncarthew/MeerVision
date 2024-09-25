@@ -6,7 +6,7 @@ paths:
   meerdown_annot: '/scratch/crtsim008/MeerDown/annotations.json'
   obs_frames: '/scratch/crtsim008/Observed/frames'
   obs_annot: '/scratch/crtsim008/Observed/annotations.json'
-  data_path: '/scratch/crtsim008/Training1'
+  data_path: '/scratch/crtsim008/Training8'
   yolo5_path: 'ObjectDetection/Yolo5'
   yolo8_path: 'ObjectDetection/Yolo8'
 
