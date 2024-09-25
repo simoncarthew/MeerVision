@@ -182,7 +182,7 @@ for index, row in train_df.iterrows():
             logging.info(f'Trained {row["model"]}.')
 
         except Exception as e:
-            logging.error(f'Error training {row["model"]}: {e}')
+            logging.error(f'Error training {row["model"]}: {e}\n{traceback.format_exc()}')
             trained = False
 
         try:
