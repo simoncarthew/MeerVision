@@ -25,8 +25,11 @@ class Yolo5:
             model_size = "yolov5" + model_size
             self.model = torch.hub.load('ultralytics/yolov5', model_size, pretrained=pretrained).to(self.device)
 
-    def train(self, data_path, lr = 0.01, epochs=30, batch_size=16, img_sz=640, freeze = 10, optimizer = 'SGD', augment = True, save_path = os.path.join("ObjectDetection","Yolo5")):
-        freeze=list(range(freeze))
+    def train(self, data_path, lr = 0.01, epochs=30, batch_size=16, img_sz=640, freeze = 0, optimizer = 'SGD', augment = True, save_path = os.path.join("ObjectDetection","Yolo5")):
+        if freeze != 0:
+            freeze=list(range(freeze))
+        else:
+            freeze = [0]
 
         train.run(
             data=data_path,
@@ -265,7 +268,7 @@ if __name__ == "__main__":
     # for file in jpg_files:
     #     print(yolo.sgl_detect(image_path=file, show=True))
     # print("Starting Training")
-    yolo.train(data_path='Data/Formated/yolo/dataset.yaml',epochs=5,batch_size=4)
+    yolo.train(data_path='Data/Formated/yolo/dataset.yaml',epochs=5,batch_size=4,freeze = 10)
     # print("Finnished Training")
     # print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
     # print(yolo.cust_evaluate(yolo_path="Data/Formated/yolo"))

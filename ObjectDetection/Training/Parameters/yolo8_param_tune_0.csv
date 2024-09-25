@@ -6,3 +6,4 @@ id,model,batch,lr,freeze,pretrained,augment,epochs,percval,obs_no,md_z1_trainval
 4,yolo8n,std,std,std,std,std,std,std,std,std,std,std,AdamW,std
 5,yolo8n,std,std,5,std,std,std,std,std,std,std,std,std,std
 6,yolo8n,std,std,10,std,std,std,std,std,std,std,std,std,std
+7,yolo5s,std,0.05,std,std,std,std,std,std,std,std,std,std,std
