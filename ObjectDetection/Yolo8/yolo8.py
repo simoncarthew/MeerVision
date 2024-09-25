@@ -25,17 +25,8 @@ class Yolo8:
                 self.model = YOLO(yolo_path + "/yolov8" + model_size + ".pt")
             else:
                 self.model = YOLO("yolov8" + model_size + ".yaml")
-        
-    
-    def freeze_layers(self, freeze):
-        freeze = [f"model.{x}." for x in range(freeze)]
-        for k, v in self.model.named_parameters():
-            v.requires_grad = True 
-            if any(x in k for x in freeze):
-                v.requires_grad = False
 
     def train(self, batch = 32, freeze = 0, img_sz = 640, lr = 0.01, optimizer = 'SGD', epochs = 50, dataset_path=os.path.join("Data","Formated","yolo","dataset.yaml"), save_path = os.path.join('ObjectDetection','Yolo8'), augment = False):
-        self.freeze_layers(freeze)
 
         # set augmenting variables
         results = self.model.train(
@@ -44,25 +35,26 @@ class Yolo8:
             project=save_path,
             verbose=True,
             optimizer=optimizer,
-            data=dataset_path,  # Path to the dataset YAML file
-            epochs=epochs,  # Number of training epochs
-            batch=batch,  # Batch size
-            imgsz=img_sz,  # Image size
-            augment=augment,  # Enable data augmentation
-            hsv_h=0.015,  # Hue adjustment
-            hsv_s=0.7,    # Saturation adjustment
-            hsv_v=0.4,    # Value (brightness) adjustment
-            degrees=10.0,  # Rotation in degrees (adjusted to a non-zero value)
-            translate=0.1,  # Translation fraction
-            scale=0.5,  # Scaling factor
-            shear=2.0,  # Shear angle in degrees (adjusted to a non-zero value)
-            perspective=0.001,  # Perspective transformation (adjusted to a non-zero value)
-            flipud=0.1,  # Probability of flipping vertically (adjusted to a non-zero value)
-            fliplr=0.5,  # Probability of flipping horizontally
-            mosaic=1.0,  # Mosaic augmentation
-            mixup=0.2,  # MixUp augmentation (adjusted to a non-zero value)
-            copy_paste=0.2,  # Copy-Paste augmentation (adjusted to a non-zero value)
+            data=dataset_path,  
+            epochs=epochs, 
+            batch=batch,  
+            imgsz=img_sz,  
+            augment=augment,
+            freeze=freeze
         )
+        # hsv_h=0.015,
+        # hsv_s=0.7,    
+        # hsv_v=0.4, 
+        # degrees=10.0,
+        # translate=0.1, 
+        # scale=0.5,  
+        # shear=2.0, 
+        # perspective=0.001,  
+        # flipud=0.1,
+        # fliplr=0.5, 
+        # mosaic=1.0,  
+        # mixup=0.2,
+        # copy_paste=0.2, 
 
         return results
     
@@ -294,16 +286,16 @@ class Yolo8:
 
 if __name__ == "__main__":
     # model_path = "ObjectDetection/Training/Results/yolo8_first_test/models/model_0/weights/last.pt"
-    model_path = "ObjectDetection/Training/Results/hyper_tune_0/results5/models/model_0/weights/best.pt"
-    yolo = Yolo8(model_path=model_path)
-    # yolo = Yolo8(model_size = "l")
+    # model_path = "ObjectDetection/Training/Results/hyper_tune_0/results5/models/model_0/weights/best.pt"
+    # yolo = Yolo8(model_path=model_path)
+    yolo = Yolo8(model_size = "n")
     # print("Loading Pretrained Model")
     # yolo = Yolo8(model_size='n',pretrained=True)
     # print("Loaded Pretrained Model")
-    # yolo.train(batch=32,epochs=5,dataset_path="/scratch/crtsim008/Formated/yolo/dataset.yaml",augment=True)
+    yolo.train(freeze = 10,batch=4,epochs=5,dataset_path="Data/Formated/yolo/dataset.yaml",augment=True)
     # print(yolo.inference_time(yolo_path="Data/Formated/yolo"))
-    image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg"
-    detections = yolo.sgl_detect(image_path,show=True, format="coco")
+    # image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg"
+    # detections = yolo.sgl_detect(image_path,show=True, format="coco")
     # print(yolo.test_detect(yolo_path='Data/Formated/yolo'))
     # print(yolo.evaluate(yolo_path='Data/Formated/yolo'))
     # yolo.process_video(video_path="Data/YoutubeCameraTrap/istockphoto-1990464825-640_adpp_is.mp4",thresh=0.1)

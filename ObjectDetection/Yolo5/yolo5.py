@@ -24,17 +24,9 @@ class Yolo5:
         else:
             model_size = "yolov5" + model_size
             self.model = torch.hub.load('ultralytics/yolov5', model_size, pretrained=pretrained).to(self.device)
-    
-    def freeze_layers(self, freeze):
-        # Print the layers that will be frozen
-        for k, v in self.model.named_parameters():
-            if any(f"model.{x}." in k for x in range(freeze)):
-                v.requires_grad = False
-            else:
-                v.requires_grad = True
 
     def train(self, data_path, lr = 0.01, epochs=30, batch_size=16, img_sz=640, freeze = 10, optimizer = 'SGD', augment = True, save_path = os.path.join("ObjectDetection","Yolo5")):
-        self.freeze_layers(freeze)
+        freeze=list(range(freeze))
 
         train.run(
             data=data_path,
@@ -46,7 +38,8 @@ class Yolo5:
             project = save_path,
             optimizer = optimizer,
             augment=augment,
-            name = "train"
+            name = "train",
+            freeze=freeze
         )
     
     def detect_video(self, video_path, output_path=None, conf_thres=0.25):
@@ -261,18 +254,18 @@ if __name__ == "__main__":
     # model_path = 'ObjectDetection/Yolo5/hpc/first.pt'
     # model_path = "ObjectDetection/Yolo5/md_v5b.0.0.pt"
     # model_path = "ObjectDetection/Yolo5/train/weights/best.pt"
-    model_path = "ObjectDetection/Training/Results/yolo5_first_test/models/model_0/weights/best.pt"
+    # model_path = "ObjectDetection/Training/Results/yolo5_first_test/models/model_0/weights/best.pt"
     # print("Loading Previous Model")
-    yolo = Yolo5(model_path=model_path)
+    # yolo = Yolo5(model_path=model_path)
     # print("Previous Model Loaded")
     # print("Loading new Model")
-    # yolo = Yolo5(model_size='s')
+    yolo = Yolo5(model_size='s')
     # print("New Model Loaded")
-    jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
-    for file in jpg_files:
-        print(yolo.sgl_detect(image_path=file, show=True))
+    # jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
+    # for file in jpg_files:
+    #     print(yolo.sgl_detect(image_path=file, show=True))
     # print("Starting Training")
-    # yolo.train(data_path='/scratch/crtsim008/Formated/yolo/dataset.yaml',epochs=30,batch_size=32)
+    yolo.train(data_path='Data/Formated/yolo/dataset.yaml',epochs=5,batch_size=4)
     # print("Finnished Training")
     # print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
     # print(yolo.cust_evaluate(yolo_path="Data/Formated/yolo"))
