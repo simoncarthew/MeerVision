@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 import json
+import copy
 
 sys.path.append("Data")
 from DataManager import DataManager
@@ -97,6 +98,10 @@ class CNNS:
         optimizer = optim.SGD(self.model.parameters(), lr=learning_rate)
         criterion = nn.CrossEntropyLoss()
 
+        # best model info
+        best_val_accuracy = 0.0
+        best_model_state = copy.deepcopy(self.model.state_dict())
+
         for epoch in range(epochs):
             self.model.train()
             running_loss = 0.0
@@ -131,8 +136,19 @@ class CNNS:
             results["val_acc"].append(val_accuracy)
             results["val_loss"].append(val_loss)
 
+            # Check if the current model is the best based on validation accuracy
+            if val_accuracy > best_val_accuracy:
+                best_val_accuracy = val_accuracy
+                best_model_state = copy.deepcopy(self.model.state_dict())  # Save the best model's state
+                results["best_epoch"] = epoch
+
             # print results
             print(f"Epoch [{epoch+1}/{epochs}], Train Loss: {training_loss:.4f}, Train Accuracy: {train_accuracy:.2f}%, Val Loss: {val_loss:.4f}, Val Accuracy: {val_accuracy:.2f}%")
+
+            torch.cuda.empty_cache()
+
+        # Set self.model to the best model
+        self.model.load_state_dict(best_model_state)
 
         # test the model
         if test_loader:
@@ -264,27 +280,25 @@ if __name__ == "__main__":
     batch = 4
     num_workers = 1
     data_path = os.path.join("Data","Classification")
-    obs_no = 200
-    obs_test_no = 100
-    md_z1_trainval_no = 1000
-    md_z2_trainval_no = 1000
+    obs_no = 100
+    obs_test_no = 10
+    md_z1_trainval_no = 50
+    md_z2_trainval_no = 50
     md_test_no = 0
     img_size = (64,64)
-    behaviour = True
-    snap_no=300
-    snap_test_no = 50
+    behaviour = False
+    snap_no=250
+    snap_test_no = 10
 
     # create data_loaders
-    # dm = DataManager(perc_val = 0.2)
-    # train_loader, val_loader, test_loader = dm.create_dataloaders(batch=batch,num_workers=num_workers,obs_no = obs_no, obs_test_no=obs_test_no, md_z1_trainval_no=md_z1_trainval_no,md_z2_trainval_no=md_z2_trainval_no, snap_no=snap_no,snap_test_no=snap_test_no,behaviour=behaviour,img_size=img_size)
-    
-    md_coco_path="Data/MeerDown/raw/behaviour_annotations.json"
-    obs_coco_path="Data/Observed/behaviour_annotations.json"
-    dm = DataManager(md_coco_path=md_coco_path,obs_coco_path=obs_coco_path)
+    dm = DataManager(perc_val = 0.2)
     train_loader, val_loader, test_loader = dm.create_dataloaders(batch=batch,num_workers=num_workers,obs_no = obs_no, obs_test_no=obs_test_no, md_z1_trainval_no=md_z1_trainval_no,md_z2_trainval_no=md_z2_trainval_no, snap_no=snap_no,snap_test_no=snap_test_no,behaviour=behaviour,img_size=img_size)
+    
+    # md_coco_path="Data/MeerDown/raw/behaviour_annotations.json"
+    # obs_coco_path="Data/Observed/behaviour_annotations.json"
+    # dm = DataManager(md_coco_path=md_coco_path,obs_coco_path=obs_coco_path)
+    # train_loader, val_loader, test_loader = dm.create_dataloaders(batch=batch,num_workers=num_workers,obs_no = obs_no, obs_test_no=obs_test_no, md_z1_trainval_no=md_z1_trainval_no,md_z2_trainval_no=md_z2_trainval_no, snap_no=snap_no,snap_test_no=snap_test_no,behaviour=behaviour,img_size=img_size)
 
-    model = CNNS(model_name="resnet50",num_classes=3,pretrained=True)
-    print(model.train(train_loader=train_loader,val_loader=val_loader,epochs=30,test_loader=test_loader))
-    # model.save_model("Classification/models/res.pth")
-    # model = CNNS(model_name="resnet50",model_path="Classification/models/res.pth",num_classes=2)
-    model.plot_predictions("Data/Classification/Behaviour/cut_images/test")
+    model = CNNS(model_name="resnet50",num_classes=2,pretrained=True)
+    print(model.train(train_loader=train_loader,val_loader=val_loader,epochs=10,test_loader=test_loader))
+    model.plot_predictions("Data/Classification/Binary/cut_images/test")
