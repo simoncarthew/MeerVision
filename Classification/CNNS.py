@@ -10,6 +10,8 @@ from tqdm import tqdm
 import random
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
+import json
 
 sys.path.append("Data")
 from DataManager import DataManager
@@ -76,19 +78,21 @@ class CNNS:
 
     def load_prev_model(self, file_path):
         # get previous model information
-        checkpoint = torch.load(file_path, map_location=self.device)
+        checkpoint = torch.load(file_path, map_location=self.device, weights_only=True)
         self.model_name = checkpoint['model_name']
         self.num_classes = checkpoint['num_classes']
         
         # load previous models dict to correct architecture
         model = self.load_new_model(self.model_name, pretrained=False)
         model.load_state_dict(checkpoint['model_state_dict'])
-        model = self.model.to(self.device)
         
         return model
 
 
-    def train(self, train_loader, val_loader, epochs, learning_rate=0.01):
+    def train(self, train_loader, val_loader, epochs, learning_rate=0.01, test_loader = None):
+        # initialize results variables
+        results = {"train_acc":[],"train_loss":[],"val_acc":[],"val_loss":[]}
+
         # set the optimizer
         optimizer = optim.SGD(self.model.parameters(), lr=learning_rate)
         criterion = nn.CrossEntropyLoss()
@@ -98,7 +102,7 @@ class CNNS:
             running_loss = 0.0
             correct = 0
             total = 0
-            for images, labels in tqdm(train_loader):
+            for images, labels in train_loader:
                 labels = labels[0]['category_id'].to(self.device)
                 images = torch.stack([image.to(self.device) for image in images])  
 
@@ -114,37 +118,80 @@ class CNNS:
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
 
+            # calculate accuracy and loss
             train_accuracy = 100 * correct / total
-            print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(train_loader):.4f}, Train Accuracy: {train_accuracy:.2f}%")
+            training_loss = running_loss/len(train_loader)
 
-            self.validate(val_loader)
+            # validate the model
+            val_loss, val_accuracy = self.validate(val_loader)
+
+            # save
+            results["train_acc"].append(train_accuracy)
+            results["train_loss"].append(training_loss)
+            results["val_acc"].append(val_accuracy)
+            results["val_loss"].append(val_loss)
+
+            # print results
+            print(f"Epoch [{epoch+1}/{epochs}], Train Loss: {training_loss:.4f}, Train Accuracy: {train_accuracy:.2f}%, Val Loss: {val_loss:.4f}, Val Accuracy: {val_accuracy:.2f}%")
+
+        # test the model
+        if test_loader:
+            _ , test_acc = self.validate(test_loader)
+            results["test_acc"] = test_acc
+
+        return results
 
     def validate(self, val_loader):
         self.model.eval()
         correct = 0
         total = 0
+        running_loss = 0.0
+        criterion = nn.CrossEntropyLoss()  # Define the loss function
+
         with torch.no_grad():
-            for images, labels in tqdm(val_loader):
+            for images, labels in val_loader:
                 labels = labels[0]['category_id'].to(self.device)
-                images = torch.stack([image.to(self.device) for image in images]) 
+                images = torch.stack([image.to(self.device) for image in images])
+
                 outputs = self.model(images)
+                loss = criterion(outputs, labels)  # Calculate the loss
+                running_loss += loss.item() * labels.size(0)  # Accumulate loss
+
                 _, predicted = torch.max(outputs, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
 
-        val_accuracy = 100 * correct / total
-        print(f'Validation Accuracy: {val_accuracy:.2f}%')
+        val_loss = running_loss / total  # Calculate average loss
+        val_accuracy = 100 * correct / total  # Calculate accuracy
 
-    def predict(self, test_loader):
+        return val_loss, val_accuracy
+
+
+    def predict(self, image_path, img_size=64):
+        # Define the transforms used during training
+        transform = transforms.Compose([
+            transforms.Resize(img_size),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) 
+        ])
+
+        # Load the image and apply the transformations
+        image = Image.open(image_path).convert('RGB') 
+        image = transform(image).unsqueeze(0) 
+
+        # Move the image to the device (GPU/CPU)
+        image = image.to(self.device)
+
+        # Set model to evaluation mode
         self.model.eval()
-        predictions = []
+
+        # Get the model's prediction
         with torch.no_grad():
-            for images in test_loader:
-                images = images.to(self.device)
-                outputs = self.model(images)
-                _, predicted = torch.max(outputs, 1)
-                predictions.extend(predicted.cpu().numpy())
-        return predictions
+            outputs = self.model(image)
+            _, predicted = torch.max(outputs, 1)
+
+        # Return the predicted class
+        return predicted.item()
 
     def save_model(self, file_path):
         torch.save({
@@ -154,69 +201,90 @@ class CNNS:
         }, file_path)
         print(f"Model saved to {file_path}")
 
-    def unnormalize(self,image, mean, std):
-        """Undo the normalization for plotting."""
-        mean = np.array(mean).reshape(1, 1, 3)
-        std = np.array(std).reshape(1, 1, 3)
-        image = (image * std) + mean
-        return np.clip(image, 0, 1)
-
-    def show_predictions(self, dataloader, num_images=5):
-        self.model.eval()
-        images, labels = next(iter(dataloader))
-        images = images.to(self.device)
-        labels = labels[0]['category_id'].to(self.device)  # assuming labels are in the first element
-
-        # Randomly select images and their corresponding labels
-        indices = random.sample(range(len(images)), num_images)
-        selected_images = images[indices]
-        selected_labels = labels[indices].cpu().numpy()
-
-        with torch.no_grad():
-            outputs = self.model(selected_images)
-            _, predicted = torch.max(outputs, 1)
-
-        # Convert images to numpy arrays for plotting
-        selected_images = selected_images.cpu().numpy()  # Shape: (N, C, H, W)
-        selected_images = selected_images.transpose((0, 2, 3, 1))  # Change to (N, H, W, C)
-
-        # Unnormalize the images
-        mean = [0.485, 0.456, 0.406]  # ImageNet mean
-        std = [0.229, 0.224, 0.225]   # ImageNet std
-        selected_images = [self.unnormalize(img, mean, std) for img in selected_images]
-
-        # Plotting
-        plt.figure(figsize=(15, 10))
-        for i in range(num_images):
-            plt.subplot(1, num_images, i + 1)
-            plt.imshow(selected_images[i])  # Correctly formatted for plt.imshow
+    def plot_predictions(self, directory_path, coco_name = 'test_coco.json', num_images=16, img_size=64):
+        # Load the COCO annotations file
+        coco_json_path = os.path.join(directory_path, coco_name)
+        
+        with open(coco_json_path, 'r') as f:
+            coco_data = json.load(f)
+        
+        # Get image file names and their actual class labels
+        images_info = coco_data['images']
+        annotations_info = coco_data['annotations']
+        categories_info = coco_data['categories']
+        
+        # Create a dictionary mapping image IDs to actual category IDs
+        image_id_to_category = {ann['image_id']: ann['category_id'] for ann in annotations_info}
+        
+        # Create a dictionary mapping category IDs to category names
+        category_id_to_name = {cat['id']: cat['name'] for cat in categories_info}
+        
+        # Randomly select images to process
+        selected_images = random.sample(images_info, num_images)
+        
+        # Store the images, actual classes, and predicted classes
+        actual_classes = []
+        predicted_classes = []
+        selected_images_paths = []
+        
+        # Loop through selected images and predict classes
+        for img_info in selected_images:
+            img_id = img_info['id']
+            img_filename = img_info['file_name']
+            img_path = os.path.join(directory_path, img_filename)
+            
+            # Get the actual class label
+            actual_class_id = image_id_to_category[img_id]
+            actual_class_name = category_id_to_name[actual_class_id]
+            actual_classes.append(actual_class_name)
+            
+            # Predict the class using the previously defined `predict` function
+            predicted_class_id = self.predict(img_path, img_size=img_size)
+            predicted_class_name = category_id_to_name[predicted_class_id]
+            predicted_classes.append(predicted_class_name)
+            
+            # Store the image path for plotting
+            selected_images_paths.append(img_path)
+        
+        # Plot the images with their predicted and actual labels
+        plt.figure(figsize=(20, 5))
+        for i, img_path in enumerate(selected_images_paths):
+            img = Image.open(img_path)
+            plt.subplot(2, 8, i + 1)
+            plt.imshow(img)
+            plt.title(f"Pred: {predicted_classes[i]}\nActual: {actual_classes[i]}")
             plt.axis('off')
-            plt.title(f"Pred: {predicted[i].item()}, Actual: {selected_labels[i]}")
-        plt.savefig('predictions.png')  # Save the figure to a file instead of displaying it
-        plt.close()  # Close the plot to free memory
+        
+        plt.tight_layout()
+        plt.savefig('predictions.jpg')
 
 
 if __name__ == "__main__":
     # set data variables
-    batch = 16
+    batch = 4
     num_workers = 1
     data_path = os.path.join("Data","Classification")
-    obs_no = 100
-    md_z1_trainval_no = 100
-    md_z2_trainval_no = 100
+    obs_no = 200
+    obs_test_no = 100
+    md_z1_trainval_no = 1000
+    md_z2_trainval_no = 1000
     md_test_no = 0
     img_size = (64,64)
-    new_cuts = True
-    behaviour = False
+    behaviour = True
     snap_no=300
     snap_test_no = 50
 
     # create data_loaders
-    # dm = DataManager(md_coco_path="Data/MeerDown/raw/behaviour_annotations.json")
-    dm = DataManager()
-    train_loader, val_loader, test_loader = dm.create_dataloaders(batch=batch,num_workers=num_workers,obs_no = obs_no, md_z1_trainval_no=md_z1_trainval_no,md_z2_trainval_no=md_z2_trainval_no, snap_no=snap_no,snap_test_no=snap_test_no,new_cuts=new_cuts,behaviour=behaviour)
+    # dm = DataManager(perc_val = 0.2)
+    # train_loader, val_loader, test_loader = dm.create_dataloaders(batch=batch,num_workers=num_workers,obs_no = obs_no, obs_test_no=obs_test_no, md_z1_trainval_no=md_z1_trainval_no,md_z2_trainval_no=md_z2_trainval_no, snap_no=snap_no,snap_test_no=snap_test_no,behaviour=behaviour,img_size=img_size)
+    
+    md_coco_path="Data/MeerDown/raw/behaviour_annotations.json"
+    obs_coco_path="Data/Observed/behaviour_annotations.json"
+    dm = DataManager(md_coco_path=md_coco_path,obs_coco_path=obs_coco_path)
+    train_loader, val_loader, test_loader = dm.create_dataloaders(batch=batch,num_workers=num_workers,obs_no = obs_no, obs_test_no=obs_test_no, md_z1_trainval_no=md_z1_trainval_no,md_z2_trainval_no=md_z2_trainval_no, snap_no=snap_no,snap_test_no=snap_test_no,behaviour=behaviour,img_size=img_size)
 
-    # first test
-    resnet = CNNS(model_name="resnet50",num_classes=2)
-    resnet.train(train_loader=train_loader,val_loader=val_loader,epochs=2)
-    resnet.show_predictions(test_loader,5)
+    model = CNNS(model_name="resnet50",num_classes=3,pretrained=True)
+    print(model.train(train_loader=train_loader,val_loader=val_loader,epochs=30,test_loader=test_loader))
+    # model.save_model("Classification/models/res.pth")
+    # model = CNNS(model_name="resnet50",model_path="Classification/models/res.pth",num_classes=2)
+    model.plot_predictions("Data/Classification/Behaviour/cut_images/test")

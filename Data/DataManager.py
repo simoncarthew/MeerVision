@@ -224,24 +224,28 @@ class DataManager():
         if md_z1_trainval_no == -1: md_z1_trainval_no = num_z1_images
         if md_z2_trainval_no == -1: md_z2_trainval_no = num_z2_images
 
-        # get sampling periods
-        z1_samp_period = math.floor(num_z1_images / md_z1_trainval_no) 
-        z2_samp_period = math.floor(num_z2_images / (md_z2_trainval_no + md_test_no))
-        
-        # check if sampling period is ok
-        if z1_samp_period < 1:
-            print("Invalid MeerDown zone 1 training size.")
-            exit()
-        if z2_samp_period < 1:
-            print("Invalid MeerDown zone 2 training/test size.")
-            exit()
-            pass
-        
-        # sample images
-        sampled_z1_images = [image for i, image in enumerate(md_coco_1['images']) if i % z1_samp_period == 0]
-        sampled_z1_images = sampled_z1_images[0:md_z1_trainval_no]
-        sampled_z2_images = [image for i, image in enumerate(md_coco_2['images']) if i % z2_samp_period == 0]
-        sampled_z2_images = sampled_z2_images[0: md_z2_trainval_no + md_test_no]
+        if md_z1_trainval_no != 0 or md_z2_trainval_no + md_test_no != 0:
+            # get sampling periods
+            z1_samp_period = math.floor(num_z1_images / md_z1_trainval_no) 
+            z2_samp_period = math.floor(num_z2_images / (md_z2_trainval_no + md_test_no))
+            
+            # check if sampling period is ok
+            if z1_samp_period < 1:
+                print("Invalid MeerDown zone 1 training size.")
+                exit()
+            if z2_samp_period < 1:
+                print("Invalid MeerDown zone 2 training/test size.")
+                exit()
+                pass
+            
+            # sample images
+            sampled_z1_images = [image for i, image in enumerate(md_coco_1['images']) if i % z1_samp_period == 0]
+            sampled_z1_images = sampled_z1_images[0:md_z1_trainval_no]
+            sampled_z2_images = [image for i, image in enumerate(md_coco_2['images']) if i % z2_samp_period == 0]
+            sampled_z2_images = sampled_z2_images[0: md_z2_trainval_no + md_test_no]
+        else:
+            sampled_z1_images = []
+            sampled_z2_images = []
         
         # get training images
         z1_train_end = math.floor(len(sampled_z1_images) * (1 - self.perc_val))
@@ -612,10 +616,18 @@ class DataManager():
 
         return new_annotations
 
-    def reduce_to_annotations(self, coco, img_count):
-
+    def reduce_to_annotations(self, coco, img_count, img_dir):
         # Get the list of all image ids
         image_list = coco['images']
+        
+        if len(image_list) == 0: 
+            return coco
+
+        # Ensure img_count is an integer
+        img_count = int(img_count)
+
+        if img_count == -1:
+            img_count = len(image_list)
         
         # Ensure the new image count is not greater than the existing count
         if img_count > len(image_list):
@@ -636,10 +648,24 @@ class DataManager():
             'annotations': reduced_annotations,
             'categories': coco['categories'],
         }
+
+        # Get the IDs of the images to be removed
+        original_image_ids = set([img['id'] for img in image_list])
+        removed_image_ids = original_image_ids - reduced_image_ids
+        
+        # Delete the images from the specified directory
+        for img in image_list:
+            if img['id'] in removed_image_ids:
+                img_filename = img['file_name']
+                img_path = os.path.join(img_dir, img_filename)
+                if os.path.exists(img_path):
+                    os.remove(img_path)
+                else:
+                    print(f"File not found: {img_path}")
         
         return reduced_coco_data
 
-    def create_dataloaders(self, raw_path=CLASS_PATH, batch = 32, num_workers=8, obs_no = -1, obs_test_no = 0, md_z1_trainval_no = 2000, md_z2_trainval_no = 2000, md_test_no = 0, snap_no = 0, snap_test_no = 0, img_size = (64,64), new_cuts = False, behaviour = False):        
+    def create_dataloaders(self, raw_path=CLASS_PATH, batch = 32, num_workers=8, obs_no = -1, obs_test_no = 100, md_z1_trainval_no = 2000, md_z2_trainval_no = 2000, md_test_no = 0, snap_no = 0, snap_test_no = 0, img_size = (64,64), behaviour = False):        
         # select raw path
         if behaviour:
             raw_path = os.path.join(raw_path,"Behaviour")
@@ -690,7 +716,6 @@ class DataManager():
         obs_train["categories"], obs_val["categories"], obs_test["categories"] = categories, categories, categories
         md_train["categories"], md_val["categories"], md_test["categories"] = categories, categories, categories
 
-
         # set paths
         cut_images_path = os.path.join(raw_path, "cut_images")
         cut_train_path = os.path.join(cut_images_path, "train")
@@ -700,74 +725,77 @@ class DataManager():
         val_ann_file = os.path.join(cut_val_path, 'val_coco.json')
         test_ann_file = os.path.join(cut_test_path, 'test_coco.json')
 
-        if new_cuts:
-            # create raw image folder
-            uncut_images_path = os.path.join(raw_path,"uncut_images")
-            if os.path.exists(uncut_images_path):
-                shutil.rmtree(uncut_images_path)
-            Path(uncut_images_path).mkdir(parents=True, exist_ok=True)
+        # create raw image folder
+        uncut_images_path = os.path.join(raw_path,"uncut_images")
+        if os.path.exists(uncut_images_path):
+            shutil.rmtree(uncut_images_path)
+        Path(uncut_images_path).mkdir(parents=True, exist_ok=True)
 
-            # store images
-            if self.debug: print("Copying obs and md images to new folder")
-            self.merge_images(obs_train,md_train,self.obs_frames_path,self.md_frames_path,os.path.join(uncut_images_path,"train"),img_size=None)
-            if self.debug: print("Copied obs and md training images")
-            self.merge_images(obs_val,md_val,self.obs_frames_path,self.md_frames_path,os.path.join(uncut_images_path,"val"),img_size=None)
-            if self.debug: print("Copied obs and md validation images")
-            self.merge_images(md_test,obs_test,self.md_frames_path,self.obs_frames_path,os.path.join(uncut_images_path,"test"),img_size=None)
-            if self.debug: print("Copied obs and md test images")
+        # store images
+        if self.debug: print("Copying obs and md images to new folder")
+        self.merge_images(obs_train,md_train,self.obs_frames_path,self.md_frames_path,os.path.join(uncut_images_path,"train"),img_size=None)
+        if self.debug: print("Copied obs and md training images")
+        self.merge_images(obs_val,md_val,self.obs_frames_path,self.md_frames_path,os.path.join(uncut_images_path,"val"),img_size=None)
+        if self.debug: print("Copied obs and md validation images")
+        self.merge_images(md_test,obs_test,self.md_frames_path,self.obs_frames_path,os.path.join(uncut_images_path,"test"),img_size=None)
+        if self.debug: print("Copied obs and md test images")
 
-            # create the new paths
-            if os.path.exists(cut_images_path):
-                shutil.rmtree(cut_images_path)
-            Path(cut_images_path).mkdir(parents=True, exist_ok=True)
-            Path(cut_train_path).mkdir(parents=True, exist_ok=True)
-            Path(cut_val_path).mkdir(parents=True, exist_ok=True)
-            Path(cut_test_path).mkdir(parents=True, exist_ok=True)
+        # create the new paths
+        if os.path.exists(cut_images_path):
+            shutil.rmtree(cut_images_path)
+        Path(cut_images_path).mkdir(parents=True, exist_ok=True)
+        Path(cut_train_path).mkdir(parents=True, exist_ok=True)
+        Path(cut_val_path).mkdir(parents=True, exist_ok=True)
+        Path(cut_test_path).mkdir(parents=True, exist_ok=True)
 
-            # cut images and create annotations file
-            if self.debug: print("Starting to create cutout images and new annotations.")
-            obs_cut_train = self.create_cutouts_and_annotations(obs_train, os.path.join(uncut_images_path,"train"), cut_train_path, img_size)
-            md_cut_train = self.create_cutouts_and_annotations(md_train, os.path.join(uncut_images_path,"train"), cut_train_path, img_size)
-            if self.debug: print("Finnished cutting train.")
-            obs_cut_val = self.create_cutouts_and_annotations(obs_val, os.path.join(uncut_images_path,"val"), cut_val_path, img_size)
-            md_cut_val = self.create_cutouts_and_annotations(md_val, os.path.join(uncut_images_path,"val"), cut_val_path, img_size)
-            if self.debug: print("Finnished cutting val.")
-            obs_cut_test = self.create_cutouts_and_annotations(obs_test, os.path.join(uncut_images_path,"test"), cut_test_path, img_size)
-            md_cut_test = self.create_cutouts_and_annotations(md_test, os.path.join(uncut_images_path,"test"), cut_test_path, img_size)
-            if self.debug: print("Finnished cutting test.")
-            if self.debug: print("Finished creating cutout images and new annotations.")
+        # cut images and create annotations file
+        if self.debug: print("Starting to create cutout images and new annotations.")
+        obs_cut_train = self.create_cutouts_and_annotations(obs_train, os.path.join(uncut_images_path,"train"), cut_train_path, img_size)
+        md_cut_train = self.create_cutouts_and_annotations(md_train, os.path.join(uncut_images_path,"train"), cut_train_path, img_size)
+        if self.debug: print("Finnished cutting train.")
+        obs_cut_val = self.create_cutouts_and_annotations(obs_val, os.path.join(uncut_images_path,"val"), cut_val_path, img_size)
+        md_cut_val = self.create_cutouts_and_annotations(md_val, os.path.join(uncut_images_path,"val"), cut_val_path, img_size)
+        if self.debug: print("Finnished cutting val.")
+        obs_cut_test = self.create_cutouts_and_annotations(obs_test, os.path.join(uncut_images_path,"test"), cut_test_path, img_size)
+        md_cut_test = self.create_cutouts_and_annotations(md_test, os.path.join(uncut_images_path,"test"), cut_test_path, img_size)
+        if self.debug: print("Finnished cutting test.")
+        if self.debug: print("Finished creating cutout images and new annotations.")
 
-            # reduce images to specified sizes
-            obs_cut_train = self.reduce_to_annotations(obs_cut_train,obs_no * (1-self.perc_val))
-            obs_cut_val = self.reduce_to_annotations(obs_cut_val,obs_no * self.perc_val)
-            obs_cut_test = self.reduce_to_annotations(obs_cut_test,obs_test_no)
-            md_cut_train = self.reduce_to_annotations(md_cut_train,math.floor((md_z1_trainval_no + md_z1_trainval_no) / 2) * (1-self.perc_val))
-            md_cut_val = self.reduce_to_annotations(md_cut_val,math.floor((md_z1_trainval_no + md_z1_trainval_no) / 2) * self.perc_val)
-            md_cut_test = self.reduce_to_annotations(md_cut_test,md_test_no)
+        # reduce images to specified sizes
+        obs_cut_train = self.reduce_to_annotations(obs_cut_train,obs_no * (1-self.perc_val),img_dir=cut_train_path)
+        obs_cut_val = self.reduce_to_annotations(obs_cut_val,obs_no * self.perc_val,img_dir=cut_val_path)
+        obs_cut_test = self.reduce_to_annotations(obs_cut_test,obs_test_no,img_dir=cut_test_path)
+        md_cut_train = self.reduce_to_annotations(md_cut_train,math.floor((md_z1_trainval_no + md_z1_trainval_no)) * (1-self.perc_val),img_dir=cut_train_path)
+        md_cut_val = self.reduce_to_annotations(md_cut_val,math.floor((md_z1_trainval_no + md_z1_trainval_no)) * self.perc_val,img_dir=cut_val_path)
+        md_cut_test = self.reduce_to_annotations(md_cut_test,md_test_no,img_dir=cut_test_path)
 
-            # merge datasets
-            train = self.merge_coco(obs_train, md_train)
-            val = self.merge_coco(obs_val, md_val)
-            test = self.merge_coco(obs_test, md_test)
-            cut_train = self.merge_coco(cut_train, snap_train)
-            cut_val = self.merge_coco(cut_val, snap_val)
-            cut_test = self.merge_coco(cut_test, snap_test)
-            if self.debug: print("Merged snap into coco datasets.")
+        # merge datasets
+        train = self.merge_coco(obs_cut_train, md_cut_train)
+        val = self.merge_coco(obs_cut_val, md_cut_val)
+        test = self.merge_coco(obs_cut_test, md_cut_test)
+        train = self.merge_coco(train, snap_train)
+        val = self.merge_coco(val, snap_val)
+        test = self.merge_coco(test, snap_test)
+        if self.debug: print("Merged datasets.")
 
-            # move snap images
-            if self.debug: print("Moving snap images into new folder.")
-            self.merge_images(snap_train,None,SNAP_PATH,None,os.path.join(cut_images_path,"train"),img_size=None, remove=False)
-            self.merge_images(snap_val,None,SNAP_PATH,None,os.path.join(cut_images_path,"val"),img_size=None, remove=False)
-            self.merge_images(snap_test,None,SNAP_PATH,None,os.path.join(cut_images_path,"test"),img_size=None, remove=False)
-            if self.debug: print("Moved snap images into new folder.")
+        # move snap images
+        if self.debug: print("Moving snap images into new folder.")
+        self.merge_images(snap_train,None,SNAP_PATH,None,os.path.join(cut_images_path,"train"),img_size=img_size, remove=False)
+        self.merge_images(snap_val,None,SNAP_PATH,None,os.path.join(cut_images_path,"val"),img_size=img_size, remove=False)
+        self.merge_images(snap_test,None,SNAP_PATH,None,os.path.join(cut_images_path,"test"),img_size=img_size, remove=False)
+        if self.debug: print("Moved snap images into new folder.")
 
-            # save the new annotations
-            with open(train_ann_file, "w") as f:
-                json.dump(cut_train, f, indent=4)
-            with open(val_ann_file, "w") as f:
-                json.dump(cut_val, f, indent=4)
-            with open(test_ann_file, "w") as f:
-                json.dump(cut_test, f, indent=4)
+        print("Train images:" + str(len(train["images"])))
+        print("Val images:" + str(len(val["images"])))
+        print("Test images:" + str(len(test["images"])))
+
+        # save the new annotations
+        with open(train_ann_file, "w") as f:
+            json.dump(train, f, indent=4)
+        with open(val_ann_file, "w") as f:
+            json.dump(val, f, indent=4)
+        with open(test_ann_file, "w") as f:
+            json.dump(test, f, indent=4)
         
         if os.path.exists(cut_images_path):
             # define simple transform
@@ -794,8 +822,10 @@ class DataManager():
 
 if __name__ == "__main__":
     # md_coco_path="Data/MeerDown/raw/behaviour_annotations.json"
-    dm = DataManager()
-    # train_loader, val_loader, test_loader = dm.create_dataloaders(obs_no = 50, md_z1_trainval_no=50,md_z2_trainval_no=50,snap_no=50,snap_test_no=50,new_cuts=True,behaviour=False)
+    # obs_coco_path="Data/Observed/behaviour_annotations.json"
+    # dm = DataManager(md_coco_path=md_coco_path,obs_coco_path=obs_coco_path)
+    # train_loader, val_loader, test_loader = dm.create_dataloaders(obs_no = 100, md_z1_trainval_no=100,md_z2_trainval_no=100,snap_no=300,snap_test_no=100,obs_test_no=100,behaviour=True)
     # snap_train, snap_val, snap_test = dm.create_snap_coco(num_train_val=100,num_test=20)
-    # dm.create_yolo_dataset(-1,1000,1000,0,"Data/Formated")
-    dm.view_yolo_annotations("Data/Formated/yolo/images/test","Data/Formated/yolo/labels/test")
+    dm = DataManager()
+    dm.create_yolo_dataset(100,0,0,0,"Data/Formated/test")
+    # dm.view_yolo_annotations("Data/Formated/yolo/images/test","Data/Formated/yolo/labels/test")

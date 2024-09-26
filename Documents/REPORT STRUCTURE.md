@@ -17,7 +17,9 @@
 
 ## THEORETICAL BACKGROUND
 #### MICRO CONTROLLERS AND CAMERAS
-#### CNNS
+#### IMAGE CLASSIFICATION
+* Basic CNN
+* Different Architectures
 #### YOLO
 #### MEGADETECTOR
 #### EVALUATION METRICS
@@ -82,7 +84,7 @@ Report on best parameters found for yolo5 and 8
 | STD    | 0.01       | 32      | 0      | True    | True       | 0.2     | 50     | 1000           | 1000           | 640        | -1     |
 | TUNING | 0.5 / 0.02 | 16 / 64 | 5 / 10 | -       | -          | -       | -      | 500 / 2000     | 500 / 2000     | 320 / 1280 | 0      |
 
-#### BEST MODEL
+#### MODEL SIZES
 Best training parameters used to train larger models of yolo5 and yolo8
 Plot mAP on val vs test to show overfitting if present (not necessary for all just show examples of overfit and not overfit)
 Use evaluation metrics mAP50, mAP50-90, P, R from test images to interpret performance changes across models (Bar graphs probably make sense)
