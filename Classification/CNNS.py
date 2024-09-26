@@ -13,6 +13,9 @@ import numpy as np
 from PIL import Image
 import json
 import copy
+import glob
+import time
+from sklearn.metrics import confusion_matrix
 
 sys.path.append("Data")
 from DataManager import DataManager
@@ -90,7 +93,7 @@ class CNNS:
         return model
 
 
-    def train(self, train_loader, val_loader, epochs, learning_rate=0.01, test_loader = None):
+    def train(self, train_loader, val_loader, epochs, learning_rate=0.01, test_loader = None, inference_path = None):
         # initialize results variables
         results = {"train_acc":[],"train_loss":[],"val_acc":[],"val_loss":[]}
 
@@ -128,7 +131,7 @@ class CNNS:
             training_loss = running_loss/len(train_loader)
 
             # validate the model
-            val_loss, val_accuracy = self.validate(val_loader)
+            val_loss, val_accuracy, _ = self.validate(val_loader)
 
             # save
             results["train_acc"].append(train_accuracy)
@@ -137,7 +140,7 @@ class CNNS:
             results["val_loss"].append(val_loss)
 
             # Check if the current model is the best based on validation accuracy
-            if val_accuracy > best_val_accuracy:
+            if val_accuracy >= best_val_accuracy:
                 best_val_accuracy = val_accuracy
                 best_model_state = copy.deepcopy(self.model.state_dict())  # Save the best model's state
                 results["best_epoch"] = epoch
@@ -152,8 +155,13 @@ class CNNS:
 
         # test the model
         if test_loader:
-            _ , test_acc = self.validate(test_loader)
+            _ , test_acc, conf_matrix = self.validate(test_loader)
             results["test_acc"] = test_acc
+            results["conf_matrix"] = conf_matrix.tolist()
+
+        # get the inference times
+        if inference_path:
+            results["inference"] = self.inference_test(inference_path)
 
         return results
 
@@ -164,24 +172,39 @@ class CNNS:
         running_loss = 0.0
         criterion = nn.CrossEntropyLoss()  # Define the loss function
 
+        # Store true and predicted labels for confusion matrix
+        all_labels = []
+        all_predictions = []
+
         with torch.no_grad():
             for images, labels in val_loader:
                 labels = labels[0]['category_id'].to(self.device)
                 images = torch.stack([image.to(self.device) for image in images])
 
+                # Forward pass to get outputs
                 outputs = self.model(images)
-                loss = criterion(outputs, labels)  # Calculate the loss
+                
+                # Calculate the loss
+                loss = criterion(outputs, labels)
                 running_loss += loss.item() * labels.size(0)  # Accumulate loss
 
+                # Get predictions
                 _, predicted = torch.max(outputs, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
 
+                # Store the true and predicted labels for confusion matrix
+                all_labels.extend(labels.cpu().numpy())
+                all_predictions.extend(predicted.cpu().numpy())
+
+        # Calculate validation metrics
         val_loss = running_loss / total  # Calculate average loss
         val_accuracy = 100 * correct / total  # Calculate accuracy
 
-        return val_loss, val_accuracy
+        # Create confusion matrix
+        conf_matrix = confusion_matrix(all_labels, all_predictions)
 
+        return val_loss, val_accuracy, conf_matrix
 
     def predict(self, image_path, img_size=64):
         # Define the transforms used during training
@@ -208,6 +231,26 @@ class CNNS:
 
         # Return the predicted class
         return predicted.item()
+
+    def inference_test(self, img_dir):
+        image_files = glob.glob(os.path.join(img_dir, '*.jpg'))
+        total_time = 0
+        num_images = len(image_files)
+
+        for image_path in image_files:
+            start_time = time.time()  # Start the timer
+            predicted_class = self.predict(image_path)  # Predict the class
+            end_time = time.time()  # End the timer
+            
+            inference_time = end_time - start_time
+            total_time += inference_time
+
+        if num_images > 0:
+            average_inference_time = total_time / num_images
+        else:
+            print("No images found in the specified directory.")
+
+        return average_inference_time
 
     def save_model(self, file_path):
         torch.save({
@@ -289,6 +332,7 @@ if __name__ == "__main__":
     behaviour = False
     snap_no=250
     snap_test_no = 10
+    epochs = 2
 
     # create data_loaders
     dm = DataManager(perc_val = 0.2)
@@ -300,5 +344,5 @@ if __name__ == "__main__":
     # train_loader, val_loader, test_loader = dm.create_dataloaders(batch=batch,num_workers=num_workers,obs_no = obs_no, obs_test_no=obs_test_no, md_z1_trainval_no=md_z1_trainval_no,md_z2_trainval_no=md_z2_trainval_no, snap_no=snap_no,snap_test_no=snap_test_no,behaviour=behaviour,img_size=img_size)
 
     model = CNNS(model_name="resnet50",num_classes=2,pretrained=True)
-    print(model.train(train_loader=train_loader,val_loader=val_loader,epochs=10,test_loader=test_loader))
+    print(model.train(train_loader=train_loader,val_loader=val_loader,epochs=epochs,test_loader=test_loader, inference_path="Data/Classification/Binary/cut_images/test"))
     model.plot_predictions("Data/Classification/Binary/cut_images/test")

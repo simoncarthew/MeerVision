@@ -811,9 +811,9 @@ class DataManager():
             test_dataset = CocoDetection(root=cut_test_path, annFile=test_ann_file, transform=transform)
 
             # create dataloaders
-            train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True, num_workers=num_workers,pin_memory=True)
-            val_loader = DataLoader(val_dataset, batch_size=batch, shuffle=True, num_workers=num_workers,pin_memory=True)
-            test_loader = DataLoader(test_dataset, batch_size=batch, shuffle=True, num_workers=num_workers,pin_memory=True)
+            train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True, num_workers=num_workers)
+            val_loader = DataLoader(val_dataset, batch_size=batch, shuffle=True, num_workers=num_workers)
+            test_loader = DataLoader(test_dataset, batch_size=batch, shuffle=True, num_workers=num_workers)
         else:
             raise FileNotFoundError(f"{cut_images_path} not found")
 
