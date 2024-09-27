@@ -9,6 +9,7 @@ venv
 *.pyc
 events.*
 *.zip
+*.pth
 ObjectDetection/Training/Results
 Housing/Dimensions
 Data/SnapshotKgalagadi

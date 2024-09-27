@@ -332,7 +332,7 @@ if __name__ == "__main__":
     behaviour = False
     snap_no=250
     snap_test_no = 10
-    epochs = 2
+    epochs = 20
 
     # create data_loaders
     dm = DataManager(perc_val = 0.2)
@@ -344,5 +344,6 @@ if __name__ == "__main__":
     # train_loader, val_loader, test_loader = dm.create_dataloaders(batch=batch,num_workers=num_workers,obs_no = obs_no, obs_test_no=obs_test_no, md_z1_trainval_no=md_z1_trainval_no,md_z2_trainval_no=md_z2_trainval_no, snap_no=snap_no,snap_test_no=snap_test_no,behaviour=behaviour,img_size=img_size)
 
     model = CNNS(model_name="resnet50",num_classes=2,pretrained=True)
-    print(model.train(train_loader=train_loader,val_loader=val_loader,epochs=epochs,test_loader=test_loader, inference_path="Data/Classification/Binary/cut_images/test"))
-    model.plot_predictions("Data/Classification/Binary/cut_images/test")
+    results = model.train(train_loader=train_loader,val_loader=val_loader,epochs=epochs,test_loader=test_loader, inference_path="Data/Classification/Binary/cut_images/test")
+    model.save_model("ObjectDetection/Megadetector/resnet_test.pth")
+    # model.plot_predictions("Data/Classification/Binary/cut_images/test")
