@@ -25,13 +25,13 @@ MODEL_A_PATH = os.path.join("ObjectDetection","Megadetector","md_v5a.0.0.pt")
 MODEL_B_PATH = os.path.join("ObjectDetection","Megadetector","md_v5b.0.0.pt")
 
 class Mega:
-    def __init__(self, version, class_path, class_name, img_size=(1280, 1280)):
+    def __init__(self, version, class_path, class_name, img_size=(640, 640)):
 
         # load selected mega version
         if version == "a":
             self.yolo = Yolo5(model_path = MODEL_A_PATH)
         elif version == "b":
-            self.yolo = Yolo5(model_path = MODEL_A_PATH)
+            self.yolo = Yolo5(model_path = MODEL_B_PATH)
         else:
             raise ValueError("Invalid mega version.")
         
@@ -150,11 +150,19 @@ class Mega:
 
         return avg_inf
 
+    def evaluate(self, yolo_path, classify = True):
+        pred_detections = self.test_detect(yolo_path=yolo_path,classify=classify)
+        eval = EvaluateModel(yolo_path,pred_detections,self.img_size[0],self.img_size[1])
+        results = eval.run_evaluation()
+        results['inference'] = self.inference_time(os.path.join(yolo_path,"images","test"),classify=classify)
+        return results
+
 if __name__ == "__main__":
     mega = Mega(version = "b", class_path="ObjectDetection/Megadetector/resnet_test.pth", class_name="resnet50")
     # print(mega.sgl_detect(image_path="Data/Formated/yolo/images/test/At the meerkat burrow_47.jpg",show=True,classify=False,format="coco"))
     # jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
-    print(mega.inference_time("Data/Formated/yolo/images/test",classify=True))
+    # print(mega.inference_time("Data/Formated/yolo/images/test",classify=True))
+    print(mega.evaluate(yolo_path="Data/Formated/yolo",classify=True))
     # for file in jpg_files:
     #     print(mega.sgl_detect(image_path=file, show=True,classify=False))
     # coco_detections = mega.test_detect(yolo_path="Data/Formated/yolo",classify=False)
