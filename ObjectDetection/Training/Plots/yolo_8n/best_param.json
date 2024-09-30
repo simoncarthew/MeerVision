@@ -1,0 +1,26 @@
+{
+    "precision": {
+        "batch": "64",
+        "lr": "0.05",
+        "freeze": "5",
+        "optimizer": "Adam",
+        "obs_no": "2000",
+        "md": "500"
+    },
+    "recall": {
+        "batch": "64",
+        "lr": "0.005",
+        "freeze": "10",
+        "optimizer": "Adam",
+        "obs_no": "-1",
+        "md": "1000"
+    },
+    "mAP50": {
+        "batch": "16",
+        "lr": "0.005",
+        "freeze": "10",
+        "optimizer": "Adam",
+        "obs_no": "-1",
+        "md": "1000"
+    }
+}

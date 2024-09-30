@@ -288,7 +288,7 @@ if __name__ == "__main__":
     # model_path = "ObjectDetection/Training/Results/yolo8_first_test/models/model_0/weights/last.pt"
     # model_path = "ObjectDetection/Training/Results/hyper_tune_0/results5/models/model_0/weights/best.pt"
     # yolo = Yolo8(model_path=model_path)
-    yolo = Yolo8(model_size = "n")
+    yolo = Yolo8(model_size = "x")
     # print("Loading Pretrained Model")
     # yolo = Yolo8(model_size='n',pretrained=True)
     # print("Loaded Pretrained Model")

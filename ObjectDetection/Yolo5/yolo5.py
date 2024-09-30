@@ -254,7 +254,7 @@ if __name__ == "__main__":
 
     # Example usage
     # model_path = "ObjectDetection/Yolo5/best.pt"
-    model_path = 'ObjectDetection/Yolo5/hpc/best.pt'
+    model_path = 'ObjectDetection/Training/Results/hyper_tune/results7/models/model_0/weights/best.pt'
     # model_path = "ObjectDetection/Yolo5/md_v5b.0.0.pt"
     # model_path = "ObjectDetection/Yolo5/train/weights/best.pt"
     # model_path = "ObjectDetection/Training/Results/yolo5_first_test/models/model_0/weights/best.pt"

@@ -1,0 +1,26 @@
+paths:
+  training: 'ObjectDetection/Training/Parameters/yolo5_size_model.csv'
+  results: '/scratch/crtsim008/Results'
+  yolo: '/scratch/crtsim008/Formated/yolo'
+  meerdown_frame: '/scratch/crtsim008/MeerDown/frames'
+  meerdown_annot: '/scratch/crtsim008/MeerDown/annotations.json'
+  obs_frames: '/scratch/crtsim008/Observed/frames'
+  obs_annot: '/scratch/crtsim008/Observed/annotations.json'
+  data_path: '/scratch/crtsim008/Training5'
+  yolo5_path: 'ObjectDetection/Yolo5'
+  yolo8_path: 'ObjectDetection/Yolo8'
+
+parameters:
+  batch: 64
+  lr: 0.01
+  augment: True
+  percval: 0.2
+  freeze: 0
+  pretrained: True
+  epochs: 50
+  obs_no: -1
+  md_z1_trainval: 1000
+  md_z2_trainval: 1000
+  md_test_no: 0
+  img_sz: 640
+  optimizer: 'SGD'
