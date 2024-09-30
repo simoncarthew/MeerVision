@@ -219,7 +219,7 @@ for model in models:
     df = filter_results(df,unfiltered_params=None, model=model)
 
     # set the desired metrics
-    metrics = ['precision', 'recall', 'mAP50']
+    metrics = ['mAP50', 'f1']
 
     # plot the hyper parameter results
     best_parameters = {}
@@ -238,5 +238,3 @@ for model in models:
     # save best parameters
     with open(os.path.join(model_res_path, f"best_param.json"), "w") as f:
         json.dump(best_parameters, f, indent=4)
-
-# print(filter_results(df,unfiltered_params=['obs_no'], model='5s'))

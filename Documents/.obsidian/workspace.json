@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "PROBLEM STATEMENT.md",
+                "file": "DESIGN CHOICES.md",
                 "mode": "source",
                 "source": false
               }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "PROBLEM STATEMENT.md",
+                "file": "DESIGN CHOICES.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "PROBLEM STATEMENT.md",
+                "file": "DESIGN CHOICES.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "PROBLEM STATEMENT.md"
+                "file": "DESIGN CHOICES.md"
               }
             }
           }
@@ -148,6 +148,7 @@
   },
   "active": "6c5cdaa91299cb06",
   "lastOpenFiles": [
+    "PROBLEM STATEMENT.md",
     "REPORT STRUCTURE.md",
     "Images/Trainer.pdf",
     "Images/IMG_0496.jpg",
@@ -170,7 +171,6 @@
     "DOODLING.md",
     "SUBSYSTEMS.md",
     "PROPOSED SOLUTION.md",
-    "PROBLEM STATEMENT.md",
     "MEETING NOTES.md",
     "HARDWARE AQUIRING.md"
   ]
