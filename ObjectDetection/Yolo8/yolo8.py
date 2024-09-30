@@ -286,16 +286,17 @@ class Yolo8:
 
 if __name__ == "__main__":
     # model_path = "ObjectDetection/Training/Results/yolo8_first_test/models/model_0/weights/last.pt"
-    # model_path = "ObjectDetection/Training/Results/hyper_tune_0/results5/models/model_0/weights/best.pt"
-    # yolo = Yolo8(model_path=model_path)
-    yolo = Yolo8(model_size = "x")
+    model_path = "/home/meerkat/MeerVision/Control/Models/yolo8.pt"
+    yolo = Yolo8(model_path=model_path)
+    # yolo = Yolo8(model_size = "x")
     # print("Loading Pretrained Model")
     # yolo = Yolo8(model_size='n',pretrained=True)
     # print("Loaded Pretrained Model")
-    yolo.train(freeze = 10,batch=4,epochs=5,dataset_path="Data/Formated/yolo/dataset.yaml",augment=True)
+    # yolo.train(freeze = 10,batch=4,epochs=5,dataset_path="Data/Formated/yolo/dataset.yaml",augment=True)
     # print(yolo.inference_time(yolo_path="Data/Formated/yolo"))
-    # image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg"
-    # detections = yolo.sgl_detect(image_path,show=True, format="coco")
+    image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg"
+    detections = yolo.sgl_detect(image_path,show=False, format="std")
+    print(detections)
     # print(yolo.test_detect(yolo_path='Data/Formated/yolo'))
     # print(yolo.evaluate(yolo_path='Data/Formated/yolo'))
     # yolo.process_video(video_path="Data/YoutubeCameraTrap/istockphoto-1990464825-640_adpp_is.mp4",thresh=0.1)

@@ -254,13 +254,13 @@ if __name__ == "__main__":
 
     # Example usage
     # model_path = "ObjectDetection/Yolo5/best.pt"
-    model_path = 'ObjectDetection/Training/Results/hyper_tune/results7/models/model_0/weights/best.pt'
+    model_path = '/home/meerkat/MeerVision/Control/Models/yolo5.pt'
     # model_path = "ObjectDetection/Yolo5/md_v5b.0.0.pt"
     # model_path = "ObjectDetection/Yolo5/train/weights/best.pt"
     # model_path = "ObjectDetection/Training/Results/yolo5_first_test/models/model_0/weights/best.pt"
     # print("Loading Previous Model")
     yolo = Yolo5(model_path=model_path)
-    yolo.detect_video("Data/YoutubeCameraTrap/At the meerkat burrow.mp4")
+    # yolo.detect_video("Data/YoutubeCameraTrap/At the meerkat burrow.mp4")
     # print("Previous Model Loaded")
     # print("Loading new Model")
     # yolo = Yolo5(model_size='s')
@@ -273,7 +273,7 @@ if __name__ == "__main__":
     # print("Finnished Training")
     # print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
     # print(yolo.cust_evaluate(yolo_path="Data/Formated/yolo"))
-    # print(yolo.sgl_detect("Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg", show = True,format="std"))
+    print(yolo.sgl_detect("Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg", show = False,format="std"))
     # print(yolo.native_evaluate(os.path.join('Data','Formated','yolo','dataset.yaml'), model_path, save_path='ObjectDetection/Yolo5/testing', task="test"))
     # print(yolo.evaluate(os.path.join('Data','Formated','yolo')))
 
