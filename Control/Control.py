@@ -64,6 +64,32 @@ class Control:
     def down_action(self):
         self.pressed["down"] = True
 
+    def active_scroll_wheel(self, yellow_text, items):
+        # create items list if number range
+        if isinstance(items[0], int):
+            items = list(range(items[0], items[1] + 1))
+        index = 0
+
+        while True:
+            # display current item
+            self.lcd.scroll_wheel(yellow_text,items[index])
+
+            # wait for the user to make decision
+            self.wait_button()
+
+            # action on selected choice
+            if self.pressed["ok"]: return items[index]
+            elif self.pressed["down"]: index -= 1
+            elif self.pressed["up"]: index += 1
+            elif self.pressed["back"]: return None
+
+            # loop round index
+            index = index % len(items)
+
+            # reset buttons
+            self.reset_buttons()
+        pass
+
     def single_capture(self):
         while True:
             self.lcd.centered_text(self.menu_items["sgl"],"Press OK to capture.")
@@ -84,11 +110,10 @@ class Control:
 
     def continuous_capture(self,fps,duration):
         save_dir = DEP_PATH
+        result = self.active_scroll_wheel("SELECT FPS",[1,5])
+        print(result)
+        self.reset_buttons()
 
-        start_time = time.time()
-        while time.time() - start_time < duration:
-            self.rtc.read_time()
-            self.camera.capture()
 
 if __name__ == "__main__":
     # initialize main control
@@ -116,6 +141,7 @@ if __name__ == "__main__":
             elif control.pressed["ok"]: # enter desired mode
                 control.reset_buttons()
                 if control.menu_index == "sgl": control.single_capture()
+                if control.menu_index == "dep": control.continuous_capture()
 
             # set buttons states back
             control.reset_buttons()
