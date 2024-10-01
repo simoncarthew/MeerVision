@@ -1,4 +1,5 @@
 import smbus
+from datetime import datetime
 
 class RTC:
     def __init__(self):
@@ -25,6 +26,26 @@ class RTC:
         year = self._bcd_to_dec(data[6]) + 2000
 
         return {"year": year, "month": month, "day": day, "hours": hours, "minutes": minutes, "seconds": seconds}
+
+
+    def time_difference(self, time1, time2):
+        # Convert the first time dictionary to a datetime object
+        dt1 = datetime(year=time1['year'], month=time1['month'], day=time1['day'],
+                    hour=time1['hours'], minute=time1['minutes'], second=time1['seconds'])
+
+        # Convert the second time dictionary to a datetime object
+        dt2 = datetime(year=time2['year'], month=time2['month'], day=time2['day'],
+                    hour=time2['hours'], minute=time2['minutes'], second=time2['seconds'])
+
+        # Calculate the difference between the two datetime objects
+        difference = dt2 - dt1
+
+        # Return the difference as a dictionary
+        return {
+            "days": difference.days,
+            "seconds": difference.seconds,
+            "total_seconds": difference.total_seconds()
+        }
 
     def set_time(self, year, month, day, hours, minutes, seconds):
         """ Set the RTC to the specified time. """

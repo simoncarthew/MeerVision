@@ -8,10 +8,14 @@ class Camera:
     def __init__(self):
         self.camera = Picamera2()
 
-    def time_to_path(self,time, index, ext = ".jpg"):
-        return f"{time['year']}_{time['month']}_{time['day']}_{time['hours']}_{time['minutes']}_{time['seconds']}_{index}{ext}"
+    def time_to_path(self,time, index = None, ext = ".jpg"):
+        if index:
+            path = f"{time['year']}_{time['month']}_{time['day']}_{time['hours']}_{time['minutes']}_{time['seconds']}_{index}{ext}"
+        else:
+            path = f"{time['year']}_{time['month']}_{time['day']}_{time['hours']}_{time['minutes']}_{time['seconds']}{ext}"
+        return path
 
-    def capture(self, save_path):
+    def capture(self, save_path, setup_time = 0.2):
         # get the directory of saved image
         directory = os.path.dirname(save_path)
 
@@ -21,7 +25,7 @@ class Camera:
         
         # capture the photo
         self.camera.start()
-        sleep(0.2)
+        sleep(setup_time)
         self.camera.capture_file(save_path)
         self.camera.stop()
 
@@ -49,27 +53,33 @@ class Camera:
         return False
 
     def _capture_images(self, save_dir, samp_period, duration, rtc):
+        self.total_duration = duration
         self.running = True
         start_time = rtc.read_time()
+        self.run_time = 0
         prev_time = start_time
         index = 0
-        while self.running and (time.time() - start_time) < duration:
+        while self.running and self.run_time < self.total_duration:
             # get current time
             current_time = rtc.read_time()
 
             # check if its a new time stamp
-            if current_time == prev_time:
+            if current_time == prev_time and self.run_time != 0:
                 index += 1
             else:
                 index = 0
 
             # generate teh file path
-            save_path = os.path.join(save_dir, self.time_to_path(current_time,index))
+            save_path = os.path.join(save_dir, self.time_to_path(current_time,index=index))
             
             # capture the image
-            self.capture(save_path)
+            setup_time = 0.2
+            self.capture(save_path, setup_time=setup_time)
 
             # wait for next sample
-            sleep(samp_period)
+            sleep(samp_period - setup_time)
+
+            prev_time = current_time
+            self.run_time = rtc.time_difference(start_time, current_time)["seconds"]
 
         self.running = False

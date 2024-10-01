@@ -224,17 +224,17 @@ MERGED_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_res
 UNMERGED_PATH = os.path.join("ObjectDetection", "Training", "Results", "hyper_tune")
 
 # set output directory and models
-OUT_PATH = os.path.join("ObjectDetection", "Training", "Plots")
+OUT_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_results", "plots")
 models = ["5s", "8n"]
 
 # remove the folders and remerge results
-if os.path.exists(OUT_PATH):
-    shutil.rmtree(OUT_PATH)
-    os.mkdir(OUT_PATH)
 if os.path.exists(MERGED_PATH):
     shutil.rmtree(MERGED_PATH)
-    os.mkdir(MERGED_PATH)
-    merge_results(UNMERGED_PATH, MERGED_PATH)
+os.mkdir(MERGED_PATH)
+merge_results(UNMERGED_PATH, MERGED_PATH)
+if os.path.exists(OUT_PATH):
+    shutil.rmtree(OUT_PATH)
+os.mkdir(OUT_PATH)
 
 for model in models:
     # make the output folder

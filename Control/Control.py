@@ -65,7 +65,6 @@ class Control:
         self.pressed["down"] = True
 
     def active_scroll_wheel(self, yellow_text, items):
-        print("Entering scroll")
 
         # create items list if number range
         if isinstance(items[0], int):
@@ -80,18 +79,20 @@ class Control:
             self.wait_button()
 
             # action on selected choice
-            if self.pressed["ok"]: return items[index]
+            if self.pressed["ok"]: 
+                self.reset_buttons()
+                return items[index]
             elif self.pressed["down"]: index -= 1
             elif self.pressed["up"]: index += 1
-            elif self.pressed["back"]: return None
+            elif self.pressed["back"]:
+                self.reset_buttons() 
+                return None
 
             # loop round index
             index = index % len(items)
 
             # reset buttons
             self.reset_buttons()
-
-            print(items[index])
         pass
 
     def single_capture(self):
@@ -112,13 +113,38 @@ class Control:
 
             self.reset_buttons()
 
-    def continuous_capture(self,fps,duration):
+    def continuous_capture(self):
         print("Entered Continuous")
-        save_dir = DEP_PATH
-        result = self.active_scroll_wheel("SELECT FPS",[1,5])
-        print(result)
-        self.reset_buttons()
 
+        if not self.camera.is_capture_running():
+            # get the desired fps
+            fps = self.active_scroll_wheel("SELECT FPS",[1,5])
+
+            # get timed or indefinite
+            timed = self.active_scroll_wheel("TIMED OR INDEFINITE?",["Timed","Indefinite"])
+
+            # get the actual time if timed
+            if timed == "Timed":
+                hours = self.active_scroll_wheel("HOURS",[0,1])
+                minutes = self.active_scroll_wheel("MINUTES",[1,60])
+
+            # calculate the duration
+            duration = (hours * 60 + minutes) * 60
+            print(duration)
+
+            # start capturing
+            self.camera.start_capture_period(DEP_PATH,self.rtc,fps,duration)
+
+            # reset the buttons
+            self.reset_buttons()
+        else:
+            action = self.active_scroll_wheel("ACTIVE DEPLOYMENT",["End Early","View Progress"])
+
+            if action == "End Early":
+                self.camera.stop_capture_period()
+                self.lcd.centered_text("","Deployment Ended")
+            elif action == "View Progress":
+                self.lcd.percentage_bar("CURRENT PROGRESS", self.camera.run_time / self.camera.total_duration * 100)
 
 if __name__ == "__main__":
     # initialize main control
@@ -147,8 +173,9 @@ if __name__ == "__main__":
                 control.reset_buttons()
                 if control.menu_index == "sgl": control.single_capture()
                 if control.menu_index == "dep": control.continuous_capture()
-
-            print(control.menu_index)
+            
+            # display current mode
+            print(control.menu_items[control.menu_index])
 
             # set buttons states back
             control.reset_buttons()

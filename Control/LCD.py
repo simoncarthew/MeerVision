@@ -47,7 +47,7 @@ class LCD:
 
         # Yellow section for additional text
         yellow_height = 16
-        
+
         # Use textbbox to calculate the bounding box of the yellow text
         yellow_bbox = draw.textbbox((0, 0), yellow_text, font=self.font)
         yellow_text_width = yellow_bbox[2] - yellow_bbox[0]
@@ -57,33 +57,73 @@ class LCD:
         yellow_y = (yellow_height - yellow_text_height) // 2
 
         # Blue section for scroll wheel (arrows and content)
-        arrow_up = "^"
-        arrow_down = "v"
-        arrow_size = draw.textbbox((0, 0), arrow_up, font=self.font)
+        arrow_up = "/\\"
+        arrow_down = "\\/"
+        
+        # Calculate bounding boxes for arrows
+        arrow_up_bbox = draw.textbbox((0, 0), arrow_up, font=self.font)
+        arrow_down_bbox = draw.textbbox((0, 0), arrow_down, font=self.font)
 
         # Positions for arrows and content in the blue section
         blue_start_y = yellow_height  # Blue section starts right after yellow section
-        arrow_x = (self.device.width - arrow_size[2]) // 2
+        arrow_x = (self.device.width - arrow_up_bbox[2]) // 2  # Center arrow horizontally
         content_bbox = draw.textbbox((0, 0), str(content), font=self.font)
         content_width = content_bbox[2] - content_bbox[0]
         content_height = content_bbox[3] - content_bbox[1]
         content_x = (self.device.width - content_width) // 2
         content_y = blue_start_y + (self.device.height - blue_start_y - content_height) // 2
 
+        # Calculate positions for arrows to fit within the display
+        arrow_up_y = blue_start_y + 4  # Position arrow up slightly below the yellow section
+        arrow_down_y = self.device.height - arrow_down_bbox[3] - 2  # Position arrow down above the bottom edge
+
         # Draw yellow text
         draw.text((yellow_x, yellow_y), yellow_text, font=self.font, fill=1)  # Yellow part
 
         # Draw arrows and content in the blue section
-        draw.text((arrow_x, blue_start_y), arrow_up, font=self.font, fill=1)  # Top arrow
-        draw.text((arrow_x, self.device.height - arrow_size[1]), arrow_down, font=self.font, fill=1)  # Bottom arrow
+        draw.text((arrow_x + 2, arrow_up_y), arrow_up, font=self.font, fill=1)  # Top arrow
+        draw.text((arrow_x + 2, arrow_down_y), arrow_down, font=self.font, fill=1)  # Bottom arrow
         draw.text((content_x, content_y), str(content), font=self.font, fill=1)  # Center content (number or text)
+
+        # Display the image
+        self.device.display(image)
+
+    def percentage_bar(self, yellow_text, percentage):
+        # Create a blank image with a black background
+        image = Image.new('1', (self.device.width, self.device.height), 0)
+        draw = ImageDraw.Draw(image)
+
+        # Yellow text section at the top
+        yellow_height = 16
+        yellow_bbox = draw.textbbox((0, 0), yellow_text, font=self.font)
+        yellow_text_width = yellow_bbox[2] - yellow_bbox[0]
+        yellow_text_height = yellow_bbox[3] - yellow_bbox[1]
+
+        yellow_x = (self.device.width - yellow_text_width) // 2
+        yellow_y = (yellow_height - yellow_text_height) // 2
+
+        # Draw the yellow text
+        draw.text((yellow_x, yellow_y), yellow_text, font=self.font, fill=1)
+
+        # Percentage bar position and dimensions
+        bar_height = 10
+        bar_width = self.device.width - 20  # Leave 10-pixel margins on each side
+        bar_x = 10
+        bar_y = yellow_height + 10  # Position below the yellow text with a gap
+
+        # Calculate the filled portion of the bar based on the percentage
+        filled_width = int(bar_width * (percentage / 100))
+
+        # Draw the empty bar outline
+        draw.rectangle((bar_x, bar_y, bar_x + bar_width, bar_y + bar_height), outline=1, fill=0)
+
+        # Draw the filled part of the bar
+        draw.rectangle((bar_x, bar_y, bar_x + filled_width, bar_y + bar_height), outline=1, fill=1)
 
         # Display the image
         self.device.display(image)
 
 if __name__ == "__main__":
     lcd = LCD()
-    lcd.scroll_wheel("hi", 10)
-    time.sleep(10)
-    lcd.scroll_wheel("hi", "hello")
+    lcd.percentage_bar("hello", 50.0)
     time.sleep(10)
