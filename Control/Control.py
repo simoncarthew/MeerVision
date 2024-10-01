@@ -116,7 +116,7 @@ class Control:
     def continuous_capture(self):
         print("Entered Continuous")
 
-        if not self.camera.is_capture_running():
+        if not self.camera.running:
             # get the desired fps
             fps = self.active_scroll_wheel("SELECT FPS",[1,5])
 
@@ -144,7 +144,8 @@ class Control:
                 self.camera.stop_capture_period()
                 self.lcd.centered_text("","Deployment Ended")
             elif action == "View Progress":
-                self.lcd.percentage_bar("CURRENT PROGRESS", self.camera.run_time / self.camera.total_duration * 100)
+                progress = self.camera.run_time / self.camera.total_duration * 100
+                self.lcd.percentage_bar(f"{progress:.2f}%", progress)
 
 if __name__ == "__main__":
     # initialize main control

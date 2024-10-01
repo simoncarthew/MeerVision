@@ -7,6 +7,7 @@ import threading
 class Camera:
     def __init__(self):
         self.camera = Picamera2()
+        self.running = False
 
     def time_to_path(self,time, index = None, ext = ".jpg"):
         if index:
