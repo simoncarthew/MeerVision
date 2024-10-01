@@ -65,6 +65,8 @@ class Control:
         self.pressed["down"] = True
 
     def active_scroll_wheel(self, yellow_text, items):
+        print("Entering scroll")
+
         # create items list if number range
         if isinstance(items[0], int):
             items = list(range(items[0], items[1] + 1))
@@ -88,6 +90,8 @@ class Control:
 
             # reset buttons
             self.reset_buttons()
+
+            print(items[index])
         pass
 
     def single_capture(self):
@@ -109,6 +113,7 @@ class Control:
             self.reset_buttons()
 
     def continuous_capture(self,fps,duration):
+        print("Entered Continuous")
         save_dir = DEP_PATH
         result = self.active_scroll_wheel("SELECT FPS",[1,5])
         print(result)
@@ -142,6 +147,8 @@ if __name__ == "__main__":
                 control.reset_buttons()
                 if control.menu_index == "sgl": control.single_capture()
                 if control.menu_index == "dep": control.continuous_capture()
+
+            print(control.menu_index)
 
             # set buttons states back
             control.reset_buttons()
