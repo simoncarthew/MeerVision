@@ -35,6 +35,11 @@ class Camera:
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
+        # make the sub save directory
+        save_dir = os.path.join(save_dir,self.time_to_path(rtc.read_time(),ext=""))
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
         # calculte the campling period
         samp_period = 1.0 / fps
 

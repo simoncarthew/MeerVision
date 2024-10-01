@@ -143,9 +143,11 @@ class Control:
             if action == "End Early":
                 self.camera.stop_capture_period()
                 self.lcd.centered_text("","Deployment Ended")
+                sleep(2)
             elif action == "View Progress":
                 progress = self.camera.run_time / self.camera.total_duration * 100
                 self.lcd.percentage_bar(f"{progress:.2f}%", progress)
+                sleep(2)
 
 if __name__ == "__main__":
     # initialize main control
