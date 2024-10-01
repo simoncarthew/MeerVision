@@ -166,7 +166,7 @@ class Yolo5:
 
         return detected_boxes
 
-    def draw_detection(self, detected_boxes, img, thresh=0, format="yolo"):
+    def draw_detection(self, detected_boxes, img, thresh=0, format="yolo", show=True, save_path=None):
         for detected in detected_boxes:
             conf = detected['score']
             cls = detected['class']
@@ -195,13 +195,18 @@ class Yolo5:
                 cv2.putText(img, f'{label} {conf:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
         # Display the image with detections
-        cv2.imshow('Detection', img)
-        while True:
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-            if cv2.getWindowProperty('Detection', cv2.WND_PROP_VISIBLE) < 1:
-                break
-        cv2.destroyAllWindows()
+        if show:
+            cv2.imshow('Detection', img)
+            while True:
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+                if cv2.getWindowProperty('Detection', cv2.WND_PROP_VISIBLE) < 1:
+                    break
+            cv2.destroyAllWindows()
+
+        # save the image if requested
+        if save_path:
+            cv2.imwrite(save_path, img)
 
     def test_detect(self, yolo_path, conf_thresh=0):
         # Get image files
@@ -254,8 +259,8 @@ if __name__ == "__main__":
 
     # Example usage
     # model_path = "ObjectDetection/Yolo5/best.pt"
-    model_path = '/home/meerkat/MeerVision/Control/Models/yolo5.pt'
-    # model_path = "ObjectDetection/Yolo5/md_v5b.0.0.pt"
+    # model_path = '/home/meerkat/MeerVision/Control/Models/yolo5.pt'
+    model_path = "ObjectDetection/Training/Results/hyper_tune/results0/models/model_0/weights/best.pt"
     # model_path = "ObjectDetection/Yolo5/train/weights/best.pt"
     # model_path = "ObjectDetection/Training/Results/yolo5_first_test/models/model_0/weights/best.pt"
     # print("Loading Previous Model")
@@ -273,7 +278,9 @@ if __name__ == "__main__":
     # print("Finnished Training")
     # print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
     # print(yolo.cust_evaluate(yolo_path="Data/Formated/yolo"))
-    print(yolo.sgl_detect("Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg", show = False,format="std"))
+    detections = yolo.sgl_detect("Data/Formated/yolo/images/test/At the meerkat burrow_26.jpg", show = False,format="std")
+    print(detections)
+    yolo.draw_detection(detected_boxes=detections,img=cv2.imread("Data/Formated/yolo/images/test/At the meerkat burrow_26.jpg"),format="std",show=False,save_path="test.jpg")
     # print(yolo.native_evaluate(os.path.join('Data','Formated','yolo','dataset.yaml'), model_path, save_path='ObjectDetection/Yolo5/testing', task="test"))
     # print(yolo.evaluate(os.path.join('Data','Formated','yolo')))
 

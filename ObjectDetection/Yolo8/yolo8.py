@@ -66,7 +66,7 @@ class Yolo8:
         pred_detections = self.test_detect(yolo_path=yolo_path)
         eval = EvaluateModel(yolo_path,pred_detections,img_width,img_height)
         results = eval.run_evaluation()
-        results['inference'] = self.inference_time(yolo_path=yolo_path)
+        results['inference'] = self.inference_time(image_folder=os.path.join(yolo_path,"images","test"))
         return results
 
     def process_video(self, video_path, thresh=0.3, save_path=None):
@@ -128,9 +128,8 @@ class Yolo8:
             out.release()
         cv2.destroyAllWindows()
 
-    def inference_time(self, yolo_path):
-        test_path = os.path.join(yolo_path,"images","test")
-        img_files = glob.glob(os.path.join(test_path, "*.jpg"))
+    def inference_time(self, image_folder):
+        img_files = glob.glob(os.path.join(image_folder, "*.jpg"))
         inf_times = []
 
         for img_file in img_files:
@@ -199,8 +198,7 @@ class Yolo8:
 
         return detected_boxes
 
-
-    def draw_detection(self, detected_boxes, img, thresh=0, format="yolo"):
+    def draw_detection(self, detected_boxes, img, thresh=0, format="yolo", show=True, save_path=None):
         for detected in detected_boxes:
             conf = detected['score']
             cls = detected['class']
@@ -229,13 +227,18 @@ class Yolo8:
                 cv2.putText(img, f'{label} {conf:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
         # Display the image with detections
-        cv2.imshow('Detection', img)
-        while True:
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-            if cv2.getWindowProperty('Detection', cv2.WND_PROP_VISIBLE) < 1:
-                break
-        cv2.destroyAllWindows()
+        if show:
+            cv2.imshow('Detection', img)
+            while True:
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+                if cv2.getWindowProperty('Detection', cv2.WND_PROP_VISIBLE) < 1:
+                    break
+            cv2.destroyAllWindows()
+
+        # save the image if requested
+        if save_path:
+            cv2.imwrite(save_path, img)
 
     def test_detect(self, yolo_path, conf_thresh=0):
         # Get image files
@@ -286,7 +289,7 @@ class Yolo8:
 
 if __name__ == "__main__":
     # model_path = "ObjectDetection/Training/Results/yolo8_first_test/models/model_0/weights/last.pt"
-    model_path = "/home/meerkat/MeerVision/Control/Models/yolo8.pt"
+    model_path = "ObjectDetection/Training/Results/hyper_tune/results2/models/model_6/weights/best.pt"
     yolo = Yolo8(model_path=model_path)
     # yolo = Yolo8(model_size = "x")
     # print("Loading Pretrained Model")
@@ -294,9 +297,9 @@ if __name__ == "__main__":
     # print("Loaded Pretrained Model")
     # yolo.train(freeze = 10,batch=4,epochs=5,dataset_path="Data/Formated/yolo/dataset.yaml",augment=True)
     # print(yolo.inference_time(yolo_path="Data/Formated/yolo"))
-    image_path="Data/Formated/yolo/images/test/Suricata_Desmarest_86.jpg"
-    detections = yolo.sgl_detect(image_path,show=False, format="std")
+    detections = yolo.sgl_detect("Data/Formated/yolo/images/test/At the meerkat burrow_26.jpg", show = False,format="std")
     print(detections)
+    yolo.draw_detection(detected_boxes=detections,img=cv2.imread("Data/Formated/yolo/images/test/At the meerkat burrow_26.jpg"),format="std",show=False,save_path="test.jpg")
     # print(yolo.test_detect(yolo_path='Data/Formated/yolo'))
     # print(yolo.evaluate(yolo_path='Data/Formated/yolo'))
     # yolo.process_video(video_path="Data/YoutubeCameraTrap/istockphoto-1990464825-640_adpp_is.mp4",thresh=0.1)

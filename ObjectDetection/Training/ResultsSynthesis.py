@@ -23,9 +23,11 @@ def merge_results(directory, save_dir):
     global_results = pd.DataFrame()
     global_model_id = 0
 
-    # tends directory
-    trends_dir = os.path.join(save_dir, 'trends')
+    # tends and model directory
+    trends_dir = os.path.join(save_dir, 'hyp_trends')
     os.makedirs(trends_dir, exist_ok=True)
+    global_models_dir = os.path.join(save_dir, 'hyp_models')
+    os.makedirs(global_models_dir, exist_ok=True)
 
     # iterate over present results directories
     for folder in os.listdir(directory):
@@ -42,8 +44,13 @@ def merge_results(directory, save_dir):
                 for idx, row in train_data.iterrows():
                     # get model directory
                     model_id = row['id']
-                    model_dir = os.path.join(folder_path,"models", f'model_{model_id}')
+                    model_dir = os.path.join(folder_path,"hyp_models", f'model_{model_id}')
                     results_csv_path = os.path.join(model_dir, 'results.csv')
+
+                    # move model to models folder
+                    source = os.path.join(folder_path, "models", f"model_{model_id}", "weights", "best.pt")
+                    destination = os.path.join(global_models_dir, f"model_{global_model_id}.pt")
+                    shutil.copy(source, destination)
 
                     # extract trnds from results csv
                     if os.path.exists(results_csv_path):
@@ -190,8 +197,27 @@ def get_best_parameters(df, metric):
 
     return parameters
 
-def get_best_models():
-    pass
+def save_best_models(df, metric):
+    # initialise best models
+    model_names = ['yolo5s', 'yolo8n']
+    best_models = {}
+    for model_name in model_names:
+        best_models[model_name] = {metric: 0, 'id': None}
+
+    # iterate over the rows
+    for idx, row in df.iterrows():
+        if row[metric] > best_models[row['model']][metric]:
+            best_models[row['model']][metric] = row[metric]
+            best_models[row['model']]['id'] = row['id']
+    
+    # save them to the best_models_folder
+    best_model_path = os.path.join(MERGED_PATH,"model_sizes")
+    os.mkdir(best_model_path)
+    for key, value in best_models.items():
+        shutil.copy(
+            os.path.join(MERGED_PATH, "hyp_models", f"model_{best_models[key]['id']}.pt"),
+            os.path.join(best_model_path, f"{key}.pt")
+        )
 
 # set the input directory
 MERGED_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_results")
@@ -241,3 +267,7 @@ for model in models:
     # save best parameters
     with open(os.path.join(model_res_path, f"best_param.json"), "w") as f:
         json.dump(best_parameters, f, indent=4)
+
+# save the best models
+df = pd.read_csv(os.path.join(MERGED_PATH,"results.csv"))
+best_models = save_best_models(df, 'f1')
