@@ -1,21 +1,21 @@
 paths:
-  training: 'ObjectDetection/Training/Parameters/yolo8_size_model_prec.csv'
+  training: 'ObjectDetection/Training/Parameters/yolo8_size_model_f1.csv'
   results: '/scratch/crtsim008/Results'
   yolo: '/scratch/crtsim008/Formated/yolo'
   meerdown_frame: '/scratch/crtsim008/MeerDown/frames'
   meerdown_annot: '/scratch/crtsim008/MeerDown/annotations.json'
   obs_frames: '/scratch/crtsim008/Observed/frames'
   obs_annot: '/scratch/crtsim008/Observed/annotations.json'
-  data_path: '/scratch/crtsim008/Training5'
+  data_path: '/scratch/crtsim008/Training8'
   yolo5_path: 'ObjectDetection/Yolo5'
   yolo8_path: 'ObjectDetection/Yolo8'
 
 parameters:
   batch: 64
-  lr: 0.05
+  lr: 0.005
   augment: True
   percval: 0.2
-  freeze: 5
+  freeze: 10
   pretrained: True
   epochs: 50
   obs_no: -1

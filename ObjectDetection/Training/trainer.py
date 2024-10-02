@@ -252,6 +252,8 @@ for index, row in train_df.iterrows():
 
     logging.info(f'Completed model {row["model"]}({row["id"]})')
 
+    del yolo
+
 # SAVE UPDATED TRAINING_DF
 updated_train_csv_path = os.path.join(RESULTS_PATH, 'train.csv')
 train_df.to_csv(updated_train_csv_path, index=False)
