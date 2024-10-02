@@ -19,6 +19,7 @@ from Evaluate import EvaluateModel
 class Yolo5:
     def __init__(self, model_size='s', model_path = None, pretrained = True, device=None):
         self.device = device or ('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.model_size = model_size
         if model_path is not None:
             self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path)
         else:
@@ -42,7 +43,8 @@ class Yolo5:
             optimizer = optimizer,
             augment=augment,
             name = "train",
-            freeze=freeze
+            freeze=freeze,
+            weights = "yolov5" + self.model_size + ".pt"
         )
     
     def detect_video(self, video_path, output_path=None, conf_thres=0.25):
@@ -260,27 +262,27 @@ if __name__ == "__main__":
     # Example usage
     # model_path = "ObjectDetection/Yolo5/best.pt"
     # model_path = '/home/meerkat/MeerVision/Control/Models/yolo5.pt'
-    model_path = "ObjectDetection/Training/Results/hyper_tune/results0/models/model_0/weights/best.pt"
+    # model_path = "ObjectDetection/Training/Results/hyper_tune/results0/models/model_0/weights/best.pt"
     # model_path = "ObjectDetection/Yolo5/train/weights/best.pt"
     # model_path = "ObjectDetection/Training/Results/yolo5_first_test/models/model_0/weights/best.pt"
     # print("Loading Previous Model")
-    yolo = Yolo5(model_path=model_path)
+    # yolo = Yolo5(model_path=model_path)
     # yolo.detect_video("Data/YoutubeCameraTrap/At the meerkat burrow.mp4")
     # print("Previous Model Loaded")
     # print("Loading new Model")
-    # yolo = Yolo5(model_size='s')
+    yolo = Yolo5(model_size='m')
     # print("New Model Loaded")
     # jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
     # for file in jpg_files:
     #     print(yolo.sgl_detect(image_path=file, show=True))
     # print("Starting Training")
-    # yolo.train(data_path='Data/Formated/yolo/dataset.yaml',epochs=5,batch_size=4,freeze = 10)
+    yolo.train(data_path='Data/Formated/yolo/dataset.yaml',epochs=5,batch_size=4,freeze = 10)
     # print("Finnished Training")
     # print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
     # print(yolo.cust_evaluate(yolo_path="Data/Formated/yolo"))
-    detections = yolo.sgl_detect("Data/Formated/yolo/images/test/At the meerkat burrow_26.jpg", show = False,format="std")
-    print(detections)
-    yolo.draw_detection(detected_boxes=detections,img=cv2.imread("Data/Formated/yolo/images/test/At the meerkat burrow_26.jpg"),format="std",show=False,save_path="test.jpg")
+    # detections = yolo.sgl_detect("Data/Formated/yolo/images/test/At the meerkat burrow_26.jpg", show = False,format="std")
+    # print(detections)
+    # yolo.draw_detection(detected_boxes=detections,img=cv2.imread("Data/Formated/yolo/images/test/At the meerkat burrow_26.jpg"),format="std",show=False,save_path="test.jpg")
     # print(yolo.native_evaluate(os.path.join('Data','Formated','yolo','dataset.yaml'), model_path, save_path='ObjectDetection/Yolo5/testing', task="test"))
     # print(yolo.evaluate(os.path.join('Data','Formated','yolo')))
 
