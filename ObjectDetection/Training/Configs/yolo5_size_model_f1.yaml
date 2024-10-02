@@ -1,5 +1,5 @@
 paths:
-  training: 'ObjectDetection/Training/Parameters/yolo5_size_model.csv'
+  training: 'ObjectDetection/Training/Parameters/yolo5_size_model_f1.csv'
   results: '/scratch/crtsim008/Results'
   yolo: '/scratch/crtsim008/Formated/yolo'
   meerdown_frame: '/scratch/crtsim008/MeerDown/frames'

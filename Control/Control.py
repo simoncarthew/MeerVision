@@ -2,6 +2,7 @@ from time import sleep
 import  time
 import os
 import sys
+import subprocess
 from luma.oled.device import ssd1306
 from luma.core.interface.serial import i2c
 from PIL import Image, ImageDraw, ImageFont
@@ -148,6 +149,16 @@ class Control:
                 progress = self.camera.run_time / self.camera.total_duration * 100
                 self.lcd.percentage_bar(f"{progress:.2f}%", progress)
                 sleep(2)
+    
+    def testing(self):
+        # select testing mode
+        test = self.active_scroll_wheel("SELECT TEST", ["INFERENCE"])
+        
+        if test == "INFERENCE":
+            self.lcd.centered_text("", "INFERENCING")
+            subprocess.run(["python", "ObjectDetection/Training/InferenceTester.py", "--pi"])
+            self.lcd.centered_text("", "INFERENCING DONE")
+            sleep(2)
 
 if __name__ == "__main__":
     # initialize main control
@@ -176,6 +187,7 @@ if __name__ == "__main__":
                 control.reset_buttons()
                 if control.menu_index == "sgl": control.single_capture()
                 if control.menu_index == "dep": control.continuous_capture()
+                if control.menu_index == "test": control.testing()
             
             # display current mode
             print(control.menu_items[control.menu_index])

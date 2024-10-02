@@ -18,7 +18,7 @@ from Mega import Mega
 
 # set std folder paths
 RESULTS = os.path.join("ObjectDetection", "Training", "Results", "merged_results")
-TEST_IMAGES = os.path.join("Data", "Formated", "yolo", "images", "test")
+TEST_IMAGES = os.path.join("Data", "InferenceTesting")
 
 # initialize the argpasers
 parser = argparse.ArgumentParser(description="Set flags for pi and pc")
@@ -76,5 +76,4 @@ for model_path in model_paths:
     if not seen:
         df.loc[len(df)] = [os.path.basename(model_path)[:-3], pc, pi]
 
-# save the results
-df.to_csv(inferences_path, index = False)
+    df.to_csv(inferences_path, index = False)
