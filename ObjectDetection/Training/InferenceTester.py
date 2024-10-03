@@ -87,5 +87,6 @@ for model_path in model_paths:
             seen = True
     if not seen:
         df.loc[len(df)] = [os.path.basename(model_path)[:-3], pc, pi]
-
+    print("Results saved to df")
     df.to_csv(inferences_path, index = False)
+    print("CSV saved")
