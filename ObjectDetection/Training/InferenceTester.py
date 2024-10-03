@@ -9,12 +9,10 @@ import glob
 # add relatove folders to system path
 sys.path.append(os.path.join("ObjectDetection","Yolo5"))
 sys.path.append(os.path.join("ObjectDetection","Yolo8"))
-sys.path.append(os.path.join("ObjectDetection","Megadetector"))
 
 # import assistive classes
 from yolo5 import Yolo5
 from yolo8 import Yolo8
-from Mega import Mega
 
 # set std folder paths
 RESULTS = os.path.join("ObjectDetection", "Training", "Results", "merged_results")
