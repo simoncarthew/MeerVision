@@ -9,6 +9,7 @@ import time
 import glob
 import os
 import sys
+import tqdm
 from yolov5 import train, detect, val  # Make sure YOLOv5 repository is in your PYTHONPATH
 
 # IMPORT EVAL
@@ -122,7 +123,7 @@ class Yolo5:
         img_files = glob.glob(f"{image_folder}/*.jpg")
         inf_times = []
 
-        for img_file in img_files:
+        for img_file in tqdm(img_files):
             img = cv2.imread(img_file)
             start_time = time.time()
             results = self.model(img)

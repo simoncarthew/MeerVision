@@ -6,6 +6,7 @@ import glob
 import time
 import sys
 import math
+import tqdm
 from ultralytics import YOLO
 
 # IMPORT EVAL
@@ -132,7 +133,7 @@ class Yolo8:
         img_files = glob.glob(os.path.join(image_folder, "*.jpg"))
         inf_times = []
 
-        for img_file in img_files:
+        for img_file in tqdm(img_files):
             # time inference
             img = cv2.imread(img_file)
             start_time = time.time()
