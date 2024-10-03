@@ -6,7 +6,7 @@ import glob
 import time
 import sys
 import math
-import tqdm
+from tqdm import tqdm
 from ultralytics import YOLO
 
 # IMPORT EVAL

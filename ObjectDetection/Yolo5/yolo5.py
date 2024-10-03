@@ -9,7 +9,7 @@ import time
 import glob
 import os
 import sys
-import tqdm
+from tqdm import tqdm
 from yolov5 import train, detect, val  # Make sure YOLOv5 repository is in your PYTHONPATH
 
 # IMPORT EVAL
