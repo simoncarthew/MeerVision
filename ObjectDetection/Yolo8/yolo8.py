@@ -146,6 +146,9 @@ class Yolo8:
 
         return avg_inf
 
+    def to_pi(self):
+        self.model.export(format="ncnn")
+
     def sgl_detect(self, image_path, show=False, conf_thresh=0, format="yolo"):
         img = cv2.imread(image_path)  # Read the image
         if img is None:
@@ -290,8 +293,10 @@ class Yolo8:
 
 if __name__ == "__main__":
     # model_path = "ObjectDetection/Training/Results/yolo8_first_test/models/model_0/weights/last.pt"
-    model_path = "ObjectDetection/Yolo8/hpc/best.pt"
-    yolo = Yolo8(model_path=model_path)
+    yolo = Yolo8(model_path="ObjectDetection/Yolo8/yolov8n_ncnn_model")
+    # yolo.to_pi()
+    # model_path = "ObjectDetection/Yolo8/hpc/best.pt"
+    # yolo = Yolo8(model_path=model_path)
     # yolo = Yolo8(model_size = "x")
     # print("Loading Pretrained Model")
     # yolo = Yolo8(model_size='n',pretrained=True)
@@ -303,4 +308,4 @@ if __name__ == "__main__":
     # yolo.draw_detection(detected_boxes=detections,img=cv2.imread("Data/Formated/yolo/images/test/At the meerkat burrow_26.jpg"),format="std",show=False,save_path="test.jpg")
     # print(yolo.test_detect(yolo_path='Data/Formated/yolo'))
     # print(yolo.evaluate(yolo_path='Data/Formated/yolo'))
-    yolo.process_video(video_path="Data/YoutubeCameraTrap/istockphoto-1990464825-640_adpp_is.mp4",thresh=0.5)
+    # yolo.process_video(video_path="Data/YoutubeCameraTrap/istockphoto-1990464825-640_adpp_is.mp4",thresh=0.5)

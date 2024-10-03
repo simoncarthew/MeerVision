@@ -152,12 +152,23 @@ class Control:
     
     def testing(self):
         # select testing mode
-        test = self.active_scroll_wheel("SELECT TEST", ["INFERENCE"])
+        test = self.active_scroll_wheel("SELECT TEST", ["INFERENCE", "SIZE", "DEPLOYMENT TIME"])
         
         if test == "INFERENCE":
             self.lcd.centered_text("", "INFERENCING")
             subprocess.run(["python", "ObjectDetection/Training/InferenceTester.py", "--pi"])
             self.lcd.centered_text("", "INFERENCING DONE")
+            sleep(2)
+        elif test == "SIZE":
+            self.lcd.centered_text("", "GETTING SIZE")
+            self.camera.get_average_size(self.rtc)
+            self.lcd.centered_text("", "GOT SIZE")
+            sleep(2)
+        elif test =="DEPLOYMENT TIME":
+            fps = self.active_scroll_wheel("SELECT FPS",[1,3])
+            self.lcd.centered_text("", "GETTING TIME")
+            self.camera.test_deployment_time(DEP_PATH,self.rtc,fps)
+            self.lcd.centered_text("", "GOT TIME")
             sleep(2)
 
 if __name__ == "__main__":
