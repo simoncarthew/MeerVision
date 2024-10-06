@@ -8,13 +8,9 @@ import glob
 
 # add relatove folders to system path
 sys.path.append(os.path.join("ObjectDetection","Yolo"))
-sys.path.append(os.path.join("ObjectDetection","Yolo5"))
-sys.path.append(os.path.join("ObjectDetection","Yolo8"))
 
 # import assistive classes
 from yolo import Yolo
-from yolo5 import Yolo5
-from yolo8 import Yolo8
 
 # set std folder paths
 RESULTS = os.path.join("ObjectDetection", "Training", "Results", "merged_sz_results")
@@ -38,15 +34,13 @@ elif args.pc: device = 'pc'
 # load the results csv 
 results_df = pd.read_csv(os.path.join(args.path, "results.csv"))
 
-print("Loaded Model paths")
-
 # create empty df if it doesnt exist
 inferences_path = os.path.join(args.path,"inference_times.csv")
 if os.path.exists(inferences_path):
     df = pd.read_csv(inferences_path)
     print("Loaded old results into data frame")
 else:
-    columns = ['model', 'pc', 'pi']
+    columns = ['model', 'pc', 'pi', 'pi_ncnn']
     df = pd.DataFrame(columns=columns)
     print("Created New Data frame.")
 
@@ -54,39 +48,40 @@ else:
 for idx, row in results_df.iterrows():
     model_name = row['model']
     model_path = os.path.join(args.path, "models", "model_" + str(row['id']) + ".pt")
-    print(model_path)
 
-    # this is for the old yolo format
-    if 'yolo5' in model_name:
-        print("Loading yolo5")
-        model = Yolo5(model_path=model_path, device='cpu')
-        print("Loaded yolo5")
-    else:
-        print("Loading yolo8")
-        model = Yolo8(model_path=model_path, device='cpu')
-        print("Loaded yolo8")
+    print(f"Loading {model_path}")
+    model = Yolo(model_path=model_path, device='cpu')
+    print(f"Loaded {model_name}")
 
     # get the inference time
     print("Starting inference test")
     avg_inf = model.inference_time(TEST_IMAGES)
     print("Inference test complete")
 
+    pi_ncnn = 0
+    if args.pi:
+        model_path = os.path.join(args.path, "pi_models", "model_" + str(row['id']) + "_ncnn_model")
+        model = Yolo(model_path=model_path, device='cpu')
+        pi_ncnn = model.inference_time(TEST_IMAGES)
+
     # set the inference time for chosen device
-    pc = None
-    pi = None
+    pc = 0
+    pi = 0
     if args.pi: pi = avg_inf
     elif args.pc: pc = avg_inf
 
     # add results to inference time
     seen = False
     for idx, row in df.iterrows():
-        if row['model'] == os.path.basename(model_path)[:-3]:
-            if device == 'pc': pi = row['pi']
+        if row['model'] == model_name:
+            if device == 'pc': 
+                pi = row['pi']
+                pi_ncnn = row['pi_ncnn']
             if device == 'pi': pc = row['pc']
-            df.loc[idx] = [os.path.basename(model_path)[:-3], pc, pi]
+            df.loc[idx] = [model_name, pc, pi, pi_ncnn]
             seen = True
     if not seen:
-        df.loc[len(df)] = [os.path.basename(model_path)[:-3], pc, pi]
+        df.loc[len(df)] = [model_name, pc, pi, pi_ncnn]
     print("Results saved to df")
     df.to_csv(inferences_path, index = False)
     print("CSV saved")

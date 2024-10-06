@@ -298,6 +298,7 @@ class Yolo:
 if __name__ == "__main__":
     # initialize model
     model_path = "ObjectDetection/Training/Results/hyper_tune/results0/models/model_0/weights/best.pt"
+    model_path = "ObjectDetection/Training/Results/unused_model_sizes/results10/models/model_1/weights/best.pt"
     # yolo = Yolo(model_size="5nu")
     yolo = Yolo(model_path=model_path)
 

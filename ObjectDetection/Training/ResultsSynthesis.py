@@ -5,7 +5,15 @@ import matplotlib
 import shutil
 import json
 import glob
+import sys
+import subprocess
 import numpy as np
+
+# add relatove folders to system path
+sys.path.append(os.path.join("ObjectDetection","Yolo"))
+
+# import assistive classes
+from yolo import Yolo
 
 ##### STD PARAMETERS #####
 
@@ -21,7 +29,14 @@ STD = {'batch': 32,
   'img_sz': 640,
   'optimizer': 'SGD'}
 
-COLOURS=matplotlib.colormaps.get_cmap('Set3')(np.linspace(0, 1, 10))
+COLOURS=[x for i,x in enumerate(matplotlib.colormaps.get_cmap('Set3')(np.linspace(0, 1, 10))) if i!=1]
+
+UNMERGED_HYP_PATH = os.path.join("ObjectDetection", "Training", "Results", "hyper_tune")
+MERGED_HYP_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_hyp_results")
+PLOT_HYP_PATH = os.path.join(MERGED_HYP_PATH, "plots")
+
+UNMERGED_SZ_PATH = os.path.join("ObjectDetection", "Training", "Results", "model_sizes")
+MERGED_SZ_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_sz_results")
 
 #### GENERIC FUNCTIONS #####
 
@@ -53,7 +68,6 @@ def merge_results(directory, save_dir):
                     model_id = row['id']
                     model_dir = os.path.join(folder_path,"models", f'model_{model_id}')
                     results_csv_path = os.path.join(model_dir, 'results.csv')
-                    print(results_csv_path)
 
                     # move model to models folder
                     source = os.path.join(folder_path, "models", f"model_{model_id}", "weights", "best.pt")
@@ -96,59 +110,6 @@ def filter_results(results_df, unfiltered_params = None, model = None, std=STD, 
 
 ##### HYPER PARAMATER FUNCTIONS ####
 
-def plot_hyper_param_impacts(in_df, metric, save_path, parameters=['batch', 'lr', 'freeze', 'optimizer'], title = None):
-    # create plot
-    text_size = 15
-    fig, ax = plt.subplots(figsize=(15, 8))
-    ax.set_ylim([0.0, 1])
-    
-    # initialize variables
-    x_offset = 0
-    bar_width = 0.15
-    colors = matplotlib.colormaps.get_cmap('Set3')(np.linspace(0, 1, 10))
-    
-    for i, param in enumerate(parameters):
-        # filter for desired variable
-        df = filter_results(in_df, unfiltered_params=[param])
-
-        # get the std metric value and other values
-        std_value = STD[param]
-        param_values = sorted(df[param].unique())
-        std_metric = df[(df[param] == std_value)][metric].values[0]
-        metrics = [df[(df[param] == val)][metric].values[0] for val in param_values]
-        
-        # create bar plots
-        x = np.arange(len(param_values)) + x_offset
-        rects = ax.bar(x, metrics, bar_width, label=param, color=colors[i])
-        
-        # add bar labels
-        ax.bar_label(rects, padding=3, rotation=90, fontsize=text_size, fmt='%.3f')
-        
-        # add parameter values to x axis
-        for j, val in enumerate(param_values):
-            ax.text(x[j], -0.015, str(val), ha='center', va='top', rotation=90, fontsize=text_size)
-        
-        # add parameter name in uppercase
-        group_center = x_offset + (len(param_values) - 1) / 2
-        ax.text(group_center, -0.15, param.upper(), ha='center', va='top', fontsize=text_size + 3, fontweight='bold')
-        
-        x_offset += len(param_values) + 0.5
-    
-    # set the title and x labels
-    if title: ax.set_title(title, fontsize=text_size + 5, fontweight='bold')
-    ax.set_ylabel(metric.upper(), fontsize=text_size + 3, fontweight='bold')
-    ax.set_xticks([])
-    
-    # horizontal line for std metric value
-    ax.axhline(y=std_metric, color='r', linestyle='--', label='Standard', alpha=0.2)
-    
-    # set y-axis tick label size
-    ax.tick_params(axis='y', labelsize=text_size)
-    
-    plt.tight_layout()
-    plt.savefig(save_path)
-    plt.close()
-
 def get_best_parameters(df, metric):
     parameters = {'batch':None, 'lr':None, 'freeze':None, 'optimizer':None, 'obs_no':None}
     
@@ -186,122 +147,90 @@ def save_best_hyp_models(df, metric):
             os.path.join(best_model_path, f"{key}.pt")
         )
 
-def plot_model_size(df):
-    pass
-
 ##### PROCESS HYPER PARAMETER RESULTS ####
 
-# set directories
-UNMERGED_HYP_PATH = os.path.join("ObjectDetection", "Training", "Results", "hyper_tune")
-MERGED_HYP_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_hyp_results")
-PLOT_PATH = os.path.join(MERGED_HYP_PATH, "plots")
-models = ["5s", "8n"]
+def hyp_process():
+    models = ["5s", "8n"]
 
-# remove the folders 
-if os.path.exists(MERGED_HYP_PATH):
-    shutil.rmtree(MERGED_HYP_PATH)
-os.mkdir(MERGED_HYP_PATH)
-merge_results(UNMERGED_HYP_PATH, MERGED_HYP_PATH)
+    # remove the folders 
+    if os.path.exists(MERGED_HYP_PATH):
+        shutil.rmtree(MERGED_HYP_PATH)
+    os.mkdir(MERGED_HYP_PATH)
+    merge_results(UNMERGED_HYP_PATH, MERGED_HYP_PATH)
 
-if os.path.exists(PLOT_PATH):
-    shutil.rmtree(PLOT_PATH)
-os.mkdir(PLOT_PATH)
+    if os.path.exists(PLOT_HYP_PATH):
+        shutil.rmtree(PLOT_HYP_PATH)
+    os.mkdir(PLOT_HYP_PATH)
 
-for model in models:
-    # make the output folder
-    model_res_path = os.path.join(PLOT_PATH,"yolo_" + model)
-    os.mkdir(model_res_path)
 
-    # read in merged results
-    df = pd.read_csv(os.path.join(MERGED_HYP_PATH,"results.csv"))
+    for model in models:
 
-    # filter for specific model
-    df = filter_results(df,unfiltered_params=None, model=model)
+        # make the output folder
+        model_res_path = os.path.join(PLOT_HYP_PATH,"yolo_" + model)
+        os.mkdir(model_res_path)
 
-    # set the desired metrics
-    metrics = ['mAP50', 'f1']
 
-    # plot the hyper parameter results
-    best_parameters = {}
-    for metric in metrics:
-        # plot hyper parameter impacts
-        plot_hyper_param_impacts(df, metric, os.path.join(model_res_path, f"hyp_tune_{metric}.jpg"))
+        # read in merged results
+        df = pd.read_csv(os.path.join(MERGED_HYP_PATH,"results.csv"))
+
+        # filter for specific model
+        df = filter_results(df,unfiltered_params=None, model=model)
+
+        # set the desired metrics
+        metrics = ['mAP50', 'f1']
 
         # get best parameters
-        parameters = get_best_parameters(df,metric)
-        best_parameters[metric] = parameters
-    
-    # save best parameters
-    with open(os.path.join(model_res_path, f"best_param.json"), "w") as f:
-        json.dump(best_parameters, f, indent=4)
+        best_parameters = {}
+        for metric in metrics:
 
-# save the best models
-df = pd.read_csv(os.path.join(MERGED_HYP_PATH,"results.csv"))
-best_models = save_best_hyp_models(df, 'f1')
+            # get best parameters
+            parameters = get_best_parameters(df,metric)
+            best_parameters[metric] = parameters
+        
+        # save best parameters
+        with open(os.path.join(model_res_path, f"best_param.json"), "w") as f:
+            json.dump(best_parameters, f, indent=4)
+
+    # save the best models
+    df = pd.read_csv(os.path.join(MERGED_HYP_PATH,"results.csv"))
+    best_models = save_best_hyp_models(df, 'f1')
 
 ##### MODEL SIZE FUNCTIONS #####
 
-# set the directories
-UNMERGED_SZ_PATH = os.path.join("ObjectDetection", "Training", "Results", "model_sizes")
-MERGED_SZ_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_sz_results")
-PLOT_SZ_PATH = os.path.join(MERGED_SZ_PATH, "plots")
 
-def plot_model_size_accuracies(df, model_sizes = ['n', 's', 'm', 'l'], metric = 'mAP50', save_path = os.path.join(PLOT_SZ_PATH,"model_size_accuracies.png")):
-    
-    # initialize model accuracies
-    yolo5_acc = []
-    yolo8_acc = []
+def make_pi():
+    # save directory
+    save_dir = os.path.join(MERGED_SZ_PATH,"pi_models")
+    os.mkdir(save_dir)
 
-    for model_size in model_sizes:    
-        filtered_df = df[(df['model'].str[5:].str.contains(str(model_size), na=False))]
-        yolo5_score = filtered_df[(filtered_df['model'].str.contains(str('5'), na=False))][metric]
-        yolo8_score = filtered_df[(filtered_df['model'].str.contains(str('8'), na=False))][metric]
-        if len(yolo5_score) > 0: yolo5_acc.append(yolo5_score.iloc[0])
-        else: yolo5_acc.append(0)
-        if len(yolo8_score) > 0: yolo8_acc.append(yolo8_score.iloc[0])
-        else: yolo8_acc.append(0)
-    
-    test_accuracies = {
-        'Yolo5': list([round(num * 100, 2) for num in yolo5_acc]),
-        'Yolo8': list([round(num * 100, 2) for num in yolo8_acc])
-    }
+    # get all model_paths
+    model_paths = glob.glob(os.path.join(os.path.join(MERGED_SZ_PATH,"models"), "*.pt"))
 
-    x = np.arange(len(model_sizes))
-    width = 0.3
-    multiplier = 0
-
-    fig, ax = plt.subplots(layout='constrained')
-
-    for idx, (attribute, measurement) in enumerate(test_accuracies.items()):
-        offset = width * multiplier
-        rects = ax.bar(x + offset, measurement, width, label=attribute, color=COLOURS[idx])
-        ax.bar_label(rects, padding=3)
-        multiplier += 1
-
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Test Accuracy')
-    ax.set_title('Test Accuracies of Pretrained and Untrained Models')
-    ax.set_xticks(x + width / 2, model_sizes)
-    ax.legend(loc='upper left', ncols=2)
-    ax.set_ylim(0, 100)  # Assuming accuracy is between 0 and 1
-
-    plt.savefig(save_path)
+    for model_path in model_paths:
+        yolo = Yolo(model_path=model_path)
+        yolo.to_pi()
+        os.remove(model_path[:-3] + ".torchscript")
+        shutil.copytree(model_path[:-3] + "_ncnn_model", os.path.join(save_dir,os.path.basename(model_path)[:-3] + "_ncnn_model"))
 
 ##### MODEL SIZE PROCESSING #####
 
+def size_process():
 
-# remove the folders 
-if os.path.exists(MERGED_SZ_PATH):
-    shutil.rmtree(MERGED_SZ_PATH)
-os.mkdir(MERGED_SZ_PATH)
+    # remove the folders 
+    if os.path.exists(MERGED_SZ_PATH):
+        shutil.rmtree(MERGED_SZ_PATH)
+    os.mkdir(MERGED_SZ_PATH)
 
-if os.path.exists(PLOT_SZ_PATH):
-    shutil.rmtree(PLOT_SZ_PATH)
-os.mkdir(PLOT_SZ_PATH)
 
-# merge results
-merge_results(UNMERGED_SZ_PATH,MERGED_SZ_PATH)
+    # merge results
+    merge_results(UNMERGED_SZ_PATH,MERGED_SZ_PATH)
 
-# plot model size vs accuracies
-df = pd.read_csv(os.path.join(MERGED_SZ_PATH,"results.csv"))
-plot_model_size_accuracies(df)
+    # convert the models to pi format
+    make_pi()
+
+    # run inference tester
+    subprocess.run(["python", "ObjectDetection/Training/InferenceTester.py", "--pc"])
+
+if __name__ == "__main__":
+    hyp_process()
+    size_process()

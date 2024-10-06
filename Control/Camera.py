@@ -108,7 +108,7 @@ class Camera:
         self.running = True 
         self.capture_thread.start()
 
-        sleep(15)
+        sleep(25)
 
         jpg_files = glob.glob(os.path.join(save_dir, "*.jpg"))
 
@@ -144,13 +144,13 @@ class Camera:
         self.capture_thread = threading.Thread(target=self._capture_images, args=(save_dir, samp_period, None, rtc))
         self.running = True 
         self.capture_thread.start()
-        
 
         # keep track of running time
         start_time = rtc.read_time()
-        while self.running:
+        run_time = 0
+        while self.is_capture_running(self):
             current_time = rtc.read_time()
             run_time = rtc.time_difference(start_time, current_time)["total_seconds"]
             with open(os.path.join("Control", "Results", f"total_run_{fps}.txt"), 'w') as file:
                 file.write(f"Total seconds: {run_time} seconds")
-            sleep(20)
+            sleep(30)
