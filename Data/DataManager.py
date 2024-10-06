@@ -827,5 +827,5 @@ if __name__ == "__main__":
     # train_loader, val_loader, test_loader = dm.create_dataloaders(obs_no = 100, md_z1_trainval_no=100,md_z2_trainval_no=100,snap_no=300,snap_test_no=100,obs_test_no=100,behaviour=True)
     # snap_train, snap_val, snap_test = dm.create_snap_coco(num_train_val=100,num_test=20)
     dm = DataManager()
-    dm.create_yolo_dataset(100,0,0,0,"Data/Formated/test")
+    dm.create_yolo_dataset(100,100,100,0,"Data/Formated/test_dataset")
     # dm.view_yolo_annotations("Data/Formated/yolo/images/test","Data/Formated/yolo/labels/test")

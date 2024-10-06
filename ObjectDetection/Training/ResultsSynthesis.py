@@ -7,6 +7,8 @@ import json
 import glob
 import numpy as np
 
+##### STD PARAMETERS #####
+
 STD = {'batch': 32,
   'lr': 0.01,
   'augment': True,
@@ -19,15 +21,19 @@ STD = {'batch': 32,
   'img_sz': 640,
   'optimizer': 'SGD'}
 
+COLOURS=matplotlib.colormaps.get_cmap('Set3')(np.linspace(0, 1, 10))
+
+#### GENERIC FUNCTIONS #####
+
 def merge_results(directory, save_dir):
     # global results dataframe
     global_results = pd.DataFrame()
     global_model_id = 0
 
     # tends and model directory
-    trends_dir = os.path.join(save_dir, 'hyp_trends')
+    trends_dir = os.path.join(save_dir, 'trends')
     os.makedirs(trends_dir, exist_ok=True)
-    global_models_dir = os.path.join(save_dir, 'hyp_models')
+    global_models_dir = os.path.join(save_dir, 'models')
     os.makedirs(global_models_dir, exist_ok=True)
 
     # iterate over present results directories
@@ -45,8 +51,9 @@ def merge_results(directory, save_dir):
                 for idx, row in train_data.iterrows():
                     # get model directory
                     model_id = row['id']
-                    model_dir = os.path.join(folder_path,"hyp_models", f'model_{model_id}')
+                    model_dir = os.path.join(folder_path,"models", f'model_{model_id}')
                     results_csv_path = os.path.join(model_dir, 'results.csv')
+                    print(results_csv_path)
 
                     # move model to models folder
                     source = os.path.join(folder_path, "models", f"model_{model_id}", "weights", "best.pt")
@@ -70,14 +77,13 @@ def merge_results(directory, save_dir):
     global_results.to_csv(os.path.join(save_dir, 'results.csv'), index=False)
     print(f"Data merged successfully! {global_model_id} models processed.")
 
-def filter_results(results_df, unfiltered_params = None, model = None, std=STD):
+def filter_results(results_df, unfiltered_params = None, model = None, std=STD, filters = {'batch':True, 'lr':True, 'augment':True, 'freeze':True, 'pretrained':True, 'obs_no':True, 'md_z1_trainval':True, 'md_z2_trainval':True, 'md_test_no':True, 'optimizer':True, 'img_sz':True}):
 
     # filter for desired model
     if model: results_df = results_df[(results_df['model'].str.contains(str(model), na=False))]
 
     # select filters
     if unfiltered_params:
-        filters = {'batch':True, 'lr':True, 'augment':True, 'freeze':True, 'pretrained':True, 'obs_no':True, 'md_z1_trainval':True, 'md_z2_trainval':True, 'md_test_no':True, 'optimizer':True, 'img_sz':True}
         
         for unfiltered_param in unfiltered_params:
             filters[unfiltered_param] = False
@@ -87,6 +93,8 @@ def filter_results(results_df, unfiltered_params = None, model = None, std=STD):
             if value: results_df = results_df[(results_df[key] == std[key])]
 
     return results_df
+
+##### HYPER PARAMATER FUNCTIONS ####
 
 def plot_hyper_param_impacts(in_df, metric, save_path, parameters=['batch', 'lr', 'freeze', 'optimizer'], title = None):
     # create plot
@@ -141,48 +149,6 @@ def plot_hyper_param_impacts(in_df, metric, save_path, parameters=['batch', 'lr'
     plt.savefig(save_path)
     plt.close()
 
-def plot_data_size_impacts(df, metric, save_path, dataset = 'Observed', model = None):
-    # set the x and y axis
-    y_col = metric
-    if dataset == 'Observed': x_col = 'obs_no'
-    elif dataset == 'MeerDown': x_col = 'md_z1_trainval'
-    else:
-        print('Invalid dataset chosen')
-        exit()
-
-    # filter the df
-    if x_col == 'obs_no': df = filter_results(df, [x_col], model=model)
-    else: df = filter_results(df, [x_col, 'md_z2_trainval'], model=model)
-
-    # sort df
-    df = df.sort_values(by=x_col, ascending=True)
-
-    # define colour_scheme
-    colors = matplotlib.colormaps.get_cmap('Set3')(np.linspace(0, 1, 10))
-    
-    # create plots
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    # bar positions and heights
-    x = np.arange(len(df[x_col]))
-    heights = df[y_col].values
-    
-    # plot the bars
-    rects = ax.bar(x, heights, color=colors[:len(heights)])
-    
-    # set x ticks and labels
-    ax.set_xticks(x)
-    ax.set_xticklabels(df[x_col].values, rotation=45, ha='right')
-    
-    # set labels and title
-    ax.set_xlabel(dataset)
-    ax.set_ylabel(y_col)
-    ax.set_title(f'Bar Graph of {y_col} vs {x_col}')
-    
-    # save plot
-    plt.savefig(save_path)
-    plt.close()
-
 def get_best_parameters(df, metric):
     parameters = {'batch':None, 'lr':None, 'freeze':None, 'optimizer':None, 'obs_no':None}
     
@@ -198,7 +164,7 @@ def get_best_parameters(df, metric):
 
     return parameters
 
-def save_best_models(df, metric):
+def save_best_hyp_models(df, metric):
     # initialise best models
     model_names = ['yolo5s', 'yolo8n']
     best_models = {}
@@ -212,38 +178,42 @@ def save_best_models(df, metric):
             best_models[row['model']]['id'] = row['id']
     
     # save them to the best_models_folder
-    best_model_path = os.path.join(MERGED_PATH,"model_sizes")
+    best_model_path = os.path.join(MERGED_HYP_PATH,"model_sizes")
     os.mkdir(best_model_path)
     for key, value in best_models.items():
         shutil.copy(
-            os.path.join(MERGED_PATH, "hyp_models", f"model_{best_models[key]['id']}.pt"),
+            os.path.join(MERGED_HYP_PATH, "models", f"model_{best_models[key]['id']}.pt"),
             os.path.join(best_model_path, f"{key}.pt")
         )
 
-# set the input directory
-MERGED_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_results")
-UNMERGED_PATH = os.path.join("ObjectDetection", "Training", "Results", "hyper_tune")
+def plot_model_size(df):
+    pass
 
-# set output directory and models
-OUT_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_results", "plots")
+##### PROCESS HYPER PARAMETER RESULTS ####
+
+# set directories
+UNMERGED_HYP_PATH = os.path.join("ObjectDetection", "Training", "Results", "hyper_tune")
+MERGED_HYP_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_hyp_results")
+PLOT_PATH = os.path.join(MERGED_HYP_PATH, "plots")
 models = ["5s", "8n"]
 
-# remove the folders and remerge results
-if os.path.exists(MERGED_PATH):
-    shutil.rmtree(MERGED_PATH)
-os.mkdir(MERGED_PATH)
-merge_results(UNMERGED_PATH, MERGED_PATH)
-if os.path.exists(OUT_PATH):
-    shutil.rmtree(OUT_PATH)
-os.mkdir(OUT_PATH)
+# remove the folders 
+if os.path.exists(MERGED_HYP_PATH):
+    shutil.rmtree(MERGED_HYP_PATH)
+os.mkdir(MERGED_HYP_PATH)
+merge_results(UNMERGED_HYP_PATH, MERGED_HYP_PATH)
+
+if os.path.exists(PLOT_PATH):
+    shutil.rmtree(PLOT_PATH)
+os.mkdir(PLOT_PATH)
 
 for model in models:
     # make the output folder
-    model_res_path = os.path.join(OUT_PATH,"yolo_" + model)
+    model_res_path = os.path.join(PLOT_PATH,"yolo_" + model)
     os.mkdir(model_res_path)
 
     # read in merged results
-    df = pd.read_csv(os.path.join(MERGED_PATH,"results.csv"))
+    df = pd.read_csv(os.path.join(MERGED_HYP_PATH,"results.csv"))
 
     # filter for specific model
     df = filter_results(df,unfiltered_params=None, model=model)
@@ -257,10 +227,6 @@ for model in models:
         # plot hyper parameter impacts
         plot_hyper_param_impacts(df, metric, os.path.join(model_res_path, f"hyp_tune_{metric}.jpg"))
 
-        # plot data size impacts
-        plot_data_size_impacts(df, metric, os.path.join(model_res_path, f"meerdown_data_{metric}.jpg"), dataset='MeerDown', model = model)
-        plot_data_size_impacts(df, metric, os.path.join(model_res_path, f"observed_data_{metric}.jpg"), dataset='Observed', model = model)
-
         # get best parameters
         parameters = get_best_parameters(df,metric)
         best_parameters[metric] = parameters
@@ -270,5 +236,72 @@ for model in models:
         json.dump(best_parameters, f, indent=4)
 
 # save the best models
-df = pd.read_csv(os.path.join(MERGED_PATH,"results.csv"))
-best_models = save_best_models(df, 'f1')
+df = pd.read_csv(os.path.join(MERGED_HYP_PATH,"results.csv"))
+best_models = save_best_hyp_models(df, 'f1')
+
+##### MODEL SIZE FUNCTIONS #####
+
+# set the directories
+UNMERGED_SZ_PATH = os.path.join("ObjectDetection", "Training", "Results", "model_sizes")
+MERGED_SZ_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_sz_results")
+PLOT_SZ_PATH = os.path.join(MERGED_SZ_PATH, "plots")
+
+def plot_model_size_accuracies(df, model_sizes = ['n', 's', 'm', 'l'], metric = 'mAP50', save_path = os.path.join(PLOT_SZ_PATH,"model_size_accuracies.png")):
+    
+    # initialize model accuracies
+    yolo5_acc = []
+    yolo8_acc = []
+
+    for model_size in model_sizes:    
+        filtered_df = df[(df['model'].str[5:].str.contains(str(model_size), na=False))]
+        yolo5_score = filtered_df[(filtered_df['model'].str.contains(str('5'), na=False))][metric]
+        yolo8_score = filtered_df[(filtered_df['model'].str.contains(str('8'), na=False))][metric]
+        if len(yolo5_score) > 0: yolo5_acc.append(yolo5_score.iloc[0])
+        else: yolo5_acc.append(0)
+        if len(yolo8_score) > 0: yolo8_acc.append(yolo8_score.iloc[0])
+        else: yolo8_acc.append(0)
+    
+    test_accuracies = {
+        'Yolo5': list([round(num * 100, 2) for num in yolo5_acc]),
+        'Yolo8': list([round(num * 100, 2) for num in yolo8_acc])
+    }
+
+    x = np.arange(len(model_sizes))
+    width = 0.3
+    multiplier = 0
+
+    fig, ax = plt.subplots(layout='constrained')
+
+    for idx, (attribute, measurement) in enumerate(test_accuracies.items()):
+        offset = width * multiplier
+        rects = ax.bar(x + offset, measurement, width, label=attribute, color=COLOURS[idx])
+        ax.bar_label(rects, padding=3)
+        multiplier += 1
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Test Accuracy')
+    ax.set_title('Test Accuracies of Pretrained and Untrained Models')
+    ax.set_xticks(x + width / 2, model_sizes)
+    ax.legend(loc='upper left', ncols=2)
+    ax.set_ylim(0, 100)  # Assuming accuracy is between 0 and 1
+
+    plt.savefig(save_path)
+
+##### MODEL SIZE PROCESSING #####
+
+
+# remove the folders 
+if os.path.exists(MERGED_SZ_PATH):
+    shutil.rmtree(MERGED_SZ_PATH)
+os.mkdir(MERGED_SZ_PATH)
+
+if os.path.exists(PLOT_SZ_PATH):
+    shutil.rmtree(PLOT_SZ_PATH)
+os.mkdir(PLOT_SZ_PATH)
+
+# merge results
+merge_results(UNMERGED_SZ_PATH,MERGED_SZ_PATH)
+
+# plot model size vs accuracies
+df = pd.read_csv(os.path.join(MERGED_SZ_PATH,"results.csv"))
+plot_model_size_accuracies(df)

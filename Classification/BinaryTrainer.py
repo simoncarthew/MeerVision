@@ -35,7 +35,7 @@ def main():
     batch = parser.parse_args().batch
     img_size = (int(parser.parse_args().image_size),int(parser.parse_args().image_size))
     behaviour = False
-    epochs = 1
+    epochs = 25
     perc_val = 0.2
 
     # obs

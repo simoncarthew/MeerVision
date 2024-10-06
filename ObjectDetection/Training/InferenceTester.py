@@ -7,15 +7,17 @@ import sys
 import glob
 
 # add relatove folders to system path
+sys.path.append(os.path.join("ObjectDetection","Yolo"))
 sys.path.append(os.path.join("ObjectDetection","Yolo5"))
 sys.path.append(os.path.join("ObjectDetection","Yolo8"))
 
 # import assistive classes
+from yolo import Yolo
 from yolo5 import Yolo5
 from yolo8 import Yolo8
 
 # set std folder paths
-RESULTS = os.path.join("ObjectDetection", "Training", "Results", "merged_results")
+RESULTS = os.path.join("ObjectDetection", "Training", "Results", "merged_sz_results")
 TEST_IMAGES = os.path.join("Data", "InferenceTesting")
 
 # initialize the argpasers
@@ -33,9 +35,8 @@ print("Got arguments")
 if args.pi: device = 'pi'
 elif args.pc: device = 'pc'
 
-# load the best models file
-models_path = os.path.join(args.path, "model_sizes")
-model_paths = sorted(glob.glob(os.path.join(models_path, '*.pt')))
+# load the results csv 
+results_df = pd.read_csv(os.path.join(args.path, "results.csv"))
 
 print("Loaded Model paths")
 
@@ -50,19 +51,20 @@ else:
     print("Created New Data frame.")
 
 # iterate over yolo models
-for model_path in model_paths:
+for idx, row in results_df.iterrows():
+    model_name = row['model']
+    model_path = os.path.join(args.path, "models", "model_" + str(row['id']) + ".pt")
+    print(model_path)
 
-    # load the model
-    if 'yolo5' in model_path:
+    # this is for the old yolo format
+    if 'yolo5' in model_name:
         print("Loading yolo5")
         model = Yolo5(model_path=model_path, device='cpu')
         print("Loaded yolo5")
-    elif 'yolo8' in model_path:
+    else:
         print("Loading yolo8")
         model = Yolo8(model_path=model_path, device='cpu')
         print("Loaded yolo8")
-    else:
-        print(f"{model_path} is not a supported model")
 
     # get the inference time
     print("Starting inference test")

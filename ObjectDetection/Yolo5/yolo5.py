@@ -22,7 +22,7 @@ class Yolo5:
         self.device = device or ('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.model_size = model_size
         if model_path is not None:
-            self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path)
+            self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path).to(self.device)
         else:
             model_size = "yolov5" + model_size
             self.model = torch.hub.load('ultralytics/yolov5', model_size, pretrained=pretrained).to(self.device)
@@ -261,23 +261,25 @@ class Yolo5:
 if __name__ == "__main__":
 
     # Example usage
+    model_path= "ObjectDetection/Training/Results/hyper_tune/results0/models/model_0/weights/best.pt"
+    # model_path = "ObjectDetection/Training/Results/merged_hyp_results/model_sizes/yolo5s.pt"
     # model_path = "ObjectDetection/Yolo5/best.pt"
     # model_path = '/home/meerkat/MeerVision/Control/Models/yolo5.pt'
     # model_path = "ObjectDetection/Training/Results/hyper_tune/results0/models/model_0/weights/best.pt"
     # model_path = "ObjectDetection/Yolo5/train/weights/best.pt"
     # model_path = "ObjectDetection/Training/Results/yolo5_first_test/models/model_0/weights/best.pt"
     # print("Loading Previous Model")
-    # yolo = Yolo5(model_path=model_path)
-    # yolo.detect_video("Data/YoutubeCameraTrap/At the meerkat burrow.mp4")
+    yolo = Yolo5(model_path=model_path)
+    # yolo.detect_video("Data/YoutubeCamerair, model, *aTrap/At the meerkat burrow.mp4")
     # print("Previous Model Loaded")
     # print("Loading new Model")
-    yolo = Yolo5(model_size='m')
+    # yolo = Yolo5(model_size='m')
     # print("New Model Loaded")
     # jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
     # for file in jpg_files:
     #     print(yolo.sgl_detect(image_path=file, show=True))
     # print("Starting Training")
-    yolo.train(data_path='Data/Formated/yolo/dataset.yaml',epochs=5,batch_size=4,freeze = 10)
+    # yolo.train(data_path='Data/Formated/yolo/dataset.yaml',epochs=5,batch_size=4,freeze = 10)
     # print("Finnished Training")
     # print(yolo.evaluate_model("Data/Formated/yolo/dataset.yaml",model_path,save_path='ObjectDetection/Yolo5/testing'))
     # print(yolo.cust_evaluate(yolo_path="Data/Formated/yolo"))

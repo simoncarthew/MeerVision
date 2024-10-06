@@ -1,0 +1,25 @@
+paths:
+  training: 'ObjectDetection/Training/Parameters/yolo_3.csv'
+  results: '/scratch/crtsim008/Results'
+  yolo_data: '/scratch/crtsim008/Formated/yolo'
+  meerdown_frame: '/scratch/crtsim008/MeerDown/frames'
+  meerdown_annot: '/scratch/crtsim008/MeerDown/annotations.json'
+  obs_frames: '/scratch/crtsim008/Observed/frames'
+  obs_annot: '/scratch/crtsim008/Observed/annotations.json'
+  data_path: '/scratch/crtsim008/Training8'
+  yolo_path: 'ObjectDetection/Yolo'
+
+parameters:
+  batch: 32
+  lr: 0.01
+  augment: True
+  percval: 0.2
+  freeze: 0
+  pretrained: True
+  epochs: 30
+  obs_no: -1
+  md_z1_trainval: 1000
+  md_z2_trainval: 1000
+  md_test_no: 0
+  img_sz: 640
+  optimizer: 'Adam'
