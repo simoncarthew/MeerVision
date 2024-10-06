@@ -148,7 +148,7 @@ class Camera:
         # keep track of running time
         start_time = rtc.read_time()
         run_time = 0
-        while self.is_capture_running(self):
+        while self.is_capture_running():
             current_time = rtc.read_time()
             run_time = rtc.time_difference(start_time, current_time)["total_seconds"]
             with open(os.path.join("Control", "Results", f"total_run_{fps}.txt"), 'w') as file:
