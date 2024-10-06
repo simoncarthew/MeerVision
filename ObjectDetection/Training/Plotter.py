@@ -1,4 +1,3 @@
-
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,10 +7,11 @@ import json
 import glob
 import sys
 import numpy as np
-from ResultsSynthesis import filter_results, STD, UNMERGED_HYP_PATH, MERGED_HYP_PATH, PLOT_HYP_PATH, MERGED_SZ_PATH, UNMERGED_SZ_PATH, COLOURS
+from ResultsSynthesis import filter_results, STD, UNMERGED_HYP_PATH, MERGED_HYP_PATH, PLOT_HYP_PATH, MERGED_SZ_PATH, UNMERGED_SZ_PATH
 
 # set directories
 PLOT_SZ_PATH = os.path.join(MERGED_SZ_PATH, "plots")
+COLOURS=[x for i,x in enumerate(matplotlib.colormaps.get_cmap('Set3')(np.linspace(0, 1, 10))) if i!=1]
 
 #### HYPER PARAMETER PLOTTING
 
@@ -68,7 +68,6 @@ def plot_hyper_param_impacts(in_df, metric, save_path, parameters=['batch', 'lr'
     plt.savefig(save_path)
     plt.close()
 
-
 #### PLOT HYPER PARAMETERS ####
 
 # read in merged results
@@ -92,46 +91,46 @@ for model in models:
 
 #### MODEL SZ FUNCTIONS ####
 
-def plot_model_size_accuracies(df, model_sizes = ['n', 's', 'm', 'l'], metric = 'mAP50', save_path = os.path.join(PLOT_SZ_PATH,"model_size_accuracies.png")):
-    
-    # initialize model accuracies
-    yolo5_acc = []
-    yolo8_acc = []
+def plot_model_size_accuracies(df, model_sizes = ['n', 's', 'm', 'l'], metrics = ['mAP50','f1'], save_path = os.path.join(PLOT_SZ_PATH,"model_size")):
+    for metric in metrics:
+        # initialize model accuracies
+        yolo5_acc = []
+        yolo8_acc = []
 
-    for model_size in model_sizes:    
-        filtered_df = df[(df['model'].str[5:].str.contains(str(model_size), na=False))]
-        yolo5_score = filtered_df[(filtered_df['model'].str.contains(str('5'), na=False))][metric]
-        yolo8_score = filtered_df[(filtered_df['model'].str.contains(str('8'), na=False))][metric]
-        if len(yolo5_score) > 0: yolo5_acc.append(yolo5_score.iloc[0])
-        else: yolo5_acc.append(0)
-        if len(yolo8_score) > 0: yolo8_acc.append(yolo8_score.iloc[0])
-        else: yolo8_acc.append(0)
-    
-    test_accuracies = {
-        'Yolo5': list([round(num * 100, 2) for num in yolo5_acc]),
-        'Yolo8': list([round(num * 100, 2) for num in yolo8_acc])
-    }
+        for model_size in model_sizes:    
+            filtered_df = df[(df['model'].str[5:].str.contains(str(model_size), na=False))]
+            yolo5_score = filtered_df[(filtered_df['model'].str.contains(str('5'), na=False))][metric]
+            yolo8_score = filtered_df[(filtered_df['model'].str.contains(str('8'), na=False))][metric]
+            if len(yolo5_score) > 0: yolo5_acc.append(yolo5_score.iloc[0])
+            else: yolo5_acc.append(0)
+            if len(yolo8_score) > 0: yolo8_acc.append(yolo8_score.iloc[0])
+            else: yolo8_acc.append(0)
+        
+        test_accuracies = {
+            'Yolo5': list([round(num * 100, 2) for num in yolo5_acc]),
+            'Yolo8': list([round(num * 100, 2) for num in yolo8_acc])
+        }
 
-    x = np.arange(len(model_sizes))
-    width = 0.3
-    multiplier = 0
+        x = np.arange(len(model_sizes))
+        width = 0.3
+        multiplier = 0
 
-    fig, ax = plt.subplots(layout='constrained')
+        fig, ax = plt.subplots(layout='constrained')
 
-    for idx, (attribute, measurement) in enumerate(test_accuracies.items()):
-        offset = width * multiplier
-        rects = ax.bar(x + offset, measurement, width, label=attribute, color=COLOURS[idx])
-        ax.bar_label(rects, padding=3)
-        multiplier += 1
+        for idx, (attribute, measurement) in enumerate(test_accuracies.items()):
+            offset = width * multiplier
+            rects = ax.bar(x + offset, measurement, width, label=attribute, color=COLOURS[idx])
+            ax.bar_label(rects, padding=3)
+            multiplier += 1
 
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Test Accuracy')
-    ax.set_title('Yolo 5 and 8 Test Accuracies Across Model Sizes')
-    ax.set_xticks(x + width / 2, model_sizes)
-    ax.legend(loc='upper left', ncols=2)
-    ax.set_ylim(0, 100)  # Assuming accuracy is between 0 and 1
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_ylabel(metric)
+        ax.set_title(f'Yolo 5 and 8 {metric} Across Model Sizes')
+        ax.set_xticks(x + width / 2, model_sizes)
+        ax.legend(loc='upper left', ncols=2)
+        ax.set_ylim(0, 100)  # Assuming accuracy is between 0 and 1
 
-    plt.savefig(save_path)
+        plt.savefig(save_path + "_" + metric + ".png")
 
 def plot_inferences(df, save_path = os.path.join(PLOT_SZ_PATH,"inference_times")):
     models = ["8","5"]
@@ -188,6 +187,83 @@ def plot_inferences(df, save_path = os.path.join(PLOT_SZ_PATH,"inference_times")
         # Save the figure
         plt.savefig(save_path + "_" + model + ".png")
 
+def plot_6hour_process_time(df, save_path = os.path.join(PLOT_SZ_PATH,"process_time")):
+    models = ["8","5"]
+    model_sizes = ["n", "s", "m", "l"]
+
+
+    for model in models:
+        filtered_df = filter_results(df,model=model)
+        pi_ncnn_times = []
+        fps = [[],[],[]]
+
+        for model_size in model_sizes:    
+            pi_ncnn = filtered_df[filtered_df['model'].str[5:].str.contains(str(model_size))]['pi_ncnn']
+            if len(pi_ncnn) > 0: 
+                for i in range(3):
+                    no_images = 6 * 60 * 60 * i
+                    fps[i].append(pi_ncnn.iloc[0] * no_images / 60 / 60)
+            else: 
+                for i in range(3):
+                    fps[i].append(0)
+
+        inference_times = {
+            '1': list([round(num, 3) for num in fps[0]]),
+            '2': list([round(num, 3) for num in fps[1]]),
+            '3': list([round(num, 3) for num in fps[2]])
+        }
+
+        x = np.arange(len(model_sizes))  # the label locations
+        width = 0.3 
+        multiplier = 0
+
+        fig, ax = plt.subplots(layout='constrained')
+
+        for idx, (attribute, measurement) in enumerate(inference_times.items()):
+            offset = width * multiplier
+            rects = ax.bar(x + offset, measurement, width, label=attribute, color=COLOURS)
+            ax.bar_label(rects, padding=3)
+            multiplier += 1
+
+        # Add labels, title, and customize x-axis tick labels
+        ax.set_ylabel('Processing Time (Hours)')
+        ax.set_xlabel('Model Sizes')
+        ax.set_title(f'YOLOv{model} Deployment Process Time vs Model Sizes')
+
+        # Correct x-tick positioning
+        mid_bar_offset = width * (len(inference_times) - 1) / 2
+        ax.set_xticks(x + mid_bar_offset)
+        ax.set_xticklabels(model_sizes)
+        ax.set_ylim(0, 12)  # Set y-axis limits
+
+        # Save the figure
+        plt.savefig(save_path + "_" + model + ".png")
+
+def plot_run_times(df, save_path=os.path.join(PLOT_SZ_PATH, "run_times.png"), bar_width=0.4):
+    # Ensure the save directory exists
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    
+    fig, ax = plt.subplots(figsize=(10,4))
+
+    fps = df["fps"]
+    y_pos = np.arange(len(fps))
+    run_times = [round(num / 60 / 60, 3) for num in df["run_time"].tolist()]
+
+    # Create a horizontal bar chart with adjustable bar width
+    ax.barh(y_pos, run_times, height=bar_width, align='center', color=COLOURS)
+    
+    # Set y-ticks and labels
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(fps)
+    ax.invert_yaxis()  # Invert the y-axis to have the highest FPS on top
+    ax.set_xlabel('Run Time (hours)')
+    ax.set_ylabel('FPS')
+    ax.set_title('FPS vs Run Time')
+
+    # Save the plot
+    plt.savefig(save_path)
+    plt.close(fig)  # Close the figure to free up memory
+
 def plot_speed_up(df, save_path = os.path.join(PLOT_SZ_PATH,"speed_up")):
     models = ["8","5"]
     model_sizes = ["n", "s", "m", "l"]
@@ -221,6 +297,40 @@ def plot_speed_up(df, save_path = os.path.join(PLOT_SZ_PATH,"speed_up")):
 
         plt.savefig(save_path + "_" + model + ".png")
 
+def plot_trends(df, save_path = os.path.join(PLOT_SZ_PATH,"trend")):
+    no_epochs = 39
+
+    for idx, row in df.iterrows():
+        trends = pd.read_csv(os.path.join(MERGED_SZ_PATH,"trends","results_" + str(row['id']) + '.csv'))
+
+        # Create a figure and two subplots
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
+
+        # plot the validation acccuracy
+        try:
+            map_50 = trends['metrics/mAP50(B)'].tolist()[:no_epochs]
+        except:
+            map_50 = trends['metrics/mAP_0.5'].tolist()[:no_epochs]
+        ax1.plot(trends['epoch'].tolist()[:no_epochs], map_50, color=COLOURS[0], label='val mAP50')
+        ax1.set_ylabel('mAP50')
+        ax1.set_xlabel('Epochs')
+        ax1.legend()
+
+        # Plot the second line graph on the bottom axis
+        ax2.plot(trends['epoch'].tolist()[:no_epochs], trends['train/box_loss'].tolist()[:no_epochs], color=COLOURS[1], label='train loss')
+        ax2.plot(trends['epoch'].tolist()[:no_epochs], trends['val/box_loss'].tolist()[:no_epochs], color=COLOURS[2], label='val loss')
+        ax2.set_xlabel('Epochs')
+        ax2.set_ylabel('Box Loss')
+        ax2.legend()
+
+        fig.suptitle(f"Training Trends for Model {row['model']}", fontsize=16)
+
+        # Adjust layout to avoid overlap
+        plt.tight_layout()
+
+        # Show the plot
+        plt.savefig(save_path + f"_{row['model']}.png")
+
 ##### MODEL SIZE PROCESSING #####
 
 if os.path.exists(PLOT_SZ_PATH):
@@ -230,8 +340,14 @@ os.mkdir(PLOT_SZ_PATH)
 # plot model size vs accuracies
 df = pd.read_csv(os.path.join(MERGED_SZ_PATH,"results.csv"))
 plot_model_size_accuracies(df)
+plot_trends(df)
 
 # plot inference times and speed up
 df = pd.read_csv(os.path.join(MERGED_SZ_PATH,"inference_times.csv"))
 plot_inferences(df)
 plot_speed_up(df)
+plot_6hour_process_time(df)
+
+# plot run times
+df = pd.read_csv(os.path.join("ObjectDetection/Training/Results","run_times.csv"))
+plot_run_times(df)

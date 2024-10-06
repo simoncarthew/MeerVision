@@ -4,6 +4,7 @@ import os
 import sys
 import glob
 import time
+from tqdm import tqdm
 
 # import evaluation
 eval_path = os.path.join("ObjectDetection")
@@ -25,18 +26,20 @@ MODEL_A_PATH = os.path.join("ObjectDetection","Megadetector","md_v5a.0.0.pt")
 MODEL_B_PATH = os.path.join("ObjectDetection","Megadetector","md_v5b.0.0.pt")
 
 class Mega:
-    def __init__(self, version, class_path, class_name, img_size=(640, 640)):
+    def __init__(self, version, class_path = os.path.join("ObjectDetection", "Megadetector", "classifier.pth"), class_name = "vgg16", img_size=(640, 640), device = None):
+
+        device = device or ('cuda:0' if torch.cuda.is_available() else 'cpu')
 
         # load selected mega version
         if version == "a":
-            self.yolo = Yolo5(model_path = MODEL_A_PATH)
+            self.yolo = Yolo5(model_path = MODEL_A_PATH,device=device)
         elif version == "b":
-            self.yolo = Yolo5(model_path = MODEL_B_PATH)
+            self.yolo = Yolo5(model_path = MODEL_B_PATH,device=device)
         else:
             raise ValueError("Invalid mega version.")
         
         # load the classifier
-        self.classifier = CNNS(model_name=class_name,model_path=class_path)
+        self.classifier = CNNS(model_name=class_name,model_path=class_path,device=device)
 
         # set the image size
         self.img_size = img_size
@@ -105,7 +108,7 @@ class Mega:
         annotation_id = 0
 
         # Iterate over images
-        for image_id, img_file in enumerate(img_files):
+        for image_id, img_file in tqdm(enumerate(img_files)):
             # Add image information to COCO format
             img_name = os.path.basename(img_file)
             img_info = {
@@ -140,7 +143,7 @@ class Mega:
         img_files = glob.glob(f"{image_folder}/*.jpg")
         inf_times = []
 
-        for img_file in img_files:
+        for img_file in tqdm(img_files):
             start_time = time.time()
             results = self.sgl_detect(img_file,classify=classify)
             end_time = time.time()

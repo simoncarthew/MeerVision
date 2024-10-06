@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "REQUIREMENTS AND SPECIFICATIONS.md",
+                "file": "REPORT STRUCTURE.md",
                 "mode": "source",
                 "source": false
               }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "REQUIREMENTS AND SPECIFICATIONS.md",
+                "file": "REPORT STRUCTURE.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "REQUIREMENTS AND SPECIFICATIONS.md",
+                "file": "REPORT STRUCTURE.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "REQUIREMENTS AND SPECIFICATIONS.md"
+                "file": "REPORT STRUCTURE.md"
               }
             }
           }
@@ -148,18 +148,19 @@
   },
   "active": "6c5cdaa91299cb06",
   "lastOpenFiles": [
-    "REPORT STRUCTURE.md",
-    "PROPOSED SOLUTION.md",
     "PROBLEM STATEMENT.md",
-    "OBJECTIVES.md",
-    "MEETING NOTES.md",
+    "LITERATURE SUMMARIES QOTES.md",
     "MAKING SENSE OF WHERE I AM AT.md",
-    "LITERATURE SUMMARIES.md",
+    "MEETING NOTES.md",
     "LITERATURE REVIEW.md",
     "HARDWARE AQUIRING.md",
+    "REQUIREMENTS AND SPECIFICATIONS.md",
+    "REPORT STRUCTURE.md",
+    "PROPOSED SOLUTION.md",
+    "OBJECTIVES.md",
+    "LITERATURE SUMMARIES.md",
     "DOODLING.md",
     "DESIGN CHOICES.md",
-    "REQUIREMENTS AND SPECIFICATIONS.md",
     "SUBSYSTEMS.md",
     "Images/Trainer.pdf",
     "Images/IMG_0496.jpg",

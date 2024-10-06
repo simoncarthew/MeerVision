@@ -29,8 +29,6 @@ STD = {'batch': 32,
   'img_sz': 640,
   'optimizer': 'SGD'}
 
-COLOURS=[x for i,x in enumerate(matplotlib.colormaps.get_cmap('Set3')(np.linspace(0, 1, 10))) if i!=1]
-
 UNMERGED_HYP_PATH = os.path.join("ObjectDetection", "Training", "Results", "hyper_tune")
 MERGED_HYP_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_hyp_results")
 PLOT_HYP_PATH = os.path.join(MERGED_HYP_PATH, "plots")
@@ -77,6 +75,7 @@ def merge_results(directory, save_dir):
                     # extract trnds from results csv
                     if os.path.exists(results_csv_path):
                         trend_df = pd.read_csv(results_csv_path)
+                        trend_df.columns = trend_df.columns.str.strip()
                         trend_df = trend_df.drop_duplicates()
                         trend_df.to_csv(os.path.join(trends_dir, f'results_{global_model_id}.csv'), index=False)
 
@@ -196,7 +195,6 @@ def hyp_process():
     best_models = save_best_hyp_models(df, 'f1')
 
 ##### MODEL SIZE FUNCTIONS #####
-
 
 def make_pi():
     # save directory
