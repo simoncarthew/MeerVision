@@ -31,10 +31,9 @@ def plot_model_accuracy(df, save_path = os.path.join("Classification","Results",
 
     fig, ax = plt.subplots(layout='constrained')
 
-    # Use different colors for pretrained and untrained models
     for idx, (attribute, measurement) in enumerate(test_accuracies.items()):
         offset = width * multiplier
-        rects = ax.bar(x + offset, measurement, width, label=attribute, color=colours[idx])  # Use a unique color for each type
+        rects = ax.bar(x + offset, measurement, width, label=attribute, color=colours[idx])
         ax.bar_label(rects, padding=3)
         multiplier += 1
 
