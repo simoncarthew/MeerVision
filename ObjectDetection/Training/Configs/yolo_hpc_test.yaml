@@ -10,7 +10,7 @@ paths:
   yolo_path: 'ObjectDetection/Yolo'
 
 parameters:
-  batch: 2
+  batch: 32
   lr: 0.01
   augment: True
   percval: 0.2

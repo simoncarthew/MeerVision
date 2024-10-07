@@ -1,8 +1,7 @@
 id,model,batch,lr,freeze,pretrained,augment,epochs,percval,obs_no,md_z1_trainval,md_z2_trainval,md_test_no,optimizer,img_sz
-0,yolo5nu,std,std,std,std,std,std,std,20,20,20,std,std,std
-1,yolo5nu,std,std,std,std,std,std,std,std,std,std,std,std,std
-2,yolo5su,std,std,std,std,std,std,std,std,std,std,std,std,std
-3,yolo5mu,std,std,std,std,std,std,std,std,std,std,std,std,std
-4,yolo8n,std,std,std,std,std,std,std,std,std,std,std,std,std
-5,yolo8s,std,std,std,std,std,std,std,std,std,std,std,std,std
-6,yolo8m,std,std,std,std,std,std,std,std,std,std,std,std,std
+0,yolo5nu,std,std,std,std,std,std,std,std,std,std,std,std,std
+1,yolo5su,std,std,std,std,std,std,std,std,std,std,std,std,std
+2,yolo5mu,std,std,std,std,std,std,std,std,std,std,std,std,std
+3,yolo8n,std,std,std,std,std,std,std,std,std,std,std,std,std
+4,yolo8s,std,std,std,std,std,std,std,std,std,std,std,std,std
+5,yolo8m,std,std,std,std,std,std,std,std,std,std,std,std,std
