@@ -22,7 +22,7 @@ class Yolo:
         if model_path is not None:
             self.model = YOLO(model_path)
         else:
-            self.model = YOLO(yolo_path = "yolov" + model_size + ".pt")
+            self.model = YOLO(os.path.join(yolo_path, "yolov" + model_size + ".pt"))
 
     def train(self, batch = 32, freeze = 0, img_sz = 640, lr = 0.01, optimizer = 'SGD', epochs = 50, dataset_path=os.path.join("Data","Formated","yolo","dataset.yaml"), save_path = os.path.join('ObjectDetection','Yolo'), augment = False):
 
@@ -296,15 +296,15 @@ class Yolo:
         return coco_format
 
 if __name__ == "__main__":
-    # initialize model
-    model_path = "ObjectDetection/Training/Results/hyper_tune/results0/models/model_0/weights/best.pt"
-    model_path = "ObjectDetection/Training/Results/unused_model_sizes/results10/models/model_1/weights/best.pt"
-    # yolo = Yolo(model_size="5nu")
-    yolo = Yolo(model_path=model_path)
+    # # initialize model
+    # model_path = "ObjectDetection/Training/Results/hyper_tune/results0/models/model_0/weights/best.pt"
+    # model_path = "ObjectDetection/Training/Results/unused_model_sizes/results10/models/model_1/weights/best.pt"
+    yolo = Yolo(model_size="5mu")
+    # yolo = Yolo(model_path=model_path)
 
     # test tuning
     # yolo.tune(batch = 8, dataset_path = "Data/Formated/test_dataset/dataset.yaml")
 
 
     # convert to pi
-    yolo.to_pi()
+    # yolo.to_pi()
