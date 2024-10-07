@@ -1,6 +1,6 @@
 paths:
   training: 'ObjectDetection/Training/Parameters/yolo_test.csv'
-  results: 'ObjectDetection/Training/Results/test'
+  results: '/scratch/crtsim008/Results'
   yolo_data: '/scratch/crtsim008/Formated/test_dataset'
   meerdown_frame: '/scratch/crtsim008/MeerDown/frames'
   meerdown_annot: '/scratch/crtsim008/MeerDown/annotations.json'
