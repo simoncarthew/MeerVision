@@ -1,25 +1,37 @@
 # standard imports
 import sys
 import os
+import pandas as pd
 
 # add relatove folders to system path
-sys.path.append(os.path.join("ObjectDetection","Yolo5"))
-sys.path.append(os.path.join("ObjectDetection","Yolo8"))
-sys.path.append(os.path.join("ObjectDetection","Megadetector"))
+sys.path.append(os.path.join("ObjectDetection","Yolo"))
 
 # import assistive classes
-from yolo5 import Yolo5
-from yolo8 import Yolo8
-from Mega import Mega
+from yolo import Yolo
 
 # model name to path maps
-model_dir_path = os.path.join("Control","Models")
+RESULTS_DIR_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_sz_results")
+MODEL_DIR_PATH = os.path.join(RESULTS_DIR_PATH, "pi_models")
+
+def paths_to_models():
+    models = {}
+    df = pd.read_csv(os.path.join(RESULTS_DIR_PATH,"results.csv"))
+    for idx, row in df.iterrows():
+        models[row['model']] = os.path.join(MODEL_DIR_PATH, f"model_{row['id']}_ncnn_model")
+    return models
 
 class Process:
-    def __init__(self, model_name):
-        if "5" in model_name:
-            self.model = Yolo5(model_path = os.path.join(model_dir_path, model_name + ".pt"), device='cpu')
-        elif "8" in model_name:
-            self.model = Yolo8(model_path = os.path.join(model_dir_path, model_name + ".pt"), device='cpu')
-        elif "megaA" in model_name:
-            self.model = Mega(model_path = os.path.join(model_dir_path, model_name + ".pt"), device='cpu')
+    def __init__(self, version = "5", size = "s"):
+        # convert model version to model path
+        models = paths_to_models()
+        print("Got model paths.")
+
+        # load selected model
+        self.model = Yolo(model_path = models[f"yolo{version}{size}"])
+        print(f"Loaded yolo{version}{size}")
+
+    def detect_all(self, deployment_path = "images"):
+        pass
+
+if __name__ == "__main__":
+    process = Process()

@@ -3,6 +3,7 @@ import  time
 import os
 import sys
 import subprocess
+import logging
 from luma.oled.device import ssd1306
 from luma.core.interface.serial import i2c
 from PIL import Image, ImageDraw, ImageFont
@@ -12,6 +13,30 @@ from Camera import Camera
 from LCD import LCD
 from RTC import RTC
 from Buttons import Buttons
+
+
+# create logging file
+LOG_FILE = os.path.join("Control","log.txt")
+logging.basicConfig(
+    filename=LOG_FILE, 
+    level=logging.DEBUG, 
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+# redirect stdout
+class LoggerWriter:
+    def __init__(self, level):
+        self.level = level
+
+    def write(self, message):
+        if message.strip() != "":
+            self.level(message)
+
+    def flush(self):
+        pass 
+
+sys.stdout = LoggerWriter(logging.info)
+sys.stderr = LoggerWriter(logging.error)
 
 SGL_CAP_PATH = os.path.join("Control","Images","SingleCapture")
 DEP_PATH = os.path.join("Control","Images","Deployments")

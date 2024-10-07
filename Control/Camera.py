@@ -4,6 +4,7 @@ import time
 import glob
 import shutil
 import os
+import json
 import threading
 
 class Camera:
@@ -67,6 +68,12 @@ class Camera:
         self.run_time = 0
         prev_time = start_time
         index = 0
+
+        # save meta data
+        meta = {"fps" : samp_period}
+        with open(os.path.join(save_dir,"meta.json"), "w") as json_file:
+            json.dump(meta, json_file, indent=4)
+
         while self.running:
             if self.total_duration is not None and self.run_time >= self.total_duration:
                 break
