@@ -44,19 +44,14 @@ class Process:
         global_results = []
         for image_path in images:
             results = self.model.sgl_detect(image_path, show=False, conf_thresh=0, format="yolo")
-            global_results.append()
+            global_results.append(results)
 
         with open(os.path.join(deployment_path,"meta.json"), 'r') as file:
             data = json.load(file)
 
         return global_results, data.get("fps"), data.get("start_time")
     
-    def synthesize_results():
-        pass
-
-
-    def plot_results(self,results, fps, start_time, save_path = os.path.join("number_of_detections")):
-
+    def synthesize_results(self,results, fps, start_time, save_path = "Control/Processed/detections.csv"):
         # cont number of detections
         no_detections = [len(image) for image in results]
 
@@ -73,18 +68,29 @@ class Process:
         # generate time intervals
         time_intervals = [start_time + timedelta(seconds=i / fps) for i in range(len(no_detections))]
 
-        # Plotting the graph
+        # create df and store as csv
+        df = pd.DataFrame(columns=["time", "no_detections"])
+        for i in range(len(time_intervals)):
+            df.loc[len(df)] = [time_intervals[i],no_detections[i]]
+        df.to_csv(save_path,index=False)
+
+        return df
+
+    def plot_results(self,df , save_path = os.path.join("Control/Processed/meerkats_vs_time.png")):
         plt.figure(figsize=(10, 5))
-        plt.plot(time_intervals, no_detections, marker='o', linestyle='-', color='b')
-        plt.xlabel('Time')
-        plt.ylabel('Number of Apples')
-        plt.title('Apples Over Time')
+        plt.plot(df["time"], df["no_detections"], marker='o', linestyle='-')
+        plt.xlabel('TIME')
+        plt.ylabel('NUMBER OF MEERKATS')
+        plt.title('MEERKATS OVER TIME')
         plt.xticks(rotation=45)
+        plt.ylim((0,max(df["no_detections"].tolist()) + 1))
         plt.tight_layout()
         plt.grid(True)
-        plt.show()
+        plt.savefig(save_path)
         
 
 if __name__ == "__main__":
     process = Process()
-    process.detect_all()
+    global_results, fps, start_time = process.detect_all()
+    df = process.synthesize_results(global_results, fps, start_time)
+    process.plot_results(df)

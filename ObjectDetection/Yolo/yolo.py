@@ -38,7 +38,8 @@ class Yolo:
             batch=batch,  
             imgsz=img_sz,  
             augment=augment,
-            freeze=freeze
+            freeze=freeze,
+            single_cls=True
         ) 
 
         return results
@@ -153,12 +154,16 @@ class Yolo:
     def to_pi(self):
         self.model.export(format="ncnn")
 
-    def sgl_detect(self, image_path, show=False, conf_thresh=0, format="yolo"):
+    def sgl_detect(self, image_path, show=False, conf_thresh=0, format="yolo", save_path=None, crop_save_path= None):
         img = cv2.imread(image_path)  # Read the image
         if img is None:
             raise ValueError(f"Image at {image_path} could not be loaded.")
         
         results = self.model(img)  # Perform detection
+
+        # Ensure crop save path is defined and create it if not present
+        if crop_save_path and not os.path.exists(crop_save_path):
+            os.makedirs(crop_save_path)
 
         # Extract results
         detected_boxes = []
@@ -166,7 +171,8 @@ class Yolo:
             boxes = result.boxes.xyxy  # Get bounding boxes in xyxy format
             confidences = result.boxes.conf  # Get confidence scores
             classes = result.boxes.cls  # Get class labels
-            
+            id = 0
+
             for box, conf, cls in zip(boxes, confidences, classes):
                 x1, y1, x2, y2 = box.tolist()
 
@@ -201,8 +207,15 @@ class Yolo:
                         'class': int(cls)
                     })
 
+                    # Crop the detected region and save if crop_save_path is specified
+                    if crop_save_path:
+                        cropped_img = img[int(y1):int(y2), int(x1):int(x2)]
+                        crop_filename = f"{os.path.splitext(os.path.basename(image_path))[0]}_crop_{id}.jpg"
+                        cv2.imwrite(os.path.join(crop_save_path, crop_filename), cropped_img)
+                    id+=1
+
         if show:
-            self.draw_detection(detected_boxes, img, thresh=conf_thresh, format=format)
+            self.draw_detection(detected_boxes, img, thresh=conf_thresh, format=format,save_path=save_path)
 
         return detected_boxes
 
@@ -298,13 +311,22 @@ class Yolo:
 if __name__ == "__main__":
     # # initialize model
     # model_path = "ObjectDetection/Training/Results/hyper_tune/results0/models/model_0/weights/best.pt"
-    # model_path = "ObjectDetection/Training/Results/unused_model_sizes/results10/models/model_1/weights/best.pt"
-    yolo = Yolo(model_size="5mu")
-    # yolo = Yolo(model_path=model_path)
+    model_path = "ObjectDetection/Yolo/hpc.pt"
+    # yolo = Yolo(model_size="5mu")
+    yolo = Yolo(model_path=model_path)
 
     # test tuning
     # yolo.tune(batch = 8, dataset_path = "Data/Formated/test_dataset/dataset.yaml")
 
-
     # convert to pi
     # yolo.to_pi()
+
+    # detct image
+    image_path = "Data/ReportImages/test_0_undetected.jpg"
+    yolo.sgl_detect(image_path,show=False,save_path="Data/ReportImages/test_0_detected.jpg",conf_thresh=0.5)
+    image_path = "Data/ReportImages/test_1_undetected.jpg"
+    yolo.sgl_detect(image_path,show=False,save_path="Data/ReportImages/test_1_detected.jpg",conf_thresh=0.5)
+    image_path = "Data/ReportImages/test_2_undetected.jpg"
+    yolo.sgl_detect(image_path,show=False,save_path="Data/ReportImages/test_2_detected.jpg",conf_thresh=0.5)
+    image_path = "Data/ReportImages/test_3_undetected.jpg"
+    print(yolo.sgl_detect(image_path,show=False,save_path="Data/ReportImages/test_3_detected.jpg",conf_thresh=0.5, crop_save_path="Data/ReportImages"))
