@@ -70,7 +70,7 @@ class Camera:
         index = 0
 
         # save meta data
-        meta = {"fps" : samp_period}
+        meta = {"fps" : samp_period, "start_time" : start_time}
         with open(os.path.join(save_dir,"meta.json"), "w") as json_file:
             json.dump(meta, json_file, indent=4)
 
