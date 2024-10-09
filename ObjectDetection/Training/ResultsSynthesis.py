@@ -27,13 +27,14 @@ STD = {'batch': 32,
   'md_z2_trainval': 1000,
   'md_test_no': 0,
   'img_sz': 640,
-  'optimizer': 'SGD'}
+  'optimizer': 'SGD'
+  }
 
 UNMERGED_HYP_PATH = os.path.join("ObjectDetection", "Training", "Results", "hyper_tune")
 MERGED_HYP_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_hyp_results")
 PLOT_HYP_PATH = os.path.join(MERGED_HYP_PATH, "plots")
 
-UNMERGED_SZ_PATH = os.path.join("ObjectDetection", "Training", "Results", "model_sizes")
+UNMERGED_SZ_PATH = os.path.join("ObjectDetection", "Training", "Results", "grand")
 MERGED_SZ_PATH = os.path.join("ObjectDetection", "Training", "Results", "merged_sz_results")
 
 #### GENERIC FUNCTIONS #####
@@ -90,10 +91,12 @@ def merge_results(directory, save_dir):
     global_results.to_csv(os.path.join(save_dir, 'results.csv'), index=False)
     print(f"Data merged successfully! {global_model_id} models processed.")
 
-def filter_results(results_df, unfiltered_params = None, model = None, std=STD, filters = {'batch':True, 'lr':True, 'augment':True, 'freeze':True, 'pretrained':True, 'obs_no':True, 'md_z1_trainval':True, 'md_z2_trainval':True, 'md_test_no':True, 'optimizer':True, 'img_sz':True}):
+def filter_results(results_df, unfiltered_params = None, model = None, std=STD, model_size = None, filters = {'batch':True, 'lr':True, 'augment':True, 'freeze':True, 'pretrained':True, 'obs_no':True, 'md_z1_trainval':True, 'md_z2_trainval':True, 'md_test_no':True, 'optimizer':True, 'img_sz':True}):
 
     # filter for desired model
     if model: results_df = results_df[(results_df['model'].str.contains(str(model), na=False))]
+
+    if model_size: results_df = results_df[(results_df['model'].str[4:].str.contains(str(model_size), na=False))]
 
     # select filters
     if unfiltered_params:
@@ -196,19 +199,24 @@ def hyp_process():
 
 ##### MODEL SIZE FUNCTIONS #####
 
-def make_pi():
-    # save directory
-    save_dir = os.path.join(MERGED_SZ_PATH,"pi_models")
+def make_pi(df, save_dir = os.path.join(MERGED_SZ_PATH,"pi_models")):
     os.mkdir(save_dir)
 
-    # get all model_paths
-    model_paths = glob.glob(os.path.join(os.path.join(MERGED_SZ_PATH,"models"), "*.pt"))
+    # model directory
+    model_dir = os.path.join(MERGED_SZ_PATH,"models")
+
+    # filter df for non data manipulation
+    filtered_df = filter_results(df,['batch'])
+    model_paths = []
+    for idx, row in filtered_df.iterrows():
+        model_paths.append(os.path.join(model_dir,f"model_{row['id']}.pt"))
 
     for model_path in model_paths:
         yolo = Yolo(model_path=model_path)
         yolo.to_pi()
         os.remove(model_path[:-3] + ".torchscript")
         shutil.copytree(model_path[:-3] + "_ncnn_model", os.path.join(save_dir,os.path.basename(model_path)[:-3] + "_ncnn_model"))
+        shutil.rmtree(model_path[:-3] + "_ncnn_model")
 
 ##### MODEL SIZE PROCESSING #####
 
@@ -219,16 +227,16 @@ def size_process():
         shutil.rmtree(MERGED_SZ_PATH)
     os.mkdir(MERGED_SZ_PATH)
 
-
     # merge results
     merge_results(UNMERGED_SZ_PATH,MERGED_SZ_PATH)
 
     # convert the models to pi format
-    make_pi()
+    df = pd.read_csv(os.path.join(MERGED_SZ_PATH,"results.csv"))
+    make_pi(df)
 
     # run inference tester
     subprocess.run(["python", "ObjectDetection/Training/InferenceTester.py", "--pc"])
 
 if __name__ == "__main__":
-    hyp_process()
+    # hyp_process()
     size_process()

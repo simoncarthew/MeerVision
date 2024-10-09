@@ -5,6 +5,7 @@ import argparse
 import json
 import sys
 import glob
+from ResultsSynthesis import filter_results, STD
 
 # add relatove folders to system path
 sys.path.append(os.path.join("ObjectDetection","Yolo"))
@@ -33,6 +34,8 @@ elif args.pc: device = 'pc'
 
 # load the results csv 
 results_df = pd.read_csv(os.path.join(args.path, "results.csv"))
+results_df = filter_results(results_df,['batch'])
+print(results_df)
 
 # create empty df if it doesnt exist
 inferences_path = os.path.join(args.path,"inference_times.csv")
@@ -56,6 +59,7 @@ for idx, row in results_df.iterrows():
     # get the inference time
     print("Starting inference test")
     avg_inf = model.inference_time(TEST_IMAGES)
+    del model
     print("Inference test complete")
 
     pi_ncnn = 0

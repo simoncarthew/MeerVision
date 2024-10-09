@@ -161,7 +161,7 @@ class Mega:
         return results
 
 if __name__ == "__main__":
-    mega = Mega(version = "b", class_path="ObjectDetection/Megadetector/resnet_test.pth", class_name="resnet50")
+    mega = Mega(version = "b", class_path="ObjectDetection/Megadetector/classifier.pth", class_name="vgg16")
     # print(mega.sgl_detect(image_path="Data/Formated/yolo/images/test/At the meerkat burrow_47.jpg",show=True,classify=False,format="coco"))
     # jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
     # print(mega.inference_time("Data/Formated/yolo/images/test",classify=True))

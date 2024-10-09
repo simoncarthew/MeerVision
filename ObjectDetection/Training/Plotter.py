@@ -69,29 +69,30 @@ def plot_hyper_param_impacts(in_df, metric, save_path, parameters=['batch', 'lr'
     plt.close()
 
 #### PLOT HYPER PARAMETERS ####
+def plot_hyp_param():
+    # read in merged results
+    df = pd.read_csv(os.path.join(MERGED_HYP_PATH,"results.csv"))
 
-# read in merged results
-df = pd.read_csv(os.path.join(MERGED_HYP_PATH,"results.csv"))
+    # set the desired metrics
+    metrics = ['mAP50', 'f1']
+    models = ["5s", "8n"]
 
-# set the desired metrics
-metrics = ['mAP50', 'f1']
-models = ["5s", "8n"]
+    for model in models:
 
-for model in models:
+        # make the output folder
+        model_res_path = os.path.join(PLOT_HYP_PATH,"yolo_" + model)
 
-    # make the output folder
-    model_res_path = os.path.join(PLOT_HYP_PATH,"yolo_" + model)
+        # plot the hyper parameter results
+        for metric in metrics:
 
-    # plot the hyper parameter results
-    for metric in metrics:
-
-        # plot hyper parameter impacts
-        plot_hyper_param_impacts(df, metric, os.path.join(model_res_path, f"hyp_tune_{metric}.jpg"))
-
+            # plot hyper parameter impacts
+            plot_hyper_param_impacts(df, metric, os.path.join(model_res_path, f"hyp_tune_{metric}.jpg"))
 
 #### MODEL SZ FUNCTIONS ####
 
 def plot_model_size_accuracies(df, model_sizes = ['n', 's', 'm', 'l'], metrics = ['mAP50','f1'], save_path = os.path.join(PLOT_SZ_PATH,"model_size")):
+    df = filter_results(df,['batch'])
+
     for metric in metrics:
         # initialize model accuracies
         yolo5_acc = []
@@ -125,12 +126,13 @@ def plot_model_size_accuracies(df, model_sizes = ['n', 's', 'm', 'l'], metrics =
 
         # Add some text for labels, title and custom x-axis tick labels, etc.
         ax.set_ylabel(metric)
-        ax.set_title(f'Yolo 5 and 8 {metric} Across Model Sizes')
+        ax.set_title(f'Model Size vs {metric} Score')
         ax.set_xticks(x + width / 2, model_sizes)
         ax.legend(loc='upper left', ncols=2)
         ax.set_ylim(0, 100)  # Assuming accuracy is between 0 and 1
 
         plt.savefig(save_path + "_" + metric + ".png")
+        plt.close()
 
 def plot_inferences(df, save_path = os.path.join(PLOT_SZ_PATH,"inference_times")):
     models = ["8","5"]
@@ -182,36 +184,25 @@ def plot_inferences(df, save_path = os.path.join(PLOT_SZ_PATH,"inference_times")
         ax.set_xticklabels(model_sizes)
 
         ax.legend(loc='upper left', ncols=2)
-        ax.set_ylim(0, 1000)  # Set y-axis limits
+        ax.set_ylim(0, 5000)  # Set y-axis limits
 
         # Save the figure
         plt.savefig(save_path + "_" + model + ".png")
+        plt.close()
 
-def plot_6hour_process_time(df, save_path = os.path.join(PLOT_SZ_PATH,"process_time")):
+def plot_process_time(df, model_time = 'pi_ncnn', deployment_time = 6, max_fps = 3, save_path = os.path.join(PLOT_SZ_PATH,"process_time")):
     models = ["8","5"]
     model_sizes = ["n", "s", "m", "l"]
-
-
+    
     for model in models:
         filtered_df = filter_results(df,model=model)
-        pi_ncnn_times = []
-        fps = [[],[],[]]
 
-        for model_size in model_sizes:    
-            pi_ncnn = filtered_df[filtered_df['model'].str[5:].str.contains(str(model_size))]['pi_ncnn']
-            if len(pi_ncnn) > 0: 
-                for i in range(3):
-                    no_images = 6 * 60 * 60 * i
-                    fps[i].append(pi_ncnn.iloc[0] * no_images / 60 / 60)
-            else: 
-                for i in range(3):
-                    fps[i].append(0)
+        times = filtered_df[model_time].tolist()
+        no_images = deployment_time * 60 * 60
 
-        inference_times = {
-            '1': list([round(num, 3) for num in fps[0]]),
-            '2': list([round(num, 3) for num in fps[1]]),
-            '3': list([round(num, 3) for num in fps[2]])
-        }
+        inference_times = {}
+        for i in range(1,max_fps + 1):
+            inference_times[f"{i} FPS"] = [round(num * no_images * i / 60 / 60,3) for num in times]
 
         x = np.arange(len(model_sizes))  # the label locations
         width = 0.3 
@@ -221,25 +212,27 @@ def plot_6hour_process_time(df, save_path = os.path.join(PLOT_SZ_PATH,"process_t
 
         for idx, (attribute, measurement) in enumerate(inference_times.items()):
             offset = width * multiplier
-            rects = ax.bar(x + offset, measurement, width, label=attribute, color=COLOURS)
+            rects = ax.bar(x + offset, measurement, width, label=attribute, color=COLOURS[idx])
             ax.bar_label(rects, padding=3)
             multiplier += 1
 
         # Add labels, title, and customize x-axis tick labels
         ax.set_ylabel('Processing Time (Hours)')
         ax.set_xlabel('Model Sizes')
-        ax.set_title(f'YOLOv{model} Deployment Process Time vs Model Sizes')
+        ax.set_title(f'YOLOv{model} {deployment_time} Hour Deployment Process Time vs Model Sizes')
 
         # Correct x-tick positioning
         mid_bar_offset = width * (len(inference_times) - 1) / 2
         ax.set_xticks(x + mid_bar_offset)
         ax.set_xticklabels(model_sizes)
-        ax.set_ylim(0, 12)  # Set y-axis limits
+        ax.set_ylim(0, 24)  # Set y-axis limits
+        ax.legend()
 
         # Save the figure
         plt.savefig(save_path + "_" + model + ".png")
+        plt.close()
 
-def plot_run_times(df, save_path=os.path.join(PLOT_SZ_PATH, "run_times.png"), bar_width=0.4):
+def plot_run_times(df, save_path=os.path.join(PLOT_SZ_PATH, "run_times.png"), bar_width=0.4, max_discharge=0.7, max_capacity=10):
     # Ensure the save directory exists
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     
@@ -247,7 +240,7 @@ def plot_run_times(df, save_path=os.path.join(PLOT_SZ_PATH, "run_times.png"), ba
 
     fps = df["fps"]
     y_pos = np.arange(len(fps))
-    run_times = [round(num / 60 / 60, 3) for num in df["run_time"].tolist()]
+    run_times = [round(max_capacity * max_discharge / amps, 2) for amps in df["amps"].tolist()]
 
     # Create a horizontal bar chart with adjustable bar width
     ax.barh(y_pos, run_times, height=bar_width, align='center', color=COLOURS)
@@ -285,7 +278,7 @@ def plot_speed_up(df, save_path = os.path.join(PLOT_SZ_PATH,"speed_up")):
                 pi_ncnn_speed.append(0)
 
         # Create a line plot
-        plt.figure(figsize=(10, 6))  # Optional: Set the figure size
+        plt.figure(figsize=(8, 6))  # Optional: Set the figure size
         plt.plot(model_sizes, pi_speed, label='Pi', marker='o',color=COLOURS[0], linewidth=4)
         plt.plot(model_sizes, pi_ncnn_speed, label='PiNCNN', marker='o', color=COLOURS[1], linewidth=4)
 
@@ -296,6 +289,7 @@ def plot_speed_up(df, save_path = os.path.join(PLOT_SZ_PATH,"speed_up")):
         plt.legend()
 
         plt.savefig(save_path + "_" + model + ".png")
+        plt.close()
 
 def plot_trends(df, save_path = os.path.join(PLOT_SZ_PATH,"trend")):
     no_epochs = 39
@@ -331,23 +325,33 @@ def plot_trends(df, save_path = os.path.join(PLOT_SZ_PATH,"trend")):
         # Show the plot
         plt.savefig(save_path + f"_{row['model']}.png")
 
+def plot_obs_accuracy(df):
+    df = filter_results(df,['obs_no','md_z1_trainval', 'md_z2_trainval', 'optimizer'],model_size='n')
+    print(df)
+
 ##### MODEL SIZE PROCESSING #####
+def plot_model_size():
+    if os.path.exists(PLOT_SZ_PATH):
+        shutil.rmtree(PLOT_SZ_PATH)
+    os.mkdir(PLOT_SZ_PATH)
 
-if os.path.exists(PLOT_SZ_PATH):
-    shutil.rmtree(PLOT_SZ_PATH)
-os.mkdir(PLOT_SZ_PATH)
+    # plot model size vs accuracies
+    df = pd.read_csv(os.path.join(MERGED_SZ_PATH,"results.csv"))
+    plot_obs_accuracy(df)
+    exit()
+    plot_model_size_accuracies(df)
+    plot_trends(df)
 
-# plot model size vs accuracies
-df = pd.read_csv(os.path.join(MERGED_SZ_PATH,"results.csv"))
-plot_model_size_accuracies(df)
-plot_trends(df)
+    # plot inference times and speed up
+    df = pd.read_csv(os.path.join(MERGED_SZ_PATH,"inference_times.csv"))
+    plot_inferences(df)
+    plot_speed_up(df)
+    plot_process_time(df)
 
-# plot inference times and speed up
-df = pd.read_csv(os.path.join(MERGED_SZ_PATH,"inference_times.csv"))
-plot_inferences(df)
-plot_speed_up(df)
-plot_6hour_process_time(df)
+    # plot run times
+    df = pd.read_csv(os.path.join("Control/Results/power_consumption.csv"))
+    plot_run_times(df)
 
-# plot run times
-df = pd.read_csv(os.path.join("ObjectDetection/Training/Results","run_times.csv"))
-plot_run_times(df)
+if __name__== "__main__":
+    plot_hyp_param()
+    plot_model_size()

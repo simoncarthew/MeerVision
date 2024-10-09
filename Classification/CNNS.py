@@ -79,7 +79,6 @@ class CNNS:
 
         return model
 
-
     def load_prev_model(self, file_path):
         # get previous model information
         checkpoint = torch.load(file_path, map_location=self.device, weights_only=True)
@@ -91,7 +90,6 @@ class CNNS:
         model.load_state_dict(checkpoint['model_state_dict'])
         
         return model
-
 
     def train(self, train_loader, val_loader, epochs, learning_rate=0.01, test_loader = None, inference_path = None):
         # initialize results variables
