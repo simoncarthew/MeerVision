@@ -15,7 +15,7 @@ COLOURS=[x for i,x in enumerate(matplotlib.colormaps.get_cmap('Set3')(np.linspac
 
 #### HYPER PARAMETER PLOTTING
 
-def plot_hyper_param_impacts(in_df, metric, save_path, parameters=['batch', 'lr', 'freeze', 'optimizer'], title = None):
+def plot_hyper_param_impacts(in_df, metric, model, save_path, parameters=['batch', 'freeze', 'optimizer'], title = None):
     # create plot
     text_size = 15
     fig, ax = plt.subplots(figsize=(15, 8))
@@ -23,7 +23,7 @@ def plot_hyper_param_impacts(in_df, metric, save_path, parameters=['batch', 'lr'
     
     # initialize variables
     x_offset = 0
-    bar_width = 0.15
+    bar_width = 0.3
     colors = matplotlib.colormaps.get_cmap('Set3')(np.linspace(0, 1, 10))
     
     for i, param in enumerate(parameters):
@@ -49,13 +49,13 @@ def plot_hyper_param_impacts(in_df, metric, save_path, parameters=['batch', 'lr'
         
         # add parameter name in uppercase
         group_center = x_offset + (len(param_values) - 1) / 2
-        ax.text(group_center, -0.15, param.upper(), ha='center', va='top', fontsize=text_size + 3, fontweight='bold')
+        ax.text(group_center, -0.15, param.upper(), ha='center', va='top', fontsize=text_size + 3)
         
         x_offset += len(param_values) + 0.5
     
     # set the title and x labels
-    if title: ax.set_title(title, fontsize=text_size + 5, fontweight='bold')
-    ax.set_ylabel(metric.upper(), fontsize=text_size + 3, fontweight='bold')
+    if title: ax.set_title(title, fontsize=text_size + 5)
+    ax.set_ylabel(metric.upper(), fontsize=text_size + 3)
     ax.set_xticks([])
     
     # horizontal line for std metric value
@@ -64,6 +64,7 @@ def plot_hyper_param_impacts(in_df, metric, save_path, parameters=['batch', 'lr'
     # set y-axis tick label size
     ax.tick_params(axis='y', labelsize=text_size)
     
+    plt.title(f"Hyper Parameter Tuning YOLOv{model[0]} {metric.upper()}")
     plt.tight_layout()
     plt.savefig(save_path)
     plt.close()
@@ -86,7 +87,7 @@ def plot_hyp_param():
         for metric in metrics:
 
             # plot hyper parameter impacts
-            plot_hyper_param_impacts(df, metric, os.path.join(model_res_path, f"hyp_tune_{metric}.jpg"))
+            plot_hyper_param_impacts(df, metric, model, os.path.join(model_res_path, f"hyp_tune_{metric}.jpg"))
 
 #### MODEL SZ FUNCTIONS ####
 
@@ -142,23 +143,18 @@ def plot_inferences(df, save_path = os.path.join(PLOT_SZ_PATH,"inference_times")
         filtered_df = filter_results(df,model=model)
         pc_times = []
         pi_times = []
-        pi_ncnn_times = []
 
         for model_size in model_sizes:    
             pc = filtered_df[filtered_df['model'].str[5:].str.contains(str(model_size))]['pc']
             pi = filtered_df[filtered_df['model'].str[5:].str.contains(str(model_size))]['pi']
-            pi_ncnn = filtered_df[filtered_df['model'].str[5:].str.contains(str(model_size))]['pi_ncnn']
             if len(pc) > 0: pc_times.append(pc.iloc[0])
             else: pc_times.append(0)
             if len(pi) > 0: pi_times.append(pi.iloc[0])
             else: pi_times.append(0)
-            if len(pi_ncnn) > 0: pi_ncnn_times.append(pi_ncnn.iloc[0])
-            else: pi_ncnn_times.append(0)
 
         inference_times = {
             'PC': list([round(num * 1000, 0) for num in pc_times]),
             'Pi': list([round(num * 1000, 0) for num in pi_times]),
-            'PiNCNN': list([round(num * 1000, 0) for num in pi_ncnn_times])
         }
 
         x = np.arange(len(model_sizes))  # the label locations
@@ -184,13 +180,13 @@ def plot_inferences(df, save_path = os.path.join(PLOT_SZ_PATH,"inference_times")
         ax.set_xticklabels(model_sizes)
 
         ax.legend(loc='upper left', ncols=2)
-        ax.set_ylim(0, 5000)  # Set y-axis limits
+        ax.set_ylim(0, 12000)  # Set y-axis limits
 
         # Save the figure
         plt.savefig(save_path + "_" + model + ".png")
         plt.close()
 
-def plot_process_time(df, model_time = 'pi_ncnn', deployment_time = 6, max_fps = 3, save_path = os.path.join(PLOT_SZ_PATH,"process_time")):
+def plot_process_time(df, model_time = 'pi', deployment_time = 6, max_fps = 3, save_path = os.path.join(PLOT_SZ_PATH,"process_time")):
     models = ["8","5"]
     model_sizes = ["n", "s", "m", "l"]
     
@@ -225,7 +221,7 @@ def plot_process_time(df, model_time = 'pi_ncnn', deployment_time = 6, max_fps =
         mid_bar_offset = width * (len(inference_times) - 1) / 2
         ax.set_xticks(x + mid_bar_offset)
         ax.set_xticklabels(model_sizes)
-        ax.set_ylim(0, 24)  # Set y-axis limits
+        ax.set_ylim(0, 210)  # Set y-axis limits
         ax.legend()
 
         # Save the figure
@@ -261,35 +257,33 @@ def plot_speed_up(df, save_path = os.path.join(PLOT_SZ_PATH,"speed_up")):
     models = ["8","5"]
     model_sizes = ["n", "s", "m", "l"]
 
+    pi_speed = []
     for model in models:
         filtered_df = filter_results(df,model=model)
-        pi_speed = []
-        pi_ncnn_speed = []
+        speeds = []
 
         for model_size in model_sizes:    
             pc = filtered_df[filtered_df['model'].str[5:].str.contains(str(model_size))]['pc']
             pi = filtered_df[filtered_df['model'].str[5:].str.contains(str(model_size))]['pi']
-            pi_ncnn = filtered_df[filtered_df['model'].str[5:].str.contains(str(model_size))]['pi_ncnn']
             if len(pc) > 0: 
-                pi_speed.append(pi.iloc[0] / pc.iloc[0])
-                pi_ncnn_speed.append(pi_ncnn.iloc[0] / pc.iloc[0])
+                speeds.append(pc.iloc[0] / pi.iloc[0])
             else: 
-                pi_speed.append(0)
-                pi_ncnn_speed.append(0)
+                speeds.append(0)
+        pi_speed.append(speeds)
 
-        # Create a line plot
-        plt.figure(figsize=(8, 6))  # Optional: Set the figure size
-        plt.plot(model_sizes, pi_speed, label='Pi', marker='o',color=COLOURS[0], linewidth=4)
-        plt.plot(model_sizes, pi_ncnn_speed, label='PiNCNN', marker='o', color=COLOURS[1], linewidth=4)
+    # Create a line plot
+    plt.figure(figsize=(8, 6))  # Optional: Set the figure size
+    plt.plot(model_sizes, pi_speed[0], label='Yolo8', marker='o',color=COLOURS[0], linewidth=4)
+    plt.plot(model_sizes, pi_speed[1], label='Yolo5', marker='o',color=COLOURS[1], linewidth=4)
 
-        # Add labels and title
-        plt.xlabel('Model Names')
-        plt.ylabel('Speed-Up')
-        plt.title(f'Yolo {model} Pi and PiNCNN vs PC Speed Up')
-        plt.legend()
+    # Add labels and title
+    plt.xlabel('Model Names')
+    plt.ylabel('Speed-Up')
+    plt.title(f'Pi vs PC Speed Up')
+    plt.legend()
 
-        plt.savefig(save_path + "_" + model + ".png")
-        plt.close()
+    plt.savefig(save_path + ".png")
+    plt.close()
 
 def plot_trends(df, save_path = os.path.join(PLOT_SZ_PATH,"trend")):
     no_epochs = 39
@@ -325,9 +319,80 @@ def plot_trends(df, save_path = os.path.join(PLOT_SZ_PATH,"trend")):
         # Show the plot
         plt.savefig(save_path + f"_{row['model']}.png")
 
-def plot_obs_accuracy(df):
+def plot_obs_accuracy(df, save_path = os.path.join(PLOT_SZ_PATH,"obs_acc")):
     df = filter_results(df,['obs_no','md_z1_trainval', 'md_z2_trainval', 'optimizer'],model_size='n')
-    print(df)
+    df = df[(df['md_z1_trainval'] == 0) & (df['md_z2_trainval'] == 0)]
+    
+    obs_nos = df['obs_no'].unique().tolist()
+    metrics = ['mAP50', 'f1']
+    
+    for metric in metrics:
+        accuracies = {
+            'Yolo5': list([round(num * 100, 2) for num in filter_results(df,model='5')[metric]]),
+            'Yolo8': list([round(num * 100, 2) for num in filter_results(df,model='8')[metric]])
+        }
+
+        x = np.arange(len(obs_nos))
+        width = 0.3
+        multiplier = 0
+
+        fig, ax = plt.subplots(layout='constrained')
+
+        for idx, (attribute, measurement) in enumerate(accuracies.items()):
+            offset = width * multiplier
+            rects = ax.bar(x + offset, measurement, width, label=attribute, color=COLOURS[idx])
+            ax.bar_label(rects, padding=3)
+            multiplier += 1
+
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_ylabel(metric)
+        ax.set_xlabel("Number of Observed Images in Training Data")
+        ax.set_title(f'Model Size vs {metric} Score')
+        ax.set_xticks(x + width / 2, obs_nos)
+        ax.legend(loc='upper left', ncols=2)
+        ax.set_ylim(0, 100)  # Assuming accuracy is between 0 and 1
+
+        plt.savefig(save_path + f"_{metric}.png")
+        plt.close()
+
+def plot_md_accuracy(df, save_path = os.path.join(PLOT_SZ_PATH,"md_acc")):
+    df = filter_results(df,['md_z1_trainval', 'md_z2_trainval', 'optimizer'],model_size='n')
+    df = df[(df['md_z1_trainval'] != 0) & (df['md_z2_trainval'] != 0)]
+    
+    md_nos = df['md_z1_trainval'].unique().tolist()
+    md_nos.sort()
+    metrics = ['mAP50', 'f1']
+    
+    for metric in metrics:
+        models = ['Yolo5','Yolo8']
+        accuracies = {'Yolo5':[],'Yolo8':[]}
+        for model in models:
+            filtered_df = filter_results(df,model=model[4])
+            for md_no in md_nos:
+                accuracies[model].append(round(filtered_df[(filtered_df['md_z1_trainval'] == md_no) & (filtered_df['md_z2_trainval'] == md_no)][metric].tolist()[0]*100,2))
+
+        x = np.arange(len(md_nos))
+        width = 0.3
+        multiplier = 0
+
+        fig, ax = plt.subplots(layout='constrained')
+
+        for idx, (attribute, measurement) in enumerate(accuracies.items()):
+            offset = width * multiplier
+            rects = ax.bar(x + offset, measurement, width, label=attribute, color=COLOURS[idx])
+            ax.bar_label(rects, padding=3)
+            multiplier += 1
+
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_ylabel(metric)
+        ax.set_xlabel("Number of New Zealand Images in Training Data")
+        ax.set_title(f'Model Size vs {metric} Score')
+        ax.set_xticks(x + width / 2, md_nos)
+        ax.legend(loc='upper left', ncols=2)
+        ax.set_ylim(0, 100) 
+
+        plt.savefig(save_path + f"_{metric}.png")
+        plt.close()
 
 ##### MODEL SIZE PROCESSING #####
 def plot_model_size():
@@ -338,6 +403,7 @@ def plot_model_size():
     # plot model size vs accuracies
     df = pd.read_csv(os.path.join(MERGED_SZ_PATH,"results.csv"))
     plot_obs_accuracy(df)
+    plot_md_accuracy(df)
     exit()
     plot_model_size_accuracies(df)
     plot_trends(df)

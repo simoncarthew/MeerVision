@@ -10,7 +10,7 @@ paths:
   yolo_path: 'ObjectDetection/Yolo'
 
 parameters:
-  batch: 32
+  batch: 64
   lr: 0.01
   augment: True
   percval: 0.2
@@ -22,4 +22,4 @@ parameters:
   md_z2_trainval: 1000
   md_test_no: 0
   img_sz: 640
-  optimizer: 'Adam'
+  optimizer: 'SGD'
