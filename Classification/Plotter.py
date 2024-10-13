@@ -10,46 +10,44 @@ PLOT_DIR = os.path.join(BINARY_RESULTS_DIR, "plots")
 
 results_df = pd.read_csv(os.path.join(BINARY_RESULTS_DIR, "results.csv"))
 COLOURS=[x for i,x in enumerate(matplotlib.colormaps.get_cmap('Set3')(np.linspace(0, 1, 10))) if i!=1]
+FIGSIZE = (8,6)
+TITLESIZE = 15
+AXISSIZE = 12
+TICKSIZE = 10
+BARWIDTH = 0.3
 
 def plot_model_accuracy(df, save_path = os.path.join(PLOT_DIR, "class_test_accuracies.png"), colours=COLOURS):
-    model_names = df['model_name'].unique().tolist()
-    pretrained = [] 
-    no_pretrained = []
+    
+    # Filter df for pretrained models
+    df = df[df['pretrained'] == True]
+    
+    # Sort the DataFrame by 'inference' in ascending order
+    df = df.sort_values(by='test_acc', ascending=True)
 
-    for model_name in model_names:
-        filtered_df = df[df['model_name'] == model_name]
-        pretrained.append(filtered_df[filtered_df['pretrained'] == True]['test_acc'].iloc[0])
-        no_pretrained.append(filtered_df[filtered_df['pretrained'] == False]['test_acc'].iloc[0])
+    # Get values after sorting
+    models = df['model_name'].tolist()
+    inference = [num for num in df['test_acc'].tolist()]
+    
+    fig, ax = plt.subplots(figsize=FIGSIZE)
 
-    sorted_pairs = sorted(zip(model_names, pretrained, no_pretrained), key=lambda x: x[1])
+    # Create a bar plot with sorted values and save the bar container
+    bars = ax.bar(models, inference, color=COLOURS[:len(inference)], width=BARWIDTH)
 
-    model_names, pretrained, no_pretrained = zip(*sorted_pairs)
+    # Add bar labels using `ax.bar_label`
+    ax.bar_label(bars, labels=[f"{val:.0f}" for val in inference], fontsize=TICKSIZE, padding=3)
 
-    test_accuracies = {
-        'Pretrained Weights': list(pretrained),
-        'Random Weights': list(no_pretrained)
-    }
+    # Set labels and title
+    ax.set_ylabel('Test Accuracy (%)', fontsize=AXISSIZE)
+    plt.xlabel("Model Architecture", fontsize=AXISSIZE)
+    ax.set_title('Test Accuracies Across Model Architectures', fontsize=TITLESIZE)
+    
+    # Rotate x labels for better visibility
+    plt.xticks(ha='right')  
+    plt.tight_layout()
 
-    x = np.arange(len(model_names))
-    width = 0.25 
-    multiplier = 0
-
-    fig, ax = plt.subplots(layout='constrained')
-
-    for idx, (attribute, measurement) in enumerate(test_accuracies.items()):
-        offset = width * multiplier
-        rects = ax.bar(x + offset, measurement, width, label=attribute, color=colours[idx])
-        ax.bar_label(rects, padding=3)
-        multiplier += 1
-
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Test Accuracy (%)')
-    ax.set_title('Test Accuracies of Pretrained and Random Weighst Across Models')
-    ax.set_xticks(x + width / 2, model_names)
-    ax.legend(loc='upper left', ncols=2)
-    ax.set_ylim(0, 100)  # Assuming accuracy is between 0 and 1
-
+    # Save and close the plot
     plt.savefig(save_path)
+    plt.close(fig) 
 
 def plot_inference_times(df, save_path=os.path.join(PLOT_DIR, "class_inference_times.png")):
     # Filter df for pretrained models
@@ -60,20 +58,28 @@ def plot_inference_times(df, save_path=os.path.join(PLOT_DIR, "class_inference_t
 
     # Get values after sorting
     models = df['model_name'].tolist()
-    inference = df['inference'].tolist()
+    inference = [num * 1000 for num in df['inference'].tolist()]
     
-    fig = plt.figure(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=FIGSIZE)
 
-    # Creating the bar plot with sorted values
-    plt.bar(models, inference, color=COLOURS[:len(inference)], width=0.3)
+    # Create a bar plot with sorted values and save the bar container
+    bars = ax.bar(models, inference, color=COLOURS[:len(inference)], width=BARWIDTH)
 
-    plt.xlabel("Model")
-    plt.ylabel("Inference Time")
-    plt.title("Model Architecture Inference Times")
-    plt.xticks(rotation=45, ha='right')  # Rotate x labels for better visibility
-    plt.tight_layout()  # Adjust layout to fit labels
+    # Add bar labels using `ax.bar_label`
+    ax.bar_label(bars, labels=[f"{val:.2f}" for val in inference], fontsize=TICKSIZE, padding=3)
+
+    # Set labels and title
+    ax.set_xlabel("Model Architecture", fontsize=AXISSIZE)
+    ax.set_ylabel("Inference Time (ms)", fontsize=AXISSIZE)
+    ax.set_title("Model Architecture Inference Times", fontsize=TITLESIZE)
+    
+    # Rotate x labels for better visibility
+    plt.xticks(ha='right')  
+    plt.tight_layout()
+
+    # Save and close the plot
     plt.savefig(save_path)
-    plt.close(fig)  # Close the figure to free up memo
+    plt.close(fig) 
 
 if os.path.exists(PLOT_DIR):
     shutil.rmtree(PLOT_DIR)

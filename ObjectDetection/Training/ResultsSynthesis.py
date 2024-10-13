@@ -78,16 +78,26 @@ def merge_results(directory, save_dir):
                         trend_df = pd.read_csv(results_csv_path)
                         trend_df.columns = trend_df.columns.str.strip()
                         trend_df = trend_df.drop_duplicates()
+
+                        # get validation results
+                        val_prec = max(trend_df['metrics/precision(B)'].tolist())
+                        val_recall = max(trend_df['metrics/recall(B)'].tolist())
+                        val_map50 = max(trend_df['metrics/mAP50(B)'].tolist())
+
                         trend_df.to_csv(os.path.join(trends_dir, f'results_{global_model_id}.csv'), index=False)
 
                     # update the row id and add to global df
                     row['id'] = global_model_id
+                    row['val_prec'] = val_prec
+                    row['val_recall'] = val_recall
+                    row['val_map50'] = val_map50
                     global_results = pd.concat([global_results, pd.DataFrame([row])])
 
                     # increment global id
                     global_model_id += 1
 
     # save global results
+    print(global_results)
     global_results.to_csv(os.path.join(save_dir, 'results.csv'), index=False)
     print(f"Data merged successfully! {global_model_id} models processed.")
 
@@ -232,10 +242,10 @@ def size_process():
 
     # convert the models to pi format
     df = pd.read_csv(os.path.join(MERGED_SZ_PATH,"results.csv"))
-    make_pi(df)
+    # make_pi(df)
 
     # run inference tester
-    subprocess.run(["python", "ObjectDetection/Training/InferenceTester.py", "--pc"])
+    # subprocess.run(["python", "ObjectDetection/Training/InferenceTester.py", "--pc"])
 
 if __name__ == "__main__":
     # hyp_process()

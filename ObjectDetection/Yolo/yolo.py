@@ -147,7 +147,7 @@ class Yolo:
             inf_times.append(end_time - start_time)
 
         # calculate averages
-        avg_inf = sum(inf_times)/len(inf_times)
+        avg_inf = sum(inf_times[1:])/len(inf_times[1:])
 
         return avg_inf
 
@@ -312,7 +312,7 @@ if __name__ == "__main__":
     # # initialize model
     # model_path = "ObjectDetection/Training/Results/hyper_tune/results0/models/model_0/weights/best.pt"
     # model_path = "ObjectDetection/Yolo/hpc.pt"
-    model_path = "ObjectDetection/Training/Results/grand/results14/models/model_2/weights/best.pt"
+    model_path = "ObjectDetection/Training/Results/merged_sz_results/models/model_12.pt"
     # yolo = Yolo(model_size="5nu")
     yolo = Yolo(model_path=model_path)
     
@@ -335,7 +335,15 @@ if __name__ == "__main__":
     # image_path = "Data/ReportImages/test_3_undetected.jpg"
     # print(yolo.sgl_detect(image_path,show=False,save_path="Data/ReportImages/test_3_detected.jpg",conf_thresh=0.5, crop_save_path="Data/ReportImages"))
 
+    image_path = "Data/ReportImages/MedLight/2024_10_12_12_0_51.jpg"
+    yolo.sgl_detect(image_path,show=True,save_path=None)
+
     # test video
     video_path = "Data/YoutubeCameraTrap/istockphoto-1990464825-640_adpp_is.mp4"
-    video_path = "Data/YoutubeCameraTrap/At the meerkat burrow.mp4"
-    yolo.process_video(video_path,thresh=0.2)
+    # video_path = "Data/YoutubeCameraTrap/At the meerkat burrow.mp4"
+    # video_path = "Data/YoutubeCameraTrap/istockphoto-892591066-640_adpp_is.mp4"
+    # video_path = "Data/YoutubeCameraTrap/istockphoto-2062853095-640_adpp_is.mp4"
+    # yolo.process_video(video_path,thresh=0.5)
+
+    # evaluating
+    # print(yolo.native_evaluate())
