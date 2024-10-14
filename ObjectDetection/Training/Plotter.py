@@ -243,33 +243,30 @@ def plot_process_time(df, deployment_time = 6, max_fps = 3, save_path = os.path.
             plt.savefig(save_path + "_" + model + "_" + model_time + ".png")
             plt.close()
 
-def plot_run_times(df, save_path=os.path.join(PLOT_SZ_PATH, "run_times.png"), max_discharge=0.7, max_capacity=10):
+def plot_run_times(df, save_path=os.path.join(PLOT_SZ_PATH, "run_times.png"), max_discharge=0.6, max_capacity=10):
     # Ensure the save directory exists
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     
-    fig, ax = plt.subplots(figsize=FIGSIZE)
+    fig, ax = plt.subplots(figsize=(10,4))
 
     fps = df["fps"]
-    y_pos = np.arange(len(fps))
     run_times = [round(max_capacity * max_discharge / amps, 2) for amps in df["amps"].tolist()]
 
-    # Create a horizontal bar chart with adjustable bar width
-    bars = ax.barh(y_pos, run_times, height=BARWIDTH, align='center', color=COLOURS)
-    ax.bar_label(bars, labels=run_times, fontsize=TICKSIZE)
-    
-    # Set y-ticks and labels
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels(fps)
-    ax.invert_yaxis()
-    ax.set_xlabel('Run Time (hours)', fontsize=AXISSIZE)
-    ax.set_ylabel('FPS', fontsize=AXISSIZE)
-    ax.set_title('FPS vs Run Time', fontsize=TITLESIZE)
-    ax.set_xlim([0,25])
+    # Create a line graph
+    ax.plot(fps, run_times, marker='o', color=COLOURS[1], label="Deployment Time", linewidth=3)
+
+    # Set axis labels and title
+    ax.set_xlabel('FPS', fontsize=AXISSIZE)
+    ax.set_ylabel('Deployment Time (Hours)', fontsize=AXISSIZE)
+    ax.set_title('FPS vs Deployment Time', fontsize=TITLESIZE)
+
+    # Add grid and customize ticks
+    ax.tick_params(axis='both', which='major', labelsize=TICKSIZE)
 
     # Save the plot
     plt.tight_layout()
     plt.savefig(save_path)
-    plt.close(fig)  
+    plt.close(fig)
 
 def plot_speed_up(df, save_path = os.path.join(PLOT_SZ_PATH,"speed_up")):
     models = ["8","5"]
