@@ -5,13 +5,13 @@ import cv2
 DIR = os.path.join("Data", "YoutubeCameraTrap")
 
 # List of video files (without extension)
-VIDEOS = ["istockphoto-1990464825-640_adpp_is"]
+VIDEOS = ["istockphoto-892591066-640_adpp_is"]
 
 # Specify the sampling rate (frames per second)
 SAMPLING_RATE = 1  # 2 frames per second
 
 # Directory to save the sampled images
-SAVE_DIR = "Data/DeploymentTest"
+SAVE_DIR = "Control/Images/Deployments/2024_10_7_19_27_53"
 os.makedirs(SAVE_DIR, exist_ok=True)  # Create the save directory if it doesn't exist
 
 # Iterate over all video files

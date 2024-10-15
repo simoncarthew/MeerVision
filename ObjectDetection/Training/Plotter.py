@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
+import matplotlib.gridspec as gridspec
 import shutil
 import json
 import glob
@@ -308,28 +309,45 @@ def plot_trends(df, save_path = os.path.join(PLOT_SZ_PATH,"trend")):
     for idx, row in df.iterrows():
         trends = pd.read_csv(os.path.join(MERGED_SZ_PATH,"trends","results_" + str(row['id']) + '.csv'))
 
-        # Create a figure and two subplots
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=FIGSIZE, sharex=True)
+        # Create a figure and use GridSpec to allocate 70% and 30% space to the two plots
+        fig = plt.figure(figsize=FIGSIZE)
+        gs = gridspec.GridSpec(2, 1, height_ratios=[7, 3])  # 70% for the top plot, 30% for the bottom plot
+
+        ax1 = fig.add_subplot(gs[0])  # Top plot (70%)
+        ax2 = fig.add_subplot(gs[1], sharex=ax1)  # Bottom plot (30%)
 
         # plot the validation acccuracy
         try:
             map_50 = trends['metrics/mAP50(B)'].tolist()[:no_epochs]
+            precision = trends['metrics/precision(B)'].tolist()[:no_epochs]
+            recall = trends['metrics/recall(B)'].tolist()[:no_epochs]
         except:
             map_50 = trends['metrics/mAP_0.5'].tolist()[:no_epochs]
-        ax1.plot(trends['epoch'].tolist()[:no_epochs], map_50, color=COLOURS[0], label='val mAP50', linewidth=3)
-        ax1.set_ylabel('mAP50', fontsize=AXISSIZE)
+            precision = trends['metrics/precision(B)'].tolist()[:no_epochs]
+            recall = trends['metrics/recall(B)'].tolist()[:no_epochs]
+        ax1.plot(trends['epoch'].tolist()[:no_epochs], map_50, color=COLOURS[0], label='Val mAP50', linewidth=3)
+        ax1.plot(trends['epoch'].tolist()[:no_epochs], precision, color=COLOURS[1], label='Val Precision', linewidth=3)
+        ax1.plot(trends['epoch'].tolist()[:no_epochs], recall, color=COLOURS[2], label='Val Recall', linewidth=3)
+        # Move the text to the top-right corner
+        ax1.text(0.5, 0.1, f'Best Validation Scores:\n mAP50: {max(map_50):.2f}, Precision: {max(precision):.2f}, Recall: {max(recall):.2f}', 
+         horizontalalignment='center', verticalalignment='center', 
+         bbox=dict(facecolor='white', alpha=0.5), transform=ax1.transAxes, fontsize=TICKSIZE)
+
+        ax1.set_ylabel('Score', fontsize=AXISSIZE)
         ax1.set_xlabel('Epochs', fontsize=AXISSIZE)
+        ax1.set_ylim((0,1))
         ax1.legend()
 
         # Plot the second line graph on the bottom axis
-        ax2.plot(trends['epoch'].tolist()[:no_epochs], trends['train/box_loss'].tolist()[:no_epochs], color=COLOURS[1], label='train loss', linewidth=3)
-        ax2.plot(trends['epoch'].tolist()[:no_epochs], trends['val/box_loss'].tolist()[:no_epochs], color=COLOURS[2], label='val loss', linewidth=3)
+        ax2.plot(trends['epoch'].tolist()[:no_epochs], trends['train/box_loss'].tolist()[:no_epochs], color=COLOURS[3], label='train loss', linewidth=3)
+        ax2.plot(trends['epoch'].tolist()[:no_epochs], trends['val/box_loss'].tolist()[:no_epochs], color=COLOURS[4], label='val loss', linewidth=3)
         ax2.set_xlabel('Epochs', fontsize=AXISSIZE)
         ax2.set_ylabel('Box Loss', fontsize=AXISSIZE)
+        ax2.set_ylim((0.5,2.8))
         ax2.legend()
 
         model_name = f"YOLOv{row['model'][4:6]}"
-        fig.suptitle(f"Training Trends for {model_name}", fontsize=TITLESIZE)
+        fig.suptitle(f"Validation and Loss Trends for {model_name}", fontsize=TITLESIZE)
 
         plt.tight_layout()
         plt.savefig(save_path + f"_{row['model']}.png")

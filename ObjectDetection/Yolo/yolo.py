@@ -8,6 +8,7 @@ import sys
 import math
 from tqdm import tqdm
 from ultralytics import YOLO
+import matplotlib.pyplot as plt
 
 # IMPORT EVAL
 eval_path = os.path.join("ObjectDetection")
@@ -214,8 +215,8 @@ class Yolo:
                         cv2.imwrite(os.path.join(crop_save_path, crop_filename), cropped_img)
                     id+=1
 
-        if show:
-            self.draw_detection(detected_boxes, img, thresh=conf_thresh, format=format,save_path=save_path)
+        if save_path:
+            self.draw_detection(detected_boxes, img, thresh=conf_thresh, format=format,save_path=save_path, show=show)
 
         return detected_boxes
 
@@ -308,13 +309,36 @@ class Yolo:
 
         return coco_format
 
+    def look_at_layers(self):
+
+        # Access the model's convolutional layers
+        # Depending on the model architecture, we may need to navigate to the backbone
+        conv_layers = [layer for layer in self.model.modules() if isinstance(layer, torch.nn.Conv2d)]
+
+        if not conv_layers:
+            raise ValueError("No convolutional layers found in the model.")
+        
+        # Visualize kernels of the first convolutional layer
+        kernels = conv_layers[0].weight.data.cpu()  # Get the weights of the first conv layer
+
+        # Plot the kernels
+        num_kernels = kernels.shape[0]
+        plt.figure(figsize=(12, 12))
+        for i in range(num_kernels):
+            plt.subplot(8, 8, i + 1)
+            plt.imshow(kernels[i].squeeze(), cmap='gray')
+            plt.axis('off')
+
+        plt.show()
+
 if __name__ == "__main__":
     # # initialize model
     # model_path = "ObjectDetection/Training/Results/hyper_tune/results0/models/model_0/weights/best.pt"
     # model_path = "ObjectDetection/Yolo/hpc.pt"
-    model_path = "ObjectDetection/Training/Results/merged_sz_results/models/model_12.pt"
+    model_path = "ObjectDetection/Training/Results/merged_sz_results/models/model_16.pt"
     # yolo = Yolo(model_size="5nu")
     yolo = Yolo(model_path=model_path)
+    # yolo.look_at_layers()
     
     # training
     # yolo.train(batch = 4)
@@ -335,15 +359,16 @@ if __name__ == "__main__":
     # image_path = "Data/ReportImages/test_3_undetected.jpg"
     # print(yolo.sgl_detect(image_path,show=False,save_path="Data/ReportImages/test_3_detected.jpg",conf_thresh=0.5, crop_save_path="Data/ReportImages"))
 
-    image_path = "Data/ReportImages/MedLight/2024_10_12_12_0_51.jpg"
-    yolo.sgl_detect(image_path,show=True,save_path=None)
+    # image_path = "Data/ReportImages/MedLight/2024_10_12_12_0_51.jpg"
+    # yolo.sgl_detect(image_path,show=True,save_path=None)
 
     # test video
-    video_path = "Data/YoutubeCameraTrap/istockphoto-1990464825-640_adpp_is.mp4"
+    # video_path = "Data/YoutubeCameraTrap/istockphoto-1990464825-640_adpp_is.mp4"
     # video_path = "Data/YoutubeCameraTrap/At the meerkat burrow.mp4"
     # video_path = "Data/YoutubeCameraTrap/istockphoto-892591066-640_adpp_is.mp4"
     # video_path = "Data/YoutubeCameraTrap/istockphoto-2062853095-640_adpp_is.mp4"
-    # yolo.process_video(video_path,thresh=0.5)
+    video_path = "Data/Staceys/VID20230113185107.mp4"
+    yolo.process_video(video_path,thresh=0.4)
 
     # evaluating
     # print(yolo.native_evaluate())

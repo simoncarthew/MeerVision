@@ -18,8 +18,21 @@
                 "source": false
               }
             }
+          },
+          {
+            "id": "3543583e64c82654",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "THINGS I STILL NEED TO DO.md",
+                "mode": "source",
+                "source": false
+              }
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -85,7 +98,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "REPORT STRUCTURE.md",
+                "file": "THINGS I STILL NEED TO DO.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +115,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "REPORT STRUCTURE.md",
+                "file": "THINGS I STILL NEED TO DO.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +138,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "REPORT STRUCTURE.md"
+                "file": "THINGS I STILL NEED TO DO.md"
               }
             }
           }
@@ -146,22 +159,24 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "6c5cdaa91299cb06",
+  "active": "3543583e64c82654",
   "lastOpenFiles": [
+    "OBJECTIVES.md",
     "PROBLEM STATEMENT.md",
+    "PROPOSED SOLUTION.md",
+    "REPORT STRUCTURE.md",
+    "REQUIREMENTS AND SPECIFICATIONS.md",
+    "SUBSYSTEMS.md",
+    "TECHNICAL PLANNING BRAINSTORMING.md",
+    "THINGS I STILL NEED TO DO.md",
     "LITERATURE SUMMARIES QOTES.md",
     "MAKING SENSE OF WHERE I AM AT.md",
     "MEETING NOTES.md",
     "LITERATURE REVIEW.md",
     "HARDWARE AQUIRING.md",
-    "REQUIREMENTS AND SPECIFICATIONS.md",
-    "REPORT STRUCTURE.md",
-    "PROPOSED SOLUTION.md",
-    "OBJECTIVES.md",
     "LITERATURE SUMMARIES.md",
     "DOODLING.md",
     "DESIGN CHOICES.md",
-    "SUBSYSTEMS.md",
     "Images/Trainer.pdf",
     "Images/IMG_0496.jpg",
     "Images/IMG_0495.jpg",
@@ -175,7 +190,6 @@
     "Images/drive-download-20240922T084836Z-001/IMG_0496.jpg",
     "Images/drive-download-20240922T084836Z-001/IMG_0495.jpg",
     "Images/drive-download-20240922T084836Z-001",
-    "Images/drive-download-20240922T084836Z-001.zip",
-    "TECHNICAL PLANNING BRAINSTORMING.md"
+    "Images/drive-download-20240922T084836Z-001.zip"
   ]
 }
