@@ -6,11 +6,13 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 MAN_COUNT_PATH = os.path.join("Control", "Results", "manual_detections")
-DEP_PATH = os.path.join("Control", "Images", "Deployments", "2024_10_7_19_27_53")
-PROC_PATH = os.path.join("Control", "Processed", "2024_10_7_19_27_53")
+DEP_PATH = os.path.join("Control", "Images", "Deployments", "2024_10_17_15_52_50")
+PROC_PATH = os.path.join("Control", "Processed", "2024_10_17_15_52_50")
+# DEP_PATH = os.path.join("Control", "Images", "Deployments", "2024_10_17_16_12_24")
+# PROC_PATH = os.path.join("Control", "Processed", "2024_10_17_16_12_24")
 RES_PATH = os.path.join("Control", "Results")
 
-FIGSIZE = (10,6)
+FIGSIZE = (8,6)
 TITLESIZE = 15
 AXISSIZE = 12
 TICKSIZE = 10
@@ -37,9 +39,9 @@ def delte_images(folder_path):
         # Wait for user input
         key = cv2.waitKey(0)
 
-        if key == 13:  # Enter key (Keep the image)
+        if key == ord('a'):  # Enter key (Keep the image)
             print(f"Keeping: {file_name}")
-        elif key == 127:  # Delete key (Delete the image)
+        elif key == ord('d'):  # Delete key (Delete the image)
             print(f"Deleting: {file_name}")
             os.remove(image_path)
 
@@ -110,7 +112,7 @@ def plot_with_mse(manual_path, proc_path, save_path):
     mse = compute_mse(merged_df['no_detections'].values, merged_df['actual_no_detections'].values)
 
     # Plot both lines
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=FIGSIZE)
     plt.plot(merged_df["time"], merged_df['no_detections'].values, label="Predicted Count", color=COLOURS[0])
     plt.plot(merged_df["time"], merged_df['actual_no_detections'].values, label="Actual Count", color=COLOURS[1])
     
@@ -121,19 +123,53 @@ def plot_with_mse(manual_path, proc_path, save_path):
     # Add labels and legend
     plt.xlabel('Time', fontsize=AXISSIZE)
     plt.ylabel('Number of Meerkats', fontsize=AXISSIZE)
-    plt.xticks(rotation=45, fontsize=TICKSIZE)
+    plt.xticks(visible=False)
     plt.ylim((0,max(max(merged_df['no_detections'].values), max(merged_df['actual_no_detections'].values)) +1))
     plt.title("Meerkat Count vs Time", fontsize=TITLESIZE)
     plt.legend()
     
     # Display the plot
+    plt.tight_layout()
+    plt.savefig(save_path)
+    plt.close()
+
+    return mse
+
+def plot_mse_vs_size(sizes, mses, save_path=os.path.join(RES_PATH, "mse_vs_size.png")):
+    sizes = [size[0] for size in sizes]
+
+    # Set the figure size before plotting
+    plt.figure(figsize=FIGSIZE)
+    
+    # Create a bar chart
+    bars = plt.bar(sizes, mses, color=COLOURS, width=BARWIDTH)
+
+    # Add title and labels
+    plt.title('MSE Across Model Sizes', fontsize=TITLESIZE)
+    plt.xlabel('Model Size', fontsize=AXISSIZE)
+    plt.ylabel('MSE', fontsize=AXISSIZE)
+
+    # Add value labels on top of the bars
+    for bar, mse in zip(bars, mses):
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width() / 2, height, f'{mse:.2f}', 
+                 ha='center', va='bottom', fontsize=AXISSIZE)
+
+    # Save the plot
+    plt.tight_layout()
     plt.savefig(save_path)
 
 # delete images with simon
-# delete_images(DEP_PATH)
+# delte_images(DEP_PATH)
 
 # count objects in image
-# count_objects_in_images(DEP_PATH, os.path.join(RES_PATH,"manual_counts.csv"))
+# count_objects_in_images(DEP_PATH, os.path.join(DEP_PATH,"manual_counts.csv"))
 
 # plot with mse
-plot_with_mse(os.path.join(RES_PATH,"manual_counts.csv"), os.path.join(PROC_PATH,"meerkats_vs_time.csv"),save_path=os.path.join(RES_PATH,"res_path.png"))
+sizes = ["n","su","mu", "lu"]
+mses = []
+for size in sizes:
+    proc_path = PROC_PATH + "_" + size
+    mses.append(plot_with_mse(os.path.join(DEP_PATH,"manual_counts.csv"), os.path.join(proc_path,"meerkats_vs_time.csv"),save_path=os.path.join(RES_PATH,f"res_path_{size}.png")))
+print(mses)
+plot_mse_vs_size(sizes,mses)

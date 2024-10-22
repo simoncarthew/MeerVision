@@ -166,7 +166,8 @@ if __name__ == "__main__":
     # jpg_files = glob.glob(os.path.join("Data/Formated/yolo/images/test", '*.jpg'))
     # print(mega.inference_time("Data/Formated/yolo/images/test",classify=True))
     # print(mega.evaluate(yolo_path="Data/Formated/yolo",classify=True))
-    mega.yolo.detect_video("Data/YoutubeCameraTrap/At the meerkat burrow.mp4")
+    video_path = "Data/Staceys/VID20230115055421.mp4"
+    mega.yolo.detect_video(video_path)
     # for file in jpg_files:
     #     print(mega.sgl_detect(image_path=file, show=True,classify=False))
     # coco_detections = mega.test_detect(yolo_path="Data/Formated/yolo",classify=False)

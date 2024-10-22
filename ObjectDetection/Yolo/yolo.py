@@ -359,16 +359,21 @@ if __name__ == "__main__":
     # image_path = "Data/ReportImages/test_3_undetected.jpg"
     # print(yolo.sgl_detect(image_path,show=False,save_path="Data/ReportImages/test_3_detected.jpg",conf_thresh=0.5, crop_save_path="Data/ReportImages"))
 
-    # image_path = "Data/ReportImages/MedLight/2024_10_12_12_0_51.jpg"
-    # yolo.sgl_detect(image_path,show=True,save_path=None)
+    # image_path = "Control/Images/SingleCapture/2024_10_17_15_41_24.jpg"
+    # yolo.sgl_detect(image_path,show=True,save_path='test.jpg')
 
     # test video
     # video_path = "Data/YoutubeCameraTrap/istockphoto-1990464825-640_adpp_is.mp4"
     # video_path = "Data/YoutubeCameraTrap/At the meerkat burrow.mp4"
     # video_path = "Data/YoutubeCameraTrap/istockphoto-892591066-640_adpp_is.mp4"
     # video_path = "Data/YoutubeCameraTrap/istockphoto-2062853095-640_adpp_is.mp4"
-    video_path = "Data/Staceys/VID20230113185107.mp4"
-    yolo.process_video(video_path,thresh=0.4)
+    video_path = "Data/YoutubeCameraTrap"
+    videos = ["At the meerkat burrow", "istockphoto-1990464825-640_adpp_is", "istockphoto-1990588133-640_adpp_is","istockphoto-1992983606-640_adpp_is","istockphoto-2010472805-640_adpp_is", "rand_meerkats"]
+    count = 0
+    for video in videos:
+        save_path = os.path.join("ObjectDetection/Yolo/example_detections",f"video_{count}.mp4")
+        yolo.process_video(os.path.join(video_path,f"{video}.mp4"),thresh=0.0,save_path=save_path)
+        count += 1
 
     # evaluating
     # print(yolo.native_evaluate())

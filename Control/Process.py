@@ -36,7 +36,7 @@ class Process:
         self.model = Yolo(model_path = models[f"yolo{version}{size}"])
         print(f"Loaded yolo{version}{size}")
 
-    def detect_all(self, deployment_path, rendered_box_path=None, conf_thresh=0.0):
+    def detect_all(self, deployment_path, rendered_box_path=None, conf_thresh=0):
         # get all images
         images = glob.glob(os.path.join(os.path.join(deployment_path), "*.jpg"))
         images = natsorted(images)
@@ -90,13 +90,17 @@ class Process:
         plt.savefig(save_path)
 
 if __name__ == "__main__":
-    process = Process(version="5", size="mu")
-    deployment_path = "Control/Images/Deployments/2024_10_7_19_27_53"
-    process_path = "Control/Processed/2024_10_7_19_27_53"
-    if os.path.exists(process_path): 
-        shutil.rmtree(process_path)
-    os.mkdir(process_path)
-    os.mkdir(os.path.join(process_path,"detections"))
-    global_results, images, fps, start_time = process.detect_all(deployment_path=deployment_path,rendered_box_path=os.path.join(process_path,"detections"))
-    df = process.synthesize_results(global_results, fps, start_time, images, save_path=os.path.join(process_path,"meerkats_vs_time.csv"))
-    process.plot_results(df,save_path=os.path.join(process_path,"meerkats_vs_time.png"))
+    sizes = ["n","su","mu", "lu"]
+    yolo = ["8","5","5","5"]
+    for i in range(len(sizes)):
+        process = Process(version=yolo[i], size=sizes[i])
+        deployment_path = "Control/Images/Deployments/2024_10_17_15_52_50"
+        process_path = "Control/Processed/2024_10_17_15_52_50" + "_" + sizes[i]
+        if os.path.exists(process_path): 
+            shutil.rmtree(process_path)
+        os.mkdir(process_path)
+        os.mkdir(os.path.join(process_path,"detections"))
+        global_results, images, fps, start_time = process.detect_all(deployment_path=deployment_path,rendered_box_path=os.path.join(process_path,"detections"))
+        df = process.synthesize_results(global_results, fps, start_time, images, save_path=os.path.join(process_path,"meerkats_vs_time.csv"))
+        process.plot_results(df,save_path=os.path.join(process_path,"meerkats_vs_time.png"))
+        os.rename(process_path, process_path)
